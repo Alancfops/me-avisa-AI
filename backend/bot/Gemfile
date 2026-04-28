@@ -1,0 +1,8 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+ruby ">= 3.3"
+
+gem "faraday", "~> 2.0"
+# gem "telegram-bot-ruby", "~> 2.0"  # descomentar quando implementar o bot

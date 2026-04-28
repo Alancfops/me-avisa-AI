@@ -1,0 +1,48 @@
+---
+description: Arquitetura do sistema (React/Tailwind, Rails, bot Telegram, Supabase, Docker/Render)
+alwaysApply: true
+---
+
+# Arquitetura do sistema
+
+## Monorepo
+
+- **`frontend/`** — **React** + **Tailwind**; consome só a **API REST** do Rails (base URL por env, sem URL de produção fixa no código).
+- **`backend/`** — **Ruby on Rails**: API REST; dados em **Supabase** (PostgreSQL) via **ActiveRecord** (`DATABASE_URL` apontando para o projeto Supabase).
+- **`backend/bot/`** — Bot **Telegram** (`docs/bot/instruction.md`); chama o Rails só por **endpoints internos** autenticados — sem acesso direto ao banco.
+
+## Domínio Rails (espelho de `docs/`)
+
+Módulos/camadas separados: **`fiis`**, **`acoes`**, **`ets`**, alinhados a `docs/fiis`, `docs/acoes`, `docs/ets`. Regras e alertas: **`.cursor/rules/dev-rules.mdc`** + `context.md` / `alert.md` de cada pasta.
+
+## Fluxo de dados
+
+```
+Frontend --REST--> Rails --ActiveRecord--> Supabase
+Rails --HTTP--> Telegram Bot API
+Bot --HTTP interno--> Rails
+```
+
+- Bot → Rails: rede/segredo de serviço (token, header assinado, etc.); não expor essas rotas como API pública do front.
+
+## Docker + Render
+
+- **Uma imagem** pode servir **dois processos** (API vs bot) com `CMD`/`entrypoint` diferentes, ou **dois serviços** com o mesmo build — o importante é separar escala e secrets.
+- No Render: `DATABASE_URL` e secrets **Supabase** no **Rails** (e no worker do bot se aplicável); **não** colocar chaves sensíveis do Supabase no bundle do **frontend** — o front usa só URL pública da **API** e variáveis não secretas quando precisar. Token Telegram, segredo interno bot↔API, **healthcheck** na API.
+
+## Anti-padrões
+
+- Bot substituindo a API usada pelo front; ou um único módulo gigante misturando FII, ação e ETF sem fronteira clara.
+
+## Onde está documentado o fluxo Git
+
+- Branches, commits e PR: **`.cursor/skills/github-workflow/SKILL.md`** e subagente **`.cursor/agents/github-specialist.md`**.
+
+## Estrutura auxiliar no repositório (Cursor)
+
+| Pasta | Função |
+|--------|--------|
+| `.cursor/rules/` | Regras do projeto (`*.mdc`, `alwaysApply` / `globs`). Meta-regra para criar/editar artefatos: **`cursor-artifacts.mdc`**. |
+| `.cursor/skills/<nome>/` | Skills: `SKILL.md` com `name` **igual** ao nome da pasta (requisito do Cursor). |
+| `.cursor/commands/` | Comandos `/`: um arquivo `.md` por comando. **`/gerar`** encadeia back + front + Git; ver também `/gerar-back`, `/gerar-front`, `/code-review`. |
+| `.cursor/agents/` | Subagentes: um `.md` por agente (`name` alinhado ao ficheiro). |

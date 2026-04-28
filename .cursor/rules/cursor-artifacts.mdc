@@ -1,0 +1,48 @@
+---
+description: Padrões obrigatórios ao criar ou editar skills, agents, commands e rules em .cursor/
+globs: .cursor/**/*
+alwaysApply: false
+---
+
+# Artefatos Cursor (skills, agents, commands, rules)
+
+Aplicar sempre que criar ou alterar ficheiros sob **`.cursor/`**. Ver também a tabela **“Estrutura auxiliar no repositório (Cursor)”** em **`.cursor/rules/architecture.mdc`**.
+
+## Skills (`.cursor/skills/<nome-da-pasta>/`)
+
+- **Obrigatório:** ficheiro **`SKILL.md`** na raiz da pasta da skill.
+- **Frontmatter:** `name` e `description` (requisito do Cursor). O valor de **`name` tem de ser igual ao nome da pasta** (só minúsculas, números e hífens).
+- **Opcional:** `reference.md` ou outros `.md` no mesmo nível que `SKILL.md`; referências a um nível de profundidade a partir de `SKILL.md`.
+- **Não** versionar skills do projeto em `~/.cursor/skills-cursor/` (reservado ao Cursor).
+
+## Subagentes (`.cursor/agents/`)
+
+- **Um agente = um ficheiro** `*.md` com frontmatter YAML.
+- **`name`:** minúsculas e hífens; **deve coincidir com o nome do ficheiro** (ex.: `github-specialist.md` → `name: github-specialist`).
+- **`description`:** específica (o quê + quando / “use proativamente…” quando fizer sentido) — a delegação depende disto.
+- Corpo = prompt do subagente; **conciso**; referenciar skills e `docs/` quando o domínio exigir.
+
+## Comandos slash (`.cursor/commands/`)
+
+- **Um comando = um ficheiro** `.md`; o **nome do ficheiro (sem `.md`)** é o nome do comando no chat (ex.: `gerar-front.md` → `/gerar-front`).
+- **Não** agrupar vários comandos num único `.md` — o Cursor não regista linhas soltas como `/foo`.
+- Conteúdo: instruções claras (objetivo, escopo, skills/subagentes a seguir).
+
+## Rules (`.cursor/rules/`)
+
+- Ficheiros **`.mdc`** com frontmatter: pelo menos **`description`**; usar **`alwaysApply: true`** ou **`globs`** (nunca ambos ambíguos sem intenção).
+- **Uma preocupação principal por regra** quando possível; manter **menos de 500 linhas**; exemplos concretos quando ajudarem.
+- Regras aplicam-se ao **Agent (chat)** conforme documentação Cursor — não assumir Tab/Inline.
+
+## Coerência com o projeto
+
+- Artefatos de produto (skills/agents) que toquem domínio: alinhar **`docs/`**, **`dev-rules.mdc`** e **`architecture.mdc`**.
+- Fluxo Git em documentação: **`.cursor/skills/github-workflow/SKILL.md`**.
+
+## Checklist rápido antes de commitar mudanças em `.cursor/`
+
+- [ ] Skill: pasta = `name` no YAML?
+- [ ] Command: um ficheiro por slash, nome correto?
+- [ ] Agent: `name` = stem do ficheiro?
+- [ ] Rule: `description` + `globs` ou `alwaysApply` definidos?
+- [ ] Links internos (`@.cursor/...`) apontam para caminhos que existem no repo?

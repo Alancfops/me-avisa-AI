@@ -1,0 +1,28 @@
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+*.local
+
+# Backend (Rails)
+backend/log/*
+backend/tmp/*
+backend/storage/*
+!backend/log/.keep
+!backend/tmp/.keep
+!backend/storage/.keep
+backend/config/master.key
+backend/.bundle
+backend/vendor/bundle
+
+# Frontend (Node)
+frontend/node_modules
+frontend/dist
+frontend/.vite
+
+# Ruby / bot
+backend/bot/.bundle
+backend/bot/vendor

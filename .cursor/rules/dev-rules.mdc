@@ -1,0 +1,32 @@
+---
+description: Padrões obrigatórios de desenvolvimento (docs, domínio financeiro, UI mobile-first)
+alwaysApply: true
+---
+
+# Desenvolvimento — regras obrigatórias
+
+## Antes de implementar qualquer feature nova
+
+1. **Ler `docs/` por completo** (especialmente `docs/bot/instruction.md` e os pares `context.md` / `alert.md` em `docs/fiis`, `docs/acoes`, `docs/ets`).
+2. A implementação deve **espelhar a documentação**; se algo estiver incompleto, **atualizar os `.md` primeiro** ou registrar decisão explícita no doc — não improvisar em código.
+3. **Stack e pastas** do monorepo: **`.cursor/rules/architecture.mdc`** (frontend, backend, bot, Supabase, Docker).
+
+## Domínio financeiro
+
+- **Não inventar** regras de alerta, thresholds, fórmulas ou métricas que não estejam nos docs.
+- **Não inventar** cálculos financeiros; reutilizar fórmulas e convenções já descritas (ex.: DY, P/VP, cooldowns). Se faltar especificação, **parar e documentar** antes de codificar.
+
+## Separação por tipo de ativo
+
+- **Não misturar** lógica de **FII**, **ação** e **ETF** no mesmo módulo de regras sem uma camada clara.
+- Preferir módulos/camadas separadas (ou estratégias por tipo) alinhados a `docs/fiis`, `docs/acoes`, `docs/ets`.
+
+## Interface
+
+- **Mobile-first:** definir e implementar primeiro o layout **responsivo para mobile**; em seguida adaptar para **desktop/web**.
+- Breakpoints e componentes devem partir do menor viewport e evoluir para telas maiores.
+
+## Código
+
+- Manter **código limpo**: funções pequenas, nomes claros, sem duplicar regras já centralizadas nos docs ou em camadas de domínio.
+- Comentários só onde o “porquê” não for óbvio; evitar comentários que duplicam o que já está em `docs/`.
