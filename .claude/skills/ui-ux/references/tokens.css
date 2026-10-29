@@ -1,0 +1,130 @@
+/*
+ * Tokens de cor do Me Avisa Aí — Tailwind v4 + shadcn/ui.
+ * Base: protótipo do Lovable (2026-10-29), com o verde, o vermelho e a borda
+ * de campo do tema claro escurecidos para passar na WCAG 2.2 AA.
+ * Conferido com: python3 .claude/skills/ui-ux/scripts/check_contrast.py <arquivo>
+ *
+ * Colar em resources/css/app.css (substituindo os blocos :root e .dark do
+ * starter kit) e registrar os tokens extras no @theme inline:
+ *   --color-signal, --color-signal-foreground, --color-signal-soft,
+ *   --color-primary-soft, --color-drop-soft
+ *   --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
+ *   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+ */
+
+/* Claro: branco papel, tinta preta, azul elétrico, verde "compra" */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.16 0.01 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 260);
+  --primary: oklch(0.56 0.21 258);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.56 0.21 258 / 10%);
+  --secondary: oklch(0.955 0.004 255);
+  --secondary-foreground: oklch(0.2 0.01 260);
+  --muted: oklch(0.955 0.004 255);
+  --muted-foreground: oklch(0.5 0.015 258);
+  --accent: oklch(0.94 0.006 255);
+  --accent-foreground: oklch(0.16 0.01 260);
+  --signal: oklch(0.5 0.13 152);            /* Lovable: 0.62 0.17 → 3.36:1, reprovava */
+  --signal-foreground: oklch(0.99 0 0);
+  --signal-soft: oklch(0.5 0.13 152 / 10%);
+  --destructive: oklch(0.53 0.2 25);        /* Lovable: 0.6 0.22 → 4.41:1, reprovava */
+  --destructive-foreground: oklch(0.99 0 0);
+  --drop-soft: oklch(0.53 0.2 25 / 10%);
+  --border: oklch(0.91 0.005 255);          /* só decorativo (cartões, divisórias) */
+  --input: oklch(0.62 0.01 255);            /* borda de campo: precisa de 3:1 (1.4.11) */
+  --ring: oklch(0.56 0.21 258);
+  --chart-1: oklch(0.56 0.21 258);
+  --chart-2: oklch(0.5 0.13 152);
+  --chart-3: oklch(0.53 0.2 25);
+  --chart-4: oklch(0.5 0.015 258);
+  --chart-5: oklch(0.75 0.15 80);
+  --sidebar: oklch(0.97 0.003 255);
+  --sidebar-foreground: oklch(0.16 0.01 260);
+  --sidebar-primary: oklch(0.56 0.21 258);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.93 0.006 255);
+  --sidebar-accent-foreground: oklch(0.16 0.01 260);
+  --sidebar-border: oklch(0.91 0.005 255);
+  --sidebar-ring: oklch(0.56 0.21 258);
+  --shadow-card: 0 1px 2px oklch(0.16 0.01 260 / 6%), 0 8px 24px -12px oklch(0.16 0.01 260 / 12%);
+  --gradient-signal: linear-gradient(135deg, oklch(0.5 0.13 152 / 14%), transparent 60%);
+}
+
+/* Escuro: preto de verdade */
+.dark {
+  --background: oklch(0.13 0.004 260);
+  --foreground: oklch(0.96 0.003 250);
+  --card: oklch(0.17 0.005 260);
+  --card-foreground: oklch(0.96 0.003 250);
+  --popover: oklch(0.17 0.005 260);
+  --popover-foreground: oklch(0.96 0.003 250);
+  --primary: oklch(0.68 0.18 255);
+  --primary-foreground: oklch(0.13 0.004 260);
+  --primary-soft: oklch(0.68 0.18 255 / 14%);
+  --secondary: oklch(0.22 0.006 260);
+  --secondary-foreground: oklch(0.96 0.003 250);
+  --muted: oklch(0.22 0.006 260);
+  --muted-foreground: oklch(0.66 0.012 258);
+  --accent: oklch(0.24 0.008 260);
+  --accent-foreground: oklch(0.96 0.003 250);
+  --signal: oklch(0.78 0.18 152);
+  --signal-foreground: oklch(0.13 0.004 260);
+  --signal-soft: oklch(0.78 0.18 152 / 14%);
+  --destructive: oklch(0.68 0.2 25);
+  --destructive-foreground: oklch(0.13 0.004 260);
+  --drop-soft: oklch(0.68 0.2 25 / 14%);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 38%);              /* Lovable: 12% → 1.31:1, reprovava */
+  --ring: oklch(0.68 0.18 255);
+  --chart-1: oklch(0.68 0.18 255);
+  --chart-2: oklch(0.78 0.18 152);
+  --chart-3: oklch(0.68 0.2 25);
+  --chart-4: oklch(0.66 0.012 258);
+  --chart-5: oklch(0.8 0.14 80);
+  --sidebar: oklch(0.11 0.004 260);
+  --sidebar-foreground: oklch(0.96 0.003 250);
+  --sidebar-primary: oklch(0.68 0.18 255);
+  --sidebar-primary-foreground: oklch(0.13 0.004 260);
+  --sidebar-accent: oklch(0.2 0.006 260);
+  --sidebar-accent-foreground: oklch(0.96 0.003 250);
+  --sidebar-border: oklch(1 0 0 / 7%);
+  --sidebar-ring: oklch(0.68 0.18 255);
+  --shadow-card: 0 1px 0 oklch(1 0 0 / 4%) inset, 0 12px 32px -16px oklch(0 0 0 / 60%);
+  --gradient-signal: linear-gradient(135deg, oklch(0.78 0.18 152 / 16%), transparent 60%);
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Cartão padrão */
+@utility surface {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+}
+
+/* Brilho verde sutil no cartão de fundo com preço bom (decorativo; o badge carrega a informação) */
+@utility surface-signal {
+  background-image: var(--gradient-signal);
+}
+
+/* Qualquer número financeiro */
+@utility num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-display);
+}

@@ -1,16 +1,31 @@
-# me_avisaAI
+# Me Avisa Aí
 
-Monorepo: **Rails API** (`backend/`), **React + Vite + Tailwind** (`frontend/`), bot Telegram em `backend/bot/`. Documentação de produto em `docs/`. Regras e automação em `.cursor/`.
+Acompanha seus FIIs favoritos e avisa quando algum chega num preço bom para
+comprar: preço alvo, faixa de compra, regra automática (abaixo da média de 30
+dias com P/VP descontado) ou queda forte no dia.
 
-## Início rápido
+> Recomeço em 2026-10-29. A versão anterior (Rails + React) está nas branches
+> `develop` e `feature/fii-dashboard-brapi-catalog`; o que foi aproveitado está em
+> [`docs/legado.md`](docs/legado.md).
 
-1. **Ruby / Rails** — ver `backend/README.md` (`bundle install`, `ridk` + libyaml no Windows, Postgres ou `DATABASE_URL` Supabase).
-2. **Backend:** `cd backend` → copiar `backend/.env.example` para `.env` → `rails db:create` → `rails s -p 3000`.
-3. **Frontend:** `cd frontend` → `copy .env.example .env` → `npm install` → `npm run dev` (porta 5173).
+## Stack
 
-- API health: `GET /api/v1/health`
-- CORS: variável `FRONTEND_ORIGIN` (default `http://localhost:5173`).
+Laravel · React (Inertia) · Tailwind v4 · shadcn/ui · PostgreSQL · Docker Compose.
+Roda localmente. Dados de mercado: [brapi](https://brapi.dev) (cotações) e
+[CVM Dados Abertos](https://dados.cvm.gov.br/dataset/fii-doc-inf_mensal)
+(valor patrimonial e DY).
 
-## Repositório remoto
+## Módulos
 
-`https://github.com/Alancfops/me-avisa-AI.git` — fluxo Git: `.cursor/skills/github-workflow/SKILL.md`.
+1. **FIIs**: favoritos, dados de mercado, regras de alerta, avisos no site *(em construção)*
+2. Bot do Telegram
+3. Servidor MCP (gerenciar favoritos conversando com o Claude)
+4. Ações e ETFs
+
+## Documentação
+
+- Regras de produto: [`docs/fiis/`](docs/fiis/), [`docs/acoes/`](docs/acoes/), [`docs/ets/`](docs/ets/), [`docs/bot/`](docs/bot/)
+- Protótipo visual: [`docs/prototipo-lovable/`](docs/prototipo-lovable/)
+- UI/UX e acessibilidade: [`.claude/skills/ui-ux/`](.claude/skills/ui-ux/)
+
+O app é informativo e não faz recomendação de investimento.
