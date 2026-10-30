@@ -1,25 +1,33 @@
 import { Head } from '@inertiajs/react';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 
-export default function Dashboard() {
+type Favorite = {
+    ticker: string;
+};
+
+export default function Dashboard({ favorites }: { favorites: Favorite[] }) {
     return (
         <>
-            <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                </div>
+            <Head title="Painel" />
+
+            <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-8">
+                <h1 className="text-2xl font-semibold">Painel</h1>
+
+                {favorites.length === 0 ? (
+                    <p className="text-muted-foreground">
+                        Nenhum favorito ainda
+                    </p>
+                ) : (
+                    <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {favorites.map((favorite) => (
+                            <li
+                                key={favorite.ticker}
+                                className="rounded-xl border bg-card p-5 text-lg font-semibold text-card-foreground"
+                            >
+                                {favorite.ticker}
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </div>
         </>
     );
@@ -28,7 +36,7 @@ export default function Dashboard() {
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: 'Dashboard',
+            title: 'Painel',
             href: '/',
         },
     ],

@@ -8,14 +8,7 @@ const appName = import.meta.env.VITE_APP_NAME || 'Me Avisa Aí';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
-    layout: (name) => {
-        switch (true) {
-            case name === 'welcome':
-                return null;
-            default:
-                return AppLayout;
-        }
-    },
+    layout: () => AppLayout,
     strictMode: true,
     withApp(app) {
         return (

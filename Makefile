@@ -40,5 +40,5 @@ shell: ## Abre um terminal no contêiner do app
 	$(COMPOSE) run --rm web bash
 
 check: lint ## Roda o que o CI confere
-	$(COMPOSE) run --rm web vendor/bin/phpstan analyse --no-progress
+	$(COMPOSE) run --rm web vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 	$(COMPOSE) run --rm web php artisan test
