@@ -128,7 +128,8 @@ em `R$` pt-BR, e sempre uma alternativa em texto (resumo + "Ver dados em tabela"
 erro (o que houve + quando tenta de novo) e dados velhos/mercado fechado. Ver a
 tabela no fim de `references/telas.md`.
 
-**Responsivo**: pensar primeiro no celular (o uso via túnel é no telefone). Uma
+**Responsivo**: o produto é só web e roda em localhost, sem app nativo, mas a tela
+continua funcionando em janela estreita (WCAG 1.4.10). Pensar primeiro na menor. Uma
 coluna no celular, grade em `md`/`lg`; na tela do fundo, o bloco "Quando me
 avisar" sobe para logo depois do preço no celular, mudando a ordem no DOM e não
 com `order`, para o foco seguir o visual. Nada de rolagem horizontal em 320px.

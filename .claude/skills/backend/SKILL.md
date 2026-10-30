@@ -122,4 +122,4 @@ arch('application does not know infrastructure')
 Rode os comandos que o projeto tiver e relate o resultado: testes (`php artisan test`),
 formatação (`vendor/bin/pint --test`) e análise estática, se instalada. Depois, passe
 pelo `references/code-review.md`. Em mudança relevante, peça a revisão ao subagente
-`backend-reviewer`, que lê o código sem o contexto de quem o escreveu.
+`code-review`, que lê o código sem o contexto de quem o escreveu.

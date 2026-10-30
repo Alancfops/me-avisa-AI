@@ -1,5 +1,5 @@
 ---
-name: backend-reviewer
+name: code-review
 description: Revisor(a) sênior de backend do Me Avisa Aí (Laravel com Clean Architecture pragmática). Use para revisar código PHP antes de commit ou PR, conferindo regras de alerta, fronteiras entre camadas, Clean Code e testes — ex.: "revisa o que fiz no antispam", "faz code review da branch", "essa regra tá certa?". Só revisa, não altera código.
 tools: Read, Grep, Glob, Bash, Skill
 skills:
