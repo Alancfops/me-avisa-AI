@@ -194,3 +194,44 @@ it('reports the ambiguous tickers when importing', function () {
         ->expectsOutputToContain('XPML11')
         ->assertSuccessful();
 });
+
+const CVM_GERAL_HEADER = "Tipo_Fundo_Classe;CNPJ_Fundo_Classe;Data_Referencia;Versao;Data_Entrega;Nome_Fundo_Classe;Codigo_ISIN;Segmento_Atuacao\n";
+const CVM_COMPLEMENTO_HEADER = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Valor_Patrimonial_Cotas;Percentual_Dividend_Yield_Mes\n";
+
+it('keeps the last valid book value when a corrected report comes without one', function () {
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008;x\nClasse;1;2026-09-01;2;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;1;9.50;0.01\n1;2026-09-01;2;;\n",
+    ));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('cnpj', '1')->first();
+
+    expect((float) $row->book_value)->toBe(9.5)
+        ->and($row->version)->toBe(1)
+        ->and(substr((string) $row->delivered_on, 0, 10))->toBe('2026-10-10');
+});
+
+it('does not erase a stored book value with a later file that has none', function () {
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1, 'delivered_on' => '2026-10-10', 'book_value' => '9.50']);
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;2;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;2;;\n",
+    ));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    expect((float) FundReportModel::where('cnpj', '1')->value('book_value'))->toBe(9.5);
+});
+
+it('treats values outside the storable range as missing, instead of failing the whole year', function () {
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;1;9999999999999999;999999999\n",
+    ));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('cnpj', '1')->first();
+
+    expect($row->book_value)->toBeNull()->and($row->dividend_yield)->toBeNull();
+});

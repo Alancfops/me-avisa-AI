@@ -49,17 +49,21 @@ final class EloquentReportRepository implements ReportRepository
     public function save(array $reports): void
     {
         DB::transaction(function () use ($reports): void {
-            $versions = FundReportModel::query()
-                ->get(['cnpj', 'month', 'version'])
-                ->mapWithKeys(fn (FundReportModel $row): array => ["{$row->cnpj}|{$row->month}" => $row->version])
-                ->all();
+            $stored = FundReportModel::query()
+                ->get(['cnpj', 'month', 'version', 'book_value'])
+                ->keyBy(fn (FundReportModel $row): string => "{$row->cnpj}|{$row->month}");
 
             $rows = [];
 
             foreach ($reports as $report) {
                 $record = $report->record;
 
-                if (($versions["{$record->cnpj}|{$record->month}"] ?? 0) <= $record->version) {
+                $current = $stored->get("{$record->cnpj}|{$record->month}");
+                $isOlder = $current !== null && $current->version > $record->version;
+                // Correção sem VP não apaga o último VP válido.
+                $losesBookValue = $current?->book_value !== null && $record->bookValue === null;
+
+                if (! $isOlder && ! $losesBookValue) {
                     $rows[] = [
                         'cnpj' => $record->cnpj,
                         'ticker' => $report->ticker,

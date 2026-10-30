@@ -4,6 +4,7 @@ namespace App\Modules\Fiis\Application;
 
 use App\Modules\Fiis\Domain\Isin;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 final readonly class ImportReports
 {
@@ -31,7 +32,7 @@ final readonly class ImportReports
         foreach ([$year - 1, $year] as $reportYear) {
             try {
                 $stored = $this->matched($this->source->forYear($reportYear));
-                $this->reports->save($stored);
+                $this->save($stored, $reportYear);
                 $imported += count($stored);
                 $this->sourceLog->success(Source::Cvm);
             } catch (SourceUnavailable $failure) {
@@ -46,6 +47,23 @@ final readonly class ImportReports
         }
 
         return new ImportReportsResult($imported, $this->reports->ambiguousTickers());
+    }
+
+    /**
+     * @param  list<StoredReport>  $stored
+     *
+     * @throws SourceUnavailable
+     */
+    private function save(array $stored, int $year): void
+    {
+        try {
+            $this->reports->save($stored);
+        } catch (Throwable $failure) {
+            // O texto do banco vai só para o log: a mensagem da exceção aparece na Saúde.
+            $this->logger->error("Gravação dos informes de {$year} falhou: {$failure->getMessage()}");
+
+            throw new SourceUnavailable("Não foi possível gravar os informes de {$year}.");
+        }
     }
 
     /**

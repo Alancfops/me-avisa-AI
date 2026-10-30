@@ -19,6 +19,11 @@ final class CvmFundReports implements FundReports
 
     private const COMPLEMENT_COLUMNS = ['CNPJ_Fundo_Classe', 'Data_Referencia', 'Versao', 'Valor_Patrimonial_Cotas', 'Percentual_Dividend_Yield_Mes'];
 
+    /** Limites das colunas: fora disso é dado quebrado, e gravar derrubaria o ano inteiro. */
+    private const MAX_BOOK_VALUE = '999999999999999';
+
+    private const MAX_YIELD_MAGNITUDE = '99999999';
+
     public function forYear(int $year): array
     {
         $path = $this->download($year);
@@ -146,6 +151,7 @@ final class CvmFundReports implements FundReports
     private function latestVersions(array $rows, array $complements): array
     {
         $latest = [];
+        $latestWithBookValue = [];
 
         foreach ($rows as $row) {
             $record = $this->record($row, $complements);
@@ -159,9 +165,19 @@ final class CvmFundReports implements FundReports
             if (! isset($latest[$key]) || $record->version > $latest[$key]->version) {
                 $latest[$key] = $record;
             }
+
+            if ($record->bookValue !== null && (! isset($latestWithBookValue[$key]) || $record->version > $latestWithBookValue[$key]->version)) {
+                $latestWithBookValue[$key] = $record;
+            }
         }
 
-        return array_values($latest);
+        // Correção que veio sem VP não apaga o último VP válido da competência.
+        return array_values(array_map(
+            fn (FundReportRecord $record): FundReportRecord => $record->bookValue === null
+                ? ($latestWithBookValue["{$record->cnpj}|{$record->month}"] ?? $record)
+                : $record,
+            $latest,
+        ));
     }
 
     /**
@@ -186,9 +202,25 @@ final class CvmFundReports implements FundReports
             substr($reference, 0, 7),
             (int) $row['Versao'],
             $delivered,
-            $bookValue !== null && BigDecimal::of($bookValue)->isPositive() ? $bookValue : null,
-            $this->decimal($complement['Percentual_Dividend_Yield_Mes'] ?? ''),
+            $this->validBookValue($bookValue),
+            $this->validYield($this->decimal($complement['Percentual_Dividend_Yield_Mes'] ?? '')),
         );
+    }
+
+    private function validBookValue(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $number = BigDecimal::of($value);
+
+        return $number->isPositive() && $number->isLessThanOrEqualTo(self::MAX_BOOK_VALUE) ? $value : null;
+    }
+
+    private function validYield(?string $value): ?string
+    {
+        return $value !== null && BigDecimal::of($value)->abs()->isLessThanOrEqualTo(self::MAX_YIELD_MAGNITUDE) ? $value : null;
     }
 
     private function isDate(string $value): bool
