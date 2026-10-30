@@ -79,11 +79,13 @@ final class CvmFundReports implements FundReports
         }
 
         $rows = [];
+        $wanted = array_flip($required);
 
         while (($row = $this->readRow($stream)) !== null) {
             // Linha com colunas a menos ou a mais é corrupção: não dá para saber qual é qual.
             if (count($row) === count($header)) {
-                $rows[] = array_combine($header, $row);
+                // Só as colunas usadas: o arquivo tem 37, e guardar todas estoura a memória.
+                $rows[] = array_intersect_key(array_combine($header, $row), $wanted);
             }
         }
 

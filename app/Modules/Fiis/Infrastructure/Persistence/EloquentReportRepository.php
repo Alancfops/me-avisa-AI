@@ -49,21 +49,23 @@ final class EloquentReportRepository implements ReportRepository
     public function save(array $reports): void
     {
         DB::transaction(function () use ($reports): void {
-            $stored = FundReportModel::query()
-                ->get(['cnpj', 'month', 'version', 'book_value'])
-                ->keyBy(fn (FundReportModel $row): string => "{$row->cnpj}|{$row->month}");
+            // Sem models: são milhares de linhas, e a importação roda com o limite de memória do PHP.
+            $stored = [];
+
+            foreach (FundReportModel::query()->toBase()->select(['cnpj', 'month', 'version', 'book_value'])->cursor() as $row) {
+                $stored["{$row->cnpj}|{$row->month}"] = [(int) $row->version, $row->book_value !== null];
+            }
 
             $rows = [];
 
             foreach ($reports as $report) {
                 $record = $report->record;
 
-                $current = $stored->get("{$record->cnpj}|{$record->month}");
-                $isOlder = $current !== null && $current->version > $record->version;
+                [$storedVersion, $hasBookValue] = $stored["{$record->cnpj}|{$record->month}"] ?? [0, false];
                 // Correção sem VP não apaga o último VP válido.
-                $losesBookValue = $current?->book_value !== null && $record->bookValue === null;
+                $losesBookValue = $hasBookValue && $record->bookValue === null;
 
-                if (! $isOlder && ! $losesBookValue) {
+                if ($storedVersion <= $record->version && ! $losesBookValue) {
                     $rows[] = [
                         'cnpj' => $record->cnpj,
                         'ticker' => $report->ticker,
