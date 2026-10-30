@@ -2,9 +2,9 @@
 
 namespace App\Modules\Fiis\Infrastructure\Persistence;
 
-use App\Modules\Fiis\Application\DailyClose;
 use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\Quote;
+use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
 

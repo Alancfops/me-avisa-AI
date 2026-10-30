@@ -12,7 +12,7 @@ final readonly class PriceTargetRule implements AlertRule
     public function evaluate(FundSnapshot $fund): RuleResult
     {
         return $fund->price->isAtMost($this->target)
-            ? RuleResult::matched("Preço {$fund->price} no alvo {$this->target}")
+            ? RuleResult::matched("Preço {$fund->price} no alvo {$this->target}", "alvo {$this->target}")
             : RuleResult::notMatched();
     }
 }

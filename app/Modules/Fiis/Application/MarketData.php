@@ -2,6 +2,8 @@
 
 namespace App\Modules\Fiis\Application;
 
+use App\Modules\Fiis\Domain\DailyClose;
+
 interface MarketData
 {
     public function latestQuote(string $ticker): ?Quote;

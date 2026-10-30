@@ -1,8 +1,6 @@
 <?php
 
-namespace App\Modules\Fiis\Application;
-
-use App\Modules\Fiis\Domain\Money;
+namespace App\Modules\Fiis\Domain;
 
 final readonly class DailyClose
 {

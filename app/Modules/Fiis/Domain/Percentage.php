@@ -24,6 +24,12 @@ final readonly class Percentage
         return $this->value->isLessThan($other->value);
     }
 
+    /** Sem sinal, para frases como "queda de 3,6%". */
+    public function magnitude(): string
+    {
+        return str_replace('.', ',', (string) $this->value->abs()->strippedOfTrailingZeros()).'%';
+    }
+
     public function toDecimal(): string
     {
         return (string) $this->value->strippedOfTrailingZeros();

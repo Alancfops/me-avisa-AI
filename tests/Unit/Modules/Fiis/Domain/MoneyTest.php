@@ -31,3 +31,15 @@ it('exposes the decimal value without trailing zeros', function () {
     expect(Money::fromString('149.910000')->toDecimal())->toBe('149.91')
         ->and(Money::fromString('150.00')->toDecimal())->toBe('150');
 });
+
+it('averages exactly', function () {
+    $average = Money::average([Money::fromString('10'), Money::fromString('10'), Money::fromString('11')]);
+
+    expect((string) $average)->toBe('R$ 10,33')
+        ->and(Money::fromString('10.33')->isLessThan($average))->toBeTrue();
+});
+
+it('multiplies by a decimal factor', function () {
+    expect(Money::fromString('10')->times('0.95')->isAtMost(Money::fromString('9.50')))->toBeTrue()
+        ->and(Money::fromString('9.50')->isAtMost(Money::fromString('10')->times('0.95')))->toBeTrue();
+});

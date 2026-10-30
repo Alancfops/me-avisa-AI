@@ -1,10 +1,10 @@
 <?php
 
-use App\Modules\Fiis\Application\DailyClose;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\Quotes;
 use App\Modules\Fiis\Application\RefreshQuotes;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
 use Psr\Log\AbstractLogger;
 use Tests\Support\Fiis\InMemoryFavorites;

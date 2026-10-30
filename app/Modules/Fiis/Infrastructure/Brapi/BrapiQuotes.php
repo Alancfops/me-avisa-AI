@@ -2,11 +2,11 @@
 
 namespace App\Modules\Fiis\Infrastructure\Brapi;
 
-use App\Modules\Fiis\Application\DailyClose;
 use App\Modules\Fiis\Application\MarketTime;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\Quotes;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
 use DateTimeImmutable;

@@ -1,9 +1,9 @@
 <?php
 
-use App\Modules\Fiis\Application\DailyClose;
 use App\Modules\Fiis\Application\ImportPriceHistory;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\Quotes;
+use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
 use Tests\Support\Fiis\FixedClock;
 use Tests\Support\Fiis\InMemoryMarketData;

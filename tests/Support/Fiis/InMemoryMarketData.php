@@ -2,9 +2,9 @@
 
 namespace Tests\Support\Fiis;
 
-use App\Modules\Fiis\Application\DailyClose;
 use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\Quote;
+use App\Modules\Fiis\Domain\DailyClose;
 
 final class InMemoryMarketData implements MarketData
 {

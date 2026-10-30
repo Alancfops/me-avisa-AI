@@ -43,6 +43,28 @@ final readonly class Money
         return $this->amount->isPositive();
     }
 
+    /** @param list<self> $values não vazia: média de nada é erro, não zero */
+    public static function average(array $values): self
+    {
+        $sum = BigRational::zero();
+
+        foreach ($values as $value) {
+            $sum = $sum->plus($value->amount);
+        }
+
+        return new self($sum->dividedBy(count($values)));
+    }
+
+    public function times(string $factor): self
+    {
+        return new self($this->amount->multipliedBy($factor));
+    }
+
+    public function ratioTo(self $other): BigRational
+    {
+        return $this->amount->dividedBy($other->amount);
+    }
+
     /** Para gravar e para as props: até 6 casas, sem zeros à direita. */
     public function toDecimal(): string
     {
