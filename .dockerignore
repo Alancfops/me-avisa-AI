@@ -1,0 +1,11 @@
+.env
+.env.*
+.git
+.github
+.claude
+node_modules
+vendor
+docs
+public/build
+public/hot
+storage/logs/*.log

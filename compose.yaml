@@ -1,0 +1,88 @@
+name: me-avisa-ai
+
+# web, scheduler e worker usam a mesma imagem e veem o mesmo código.
+x-app: &app
+  build:
+    context: .
+    args:
+      APP_UID: ${APP_UID:-1000}
+  image: me-avisa-ai:local
+  restart: unless-stopped
+  # Só o código-fonte é montado. vendor e public/build vêm da imagem, então ficam
+  # sempre em dia depois de um build, e nenhum volume guarda uma versão velha deles.
+  # O .env é montado, e não passado com env_file, para o token não aparecer em
+  # `docker inspect`.
+  volumes:
+    - type: bind
+      source: ./.env
+      target: /app/.env
+      bind:
+        create_host_path: false
+    - ./app:/app/app
+    - ./bootstrap/app.php:/app/bootstrap/app.php
+    - ./bootstrap/providers.php:/app/bootstrap/providers.php
+    - ./config:/app/config
+    - ./database:/app/database
+    - ./resources:/app/resources
+    - ./routes:/app/routes
+    - ./tests:/app/tests
+    - ./composer.json:/app/composer.json
+    - ./composer.lock:/app/composer.lock
+    - ./phpunit.xml:/app/phpunit.xml
+    - ./phpstan.neon:/app/phpstan.neon
+    - ./pint.json:/app/pint.json
+    - storage:/app/storage
+
+services:
+  web:
+    <<: *app
+    entrypoint: ["sh", "/app/docker/entrypoint-web.sh"]
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+    environment:
+      PHP_CLI_SERVER_WORKERS: 4
+    ports:
+      # Sem login: publicar em todas as interfaces abriria o app para a rede.
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8000/up') === false ? 1 : 0);"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      web:
+        condition: service_healthy
+
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--tries=3"]
+    depends_on:
+      web:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-me_avisa_ai}
+      POSTGRES_USER: ${DB_USERNAME:-me_avisa_ai}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-me_avisa_ai}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./docker/create-testing-database.sql:/docker-entrypoint-initdb.d/create-testing-database.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres:
+  storage:
