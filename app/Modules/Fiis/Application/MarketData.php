@@ -11,6 +11,8 @@ interface MarketData
     /** Ignora cotação mais velha que a guardada: fonte atrasada não apaga dado novo. */
     public function saveQuote(Quote $quote): void;
 
+    public function deleteQuote(string $ticker): void;
+
     /** @param list<DailyClose> $closes */
     public function saveCloses(string $ticker, array $closes): void;
 

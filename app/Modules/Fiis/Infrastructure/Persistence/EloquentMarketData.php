@@ -43,6 +43,11 @@ final class EloquentMarketData implements MarketData
         ]);
     }
 
+    public function deleteQuote(string $ticker): void
+    {
+        QuoteModel::query()->where('ticker', $ticker)->delete();
+    }
+
     public function saveCloses(string $ticker, array $closes): void
     {
         if ($closes === []) {

@@ -28,6 +28,11 @@ final class InMemoryMarketData implements MarketData
         }
     }
 
+    public function deleteQuote(string $ticker): void
+    {
+        unset($this->quotes[$ticker]);
+    }
+
     public function saveCloses(string $ticker, array $closes): void
     {
         foreach ($closes as $close) {

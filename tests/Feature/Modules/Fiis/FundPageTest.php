@@ -131,6 +131,20 @@ it('evaluates after refreshing, only once per quote', function () {
     expect(AlertModel::count())->toBe(1);
 });
 
+it('does not fire on the old quote when a favorite is removed and added again', function () {
+    storeQuote('9.42');
+    $this->put('/fundos/MXRF11/regras', ['mode' => 'automatic', 'sharpDrop' => true]);
+    Http::fake(['*/stocks/historical*' => Http::response('', 500)]);
+
+    $this->delete('/favoritos/MXRF11');
+    $this->post('/favoritos', ['ticker' => 'MXRF11']);
+    $this->put('/fundos/MXRF11/regras', ['mode' => 'target', 'target' => '9.50', 'sharpDrop' => false]);
+    app(EvaluateFavorites::class)->handle();
+
+    expect(AlertModel::count())->toBe(0)
+        ->and(QuoteModel::find('MXRF11'))->toBeNull();
+});
+
 it('survives a leap day: the year before is a real date', function () {
     Carbon::setTestNow('2028-02-29 15:00:00-03:00');
     storeQuote('9.42', '-1', '2028-02-29T14:00:00-03:00');
