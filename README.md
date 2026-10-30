@@ -6,8 +6,10 @@ Acompanha seus fundos imobiliários (FIIs) favoritos e avisa quando algum chega 
 preço que você definiu ou cai além do normal. Em vez de abrir o home broker para
 conferir preço, você olha uma tela e sabe se tem algo para analisar hoje.
 
-> **Em construção.** A base do app já roda com Docker, mas por enquanto só lista os
-> favoritos: as regras, as cotações e os avisos descritos abaixo ainda estão sendo feitos.
+> **Em construção.** O módulo de FIIs já funciona com Docker: favoritos, cotações, regras,
+> avisos no site e a tela de Saúde. A interface ainda é mínima, sem o acabamento visual, e
+> o modo de demonstração não existe ainda. Fundos em que mais de um registro da CVM declara
+> o mesmo ISIN ficam sem VP, e a regra automática não dispara para eles.
 >
 > Situação da instalação: **Docker** testado no Linux; **OrbStack** e **Podman** ainda não
 > testados; **sem contêineres** ainda não disponível.
@@ -16,7 +18,7 @@ O "Aí" vem de "me avisa aí". Não é IA.
 
 ## O que ele faz
 
-O módulo de FIIs, em desenvolvimento, oferece:
+O módulo de FIIs oferece:
 
 - **Favoritos:** busca por ticker ou nome.
 - **Preço alvo:** avisa quando o preço chega ao valor definido ou fica abaixo dele.
@@ -73,6 +75,14 @@ Depois, suba o app e abra <http://127.0.0.1:8000>:
 
 ```bash
 make start
+```
+
+Na primeira vez, carregue o catálogo da busca e os informes da CVM. Depois disso, eles
+se atualizam sozinhos, uma vez por dia:
+
+```bash
+docker compose exec web php artisan fiis:sync-catalog
+docker compose exec web php artisan fiis:import-reports
 ```
 
 Sem `make`, como costuma ser no Windows, use o Compose direto:
@@ -158,6 +168,7 @@ não inicia sozinho com o computador por padrão.
 | `make migrate` | Atualiza o banco |
 | `make shell` | Abre um terminal em um contêiner de ferramentas |
 | `make check` | Roda as checagens de backend do CI |
+| `make backtest TICKER=KNRI11` | Conta os avisos que teriam saído nos preços passados, sem gravar nada; não diz se a compra daria lucro |
 
 ## Arquitetura
 
@@ -182,7 +193,7 @@ do [Informe Mensal de FII da CVM](https://dados.cvm.gov.br/dataset/fii-doc-inf_m
 
 ## Próximos módulos
 
-1. **FIIs:** favoritos, dados de mercado, regras e avisos no site *(em construção)*
+1. **FIIs:** favoritos, dados de mercado, regras e avisos no site *(funcional, com interface mínima)*
 2. Bot do Telegram
 3. Servidor MCP, para gerenciar favoritos conversando com o Claude
 4. Ações e ETFs

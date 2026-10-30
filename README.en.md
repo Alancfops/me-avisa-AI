@@ -6,8 +6,10 @@ Tracks your favorite Brazilian real estate funds (FIIs) and tells you when one r
 the price you set or drops more than usual. Instead of opening your brokerage app to
 check prices, you look at one screen and see whether there's anything to analyze today.
 
-> **Under construction.** The app's foundation already runs with Docker, but for now it
-> only lists favorites: the rules, quotes and alerts described below are still being built.
+> **Under construction.** The FII module already works with Docker: favorites, quotes,
+> rules, on-site alerts and the Health page. The interface is still minimal, without the
+> visual polish, and the demo mode does not exist yet. Funds whose ISIN is declared by more
+> than one CVM record have no book value, so the automatic rule does not fire for them.
 >
 > Installation status: **Docker** tested on Linux; **OrbStack** and **Podman** not tested
 > yet; **without containers** not available yet.
@@ -16,7 +18,7 @@ The name is Brazilian Portuguese for roughly "give me a heads-up". The "Aí" is 
 
 ## What it does
 
-The FII module, currently in development, offers:
+The FII module offers:
 
 - **Favorites:** search by ticker or name.
 - **Target price:** alerts you when the price reaches or falls below your value.
@@ -73,6 +75,14 @@ Then start the app and open <http://127.0.0.1:8000>:
 
 ```bash
 make start
+```
+
+The first time, load the search catalog and the CVM reports. After that, they update on
+their own once a day:
+
+```bash
+docker compose exec web php artisan fiis:sync-catalog
+docker compose exec web php artisan fiis:import-reports
 ```
 
 Without `make`, which is common on Windows, use Compose directly:
@@ -158,6 +168,7 @@ doesn't start with the computer by default.
 | `make migrate` | Updates the database |
 | `make shell` | Opens a terminal in a tools container |
 | `make check` | Runs the backend CI checks |
+| `make backtest TICKER=KNRI11` | Counts the alerts past prices would have triggered, without saving anything; it does not say whether buying would have been profitable |
 
 ## Architecture
 
@@ -182,7 +193,7 @@ from the [CVM monthly FII report](https://dados.cvm.gov.br/dataset/fii-doc-inf_m
 
 ## Upcoming modules
 
-1. **FIIs:** favorites, market data, rules and on-site alerts *(under construction)*
+1. **FIIs:** favorites, market data, rules and on-site alerts *(working, with a minimal interface)*
 2. Telegram bot
 3. MCP server, to manage favorites by chatting with Claude
 4. Stocks and ETFs

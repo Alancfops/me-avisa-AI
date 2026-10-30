@@ -16,6 +16,7 @@ use App\Modules\Fiis\Application\SourceLog;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiFundCatalog;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotaReader;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotes;
+use App\Modules\Fiis\Infrastructure\Console\BacktestCommand;
 use App\Modules\Fiis\Infrastructure\Console\ImportReportsCommand;
 use App\Modules\Fiis\Infrastructure\Console\RecordClosesCommand;
 use App\Modules\Fiis\Infrastructure\Console\RefreshQuotesCommand;
@@ -51,6 +52,7 @@ final class FiisServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
+                BacktestCommand::class,
                 ImportReportsCommand::class,
                 RecordClosesCommand::class,
                 RefreshQuotesCommand::class,

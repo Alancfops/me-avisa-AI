@@ -59,20 +59,19 @@ final readonly class EvaluateFavorites
 
     private function applyPolicy(Quote $quote, RuleKind $kind, RuleResult $result): void
     {
-        // Regra sem dado não deixou de valer: zerar aqui geraria um aviso repetido
-        // assim que o dado voltasse.
-        if ($result->unavailableReason !== null) {
-            return;
-        }
-
         $now = $this->clock->now();
-        $decision = (new AlertPolicy)->decide(
+        $decision = (new AlertPolicy)->apply(
+            $kind,
+            $result,
             $this->alerts->state($quote->ticker, $kind),
-            $result->matched,
             $quote->price,
             $now->getTimestamp(),
-            $kind->isNewEventEachTradingDay() ? MarketTime::day($quote->quotedAt) : null,
+            MarketTime::day($quote->quotedAt),
         );
+
+        if ($decision === null) {
+            return;
+        }
 
         $alert = $decision->alert
             ? new Alert($quote->ticker, $kind, $quote->price, (string) $result->reference, (string) $result->reason, $now, $quote->quotedAt)

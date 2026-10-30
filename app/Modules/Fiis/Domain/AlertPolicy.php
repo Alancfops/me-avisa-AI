@@ -13,6 +13,21 @@ final readonly class AlertPolicy
 
     public const REPEAT_PRICE_FACTOR = '0.98';
 
+    /**
+     * O passo usado no app e no simulador, para os dois darem a mesma resposta.
+     *
+     * @return AlertDecision|null `null` se a regra está sem dado: ela não deixou de
+     *                            valer, e zerar aqui repetiria o aviso quando o dado voltasse
+     */
+    public function apply(RuleKind $kind, RuleResult $result, RuleState $state, Money $price, int $now, string $tradingDay): ?AlertDecision
+    {
+        if ($result->unavailableReason !== null) {
+            return null;
+        }
+
+        return $this->decide($state, $result->matched, $price, $now, $kind->isNewEventEachTradingDay() ? $tradingDay : null);
+    }
+
     public function decide(RuleState $state, bool $matches, Money $price, int $now, ?string $eventKey): AlertDecision
     {
         if (! $matches) {

@@ -29,7 +29,7 @@ final readonly class AutomaticRule implements AlertRule
         $useMedian = $fund->priceToBookDays >= self::MIN_TRADING_DAYS_FOR_MEDIAN && $fund->medianPriceToBook !== null;
         $note = $useMedian ? null : self::FALLBACK_NOTE;
         $limit = $useMedian ? $fund->medianPriceToBook : Ratio::fromString(self::FALLBACK_PRICE_TO_BOOK);
-        $limitName = $useMedian ? "mediana {$limit}" : "P/VP {$limit}";
+        $limitName = $useMedian ? "da mediana {$limit}" : "de P/VP {$limit}";
         $priceLimit = $fund->average30d->times(self::AVERAGE_FACTOR);
 
         if (! $fund->price->isLessThan($priceLimit) || ! $fund->priceToBook->isBelow($limit)) {
@@ -37,8 +37,8 @@ final readonly class AutomaticRule implements AlertRule
         }
 
         return RuleResult::matched(
-            "Preço {$fund->price} abaixo de {$priceLimit} (média de 30 pregões × 0,95) e P/VP {$fund->priceToBook} abaixo da {$limitName}",
-            "média 30d {$fund->average30d}; P/VP {$fund->priceToBook} × {$limitName}",
+            "Preço {$fund->price} abaixo de {$priceLimit} (média de 30 pregões × 0,95) e P/VP {$fund->priceToBook} abaixo {$limitName}",
+            "média 30d {$fund->average30d}; P/VP {$fund->priceToBook} abaixo {$limitName}",
             $note,
         );
     }

@@ -2,7 +2,7 @@ COMPOSE ?= docker compose
 export APP_UID := $(shell id -u)
 
 .DEFAULT_GOAL := help
-.PHONY: help install start stop restart logs test lint format migrate shell check
+.PHONY: help install start stop restart logs test lint format migrate shell check backtest
 
 help: ## Lista os comandos
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -44,3 +44,7 @@ shell: ## Abre um terminal no contêiner do app
 check: lint ## Roda as checagens de backend do CI
 	$(COMPOSE) run --rm tools vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 	$(COMPOSE) run --rm tools php artisan test
+
+backtest: ## Simula os avisos sobre preços passados, sem gravar nada: make backtest TICKER=KNRI11
+	@test -n "$(TICKER)" || { echo "Informe o fundo: make backtest TICKER=KNRI11"; exit 1; }
+	$(COMPOSE) run --rm tools php artisan fiis:backtest $(TICKER)

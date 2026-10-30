@@ -43,7 +43,8 @@ it('names the fallback for the screen', function () {
     $result = (new AutomaticRule)->evaluate(fund('9.00', average: '10.00', pvp: '0.9', days: 10));
 
     expect($result->note)->toBe('Comparando com P/VP 1,0 até juntar histórico.')
-        ->and($result->reference)->toContain('P/VP 1,00');
+        ->and($result->reason)->toContain('abaixo de P/VP 1,00')
+        ->and($result->reference)->toContain('abaixo de P/VP 1,00');
 });
 
 it('does not fire without book value, and says why', function () {
@@ -64,5 +65,5 @@ it('states the price and the comparison when it fires', function () {
     $result = (new AutomaticRule)->evaluate(fund('9.00', average: '10.00', pvp: '0.90', median: '0.95', days: 60));
 
     expect($result->reason)->toBe('Preço R$ 9,00 abaixo de R$ 9,50 (média de 30 pregões × 0,95) e P/VP 0,90 abaixo da mediana 0,95')
-        ->and($result->reference)->toBe('média 30d R$ 10,00; P/VP 0,90 × mediana 0,95');
+        ->and($result->reference)->toBe('média 30d R$ 10,00; P/VP 0,90 abaixo da mediana 0,95');
 });
