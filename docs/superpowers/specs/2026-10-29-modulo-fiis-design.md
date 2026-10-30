@@ -219,6 +219,9 @@ Seguir `.claude/skills/ui-ux/references/telas.md`, limitado a:
   exemplos de `docs/fiis/alert.md`, e para os parsers da brapi e da CVM com
   respostas gravadas.
 - Fontes externas nunca são chamadas nos testes.
+- **Simulador (`make backtest`):** roda as mesmas regras sobre preços passados e
+  mostra os avisos que teriam saído, sem enviar nem gravar nada. Entra depois das
+  regras e do antispam. Mostra a quantidade de avisos, não se a compra daria lucro.
 
 ## Riscos
 

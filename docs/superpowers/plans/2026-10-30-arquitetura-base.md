@@ -23,6 +23,7 @@
 - Sem `float` em comparação de regra; ausente é `null`, nunca `0`.
 - Código em inglês; textos de tela em português do Brasil.
 - Mensagens de commit em Conventional Commits.
+- Todo o trabalho deste plano fica na branch `feature/arquitetura-base`, criada a partir da `develop`. Nada de commit direto na `develop` ou na `main`.
 
 ## Review Focus
 
@@ -45,7 +46,7 @@
 **Interfaces:**
 - Produces: projeto Laravel com Pest e rota `GET /` que responde 200.
 
-- [ ] **Step 1: Commitar a correção pendente da `ui-ux`.** `git add .claude/skills/ui-ux/SKILL.md && git commit -m "docs: remove tunnel usage from ui-ux skill"`. Não incluir `docs/prompt`.
+- [ ] **Step 1: Criar a branch.** A partir da `develop` atualizada: `git checkout -b feature/arquitetura-base`. Apagar a pasta `.scaffold/` que sobrou da tentativa anterior. Não incluir `docs/prompt` em nenhum commit.
 
 - [ ] **Step 2: Gerar o projeto em pasta temporária ignorada pelo git**
 
@@ -223,7 +224,7 @@ it('shows an empty dashboard without favorites', function () {
 
 - [ ] **Step 5: Commit.** `git commit -m "feat: list favorites through all FIIs module layers"`.
 
-### Task 5: Documentação, revisão e GitHub
+### Task 5: Documentação, revisão e PR
 
 **Files:**
 - Modify: `README.md`, `CLAUDE.md` (seção Estado), `.claude/skills/backend/SKILL.md` (só se a estrutura real divergir)
@@ -233,19 +234,8 @@ it('shows an empty dashboard without favorites', function () {
 
 - [ ] **Step 1: Atualizar docs.** Conferir `README.md` e `README.en.md` contra o projeto real, testando o caminho Docker com `make`. Podman e sem contêineres continuam marcados como não testados até haver verificação. `CLAUDE.md` deixa de dizer "Ainda não há código".
 
-- [ ] **Step 2: Revisar.** Rodar o subagente `code-review` sobre `main...develop` e corrigir o que for "Bloqueia".
+- [ ] **Step 2: Revisar.** Rodar o subagente `code-review` sobre `develop...feature/arquitetura-base` e corrigir o que for "Bloqueia".
 
 - [ ] **Step 3: Verificar de novo e commitar.** `docker compose run --rm web php artisan test`. Expected: PASS. `git commit -m "docs: document installation and current state"`.
 
-- [ ] **Step 4: Trocar a `develop` e a `main` no GitHub** (pedido pelo usuário para o fim). Conferir que o remoto ainda aponta para os SHAs conhecidos e que `main` local avança sem conflito:
-
-```bash
-git fetch origin develop:refs/remotes/origin/develop
-git tag legado/develop 7852ae377fd7e6d4c145b2f326768097dafab4f7
-git push origin legado/develop
-git checkout main && git merge --ff-only develop
-git push origin main
-git push --force-with-lease=develop:7852ae377fd7e6d4c145b2f326768097dafab4f7 origin develop
-```
-
-Expected: `git ls-remote --heads origin` mostra `main` e `develop` no mesmo commit, e `git ls-remote --tags origin` mostra `legado/develop`. Se o SHA da `develop` remota tiver mudado, parar e avisar.
+- [ ] **Step 4: Abrir o PR, se o usuário pedir.** `git push -u origin feature/arquitetura-base` e `gh pr create --base develop`. Sem pedido, relatar que a branch está pronta e parar.

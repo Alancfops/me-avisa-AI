@@ -1,22 +1,39 @@
 # Me Avisa Aí
 
-App pessoal que acompanha FIIs favoritos e avisa no Telegram quando algum chega
-num preço bom. "Aí" de "me avisa aí" — não é IA. Também é projeto de estudo de
-arquitetura, CI/CD, agentes, plugins e MCP.
+App que acompanha FIIs favoritos e avisa quando algum chega num preço bom. "Aí" de
+"me avisa aí" — não é IA. É projeto pessoal, portfólio e open source (MIT, repositório
+público), instalável por outras pessoas. Também serve de estudo de arquitetura, CI/CD,
+agentes, plugins e MCP.
 
 ## Estado
 
-Recomeço do zero (2026-10-29). **Ainda não há código**: só docs, skill e agente.
-O repositório antigo (`Alancfops/me-avisa-AI`, branch `develop`) é só referência.
+**Ainda não há código**: só docs, skills e agentes. Design aprovado em
+`docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`; próximo passo em
+`docs/superpowers/plans/2026-10-30-arquitetura-base.md`.
+**Só comece a implementar quando o usuário disser "pode começar".**
 
 ## Decisões
 
 - Projeto separado em módulos. **Módulo 1: FIIs** (favoritos, dados de mercado,
   regras de alerta, avisos no site). Depois: Telegram, MCP, ações, ETFs.
-- Laravel + React (Inertia) + Tailwind v4 + shadcn/ui, Postgres, Docker Compose.
-- Roda em localhost e sobe junto com a máquina. Sem login: um usuário só.
-- Cotação: brapi (plano grátis). VP e DY: Informe Mensal de FII da CVM.
-- Aprendizados da versão antiga: `docs/legado.md`.
+- Laravel + React (Inertia) + Tailwind v4 + shadcn/ui, Postgres. Monólito modular com
+  Clean Architecture pragmática em `app/Modules/`.
+- Só web, em localhost. Sem login, sem túnel e sem app nativo: uma pessoa por instalação.
+- Instalação: Docker Compose, OrbStack, Podman ou sem contêineres. Comandos por
+  `Makefile` (`make install`, `make start`, `make test`, `make check`).
+- Cotação: brapi (plano grátis, 1 ativo por requisição, a cada 30 min). VP e DY: Informe
+  Mensal de FII da CVM. Limites de alerta só mudam depois de uso real.
+- Aprendizados da versão antiga: `docs/legado.md` (o design prevalece).
+
+## Git e CI/CD
+
+- Conventional Commits. Fluxo: `feature/*` → PR → `develop` → PR → `main`.
+- Toda mudança, inclusive de agentes, começa em uma branch própria criada a partir da
+  `develop`: `feature/<assunto>`, `fix/<assunto>` ou `docs/<assunto>`. Não commite direto
+  na `develop` nem na `main`.
+- Commit local não aciona nada. CI (GitHub Actions) roda em PR e merge; CD roda na tag
+  `vX.Y.Z` e publica imagem `amd64`/`arm64` no GHCR e a release. Ainda não implementados.
+- Push e PR só quando o usuário pedir. `docs/prompt` não entra no git.
 
 ## Onde está cada coisa
 
