@@ -40,8 +40,9 @@ você informa ao devolver o trabalho.
    limite ou fórmula, pare e devolva a dúvida: não invente regra financeira.
 2. Escreva o teste antes e veja-o falhar. Em regra, cubra o limite exato.
 3. Implemente o mínimo para passar, na camada certa.
-4. Rode pelo Docker: `docker compose run --rm web php artisan test` e
-   `docker compose run --rm web vendor/bin/pint --test`. Não há PHP na máquina.
+4. Rode pelo `make`: `make test`, `make lint` e `make check`. Não há PHP na máquina, e
+   `compose run web` migra o banco real, então use o serviço `tools` em comandos avulsos.
+   Rode build e testes em primeiro plano, sem encerrar esperando trabalho em segundo plano.
 5. Passe pelo checklist de revisão no que você mudou.
 
 ## Limites

@@ -7,10 +7,12 @@ agentes, plugins e MCP.
 
 ## Estado
 
-**Ainda não há código**: só docs, skills e agentes. Design aprovado em
-`docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`; próximo passo em
+Base pronta: Docker, Makefile, camadas de `app/Modules/Fiis/`, regra de preço alvo e
+listagem de favoritos. Ainda faltam as demais regras, antispam, brapi, CVM e telas.
+Design em `docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`; plano da base em
 `docs/superpowers/plans/2026-10-30-arquitetura-base.md`.
 **Só comece a implementar quando o usuário disser "pode começar".**
+Rode os comandos pelo `make` (`make test`, `make check`): `compose run web` migra o banco real.
 
 ## Decisões
 

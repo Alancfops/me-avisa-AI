@@ -27,7 +27,7 @@ Cada módulo fica em `app/Modules/<Modulo>/`. As dependências apontam só para 
 
 | Camada | Contém | Pode depender de |
 |---|---|---|
-| `Domain/` | Regras de alerta, antispam, objetos de valor, retrato do fundo | Só PHP e o próprio `Domain` |
+| `Domain/` | Regras de alerta, antispam, objetos de valor, retrato do fundo | PHP, `brick/math` e o próprio `Domain` |
 | `Application/` | Casos de uso e interfaces que eles precisam (`Quotes`, `FundReports`, repositórios, relógio) | `Domain` |
 | `Infrastructure/` | Eloquent, clientes da brapi e da CVM, implementação das interfaces | `Application`, `Domain`, Laravel |
 | `Http/` | Controllers finos, Form Requests, respostas Inertia | `Application`, `Domain`, Laravel |
@@ -119,7 +119,6 @@ arch('application does not know infrastructure')
 
 ## Ao terminar
 
-Rode os comandos que o projeto tiver e relate o resultado: testes (`php artisan test`),
-formatação (`vendor/bin/pint --test`) e análise estática, se instalada. Depois, passe
+Rode `make test`, `make lint` e `make check` (com PHPStan) e relate o resultado. Depois, passe
 pelo `references/code-review.md`. Em mudança relevante, peça a revisão ao subagente
 `code-review`, que lê o código sem o contexto de quem o escreveu.

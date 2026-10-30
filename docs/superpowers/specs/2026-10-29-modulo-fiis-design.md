@@ -139,7 +139,9 @@ pessoas. Cada instalação atende uma pessoa, com as próprias chaves.
   Confirmar com a brapi (o ticker precisa existir lá). Fundos que não casarem
   ficam sem VP e a interface diz "VP indisponível".
 - **Dados das fontes são validados** antes de salvar (ver `docs/legado.md`):
-  ausente é `null`, nunca zero; resposta quebrada não sobrescreve dado bom.
+  ausente é `null`, nunca zero; resposta quebrada não sobrescreve dado bom. Preço
+  zero ou negativo vindo de fonte é inválido: o adaptador rejeita, registra em log
+  e mantém o último dado bom.
 - **Cada fonte atrás de uma interface** (ex.: `Quotes` com implementação brapi;
   `FundReports` com implementação CVM), para testar com dados falsos e trocar de
   fonte sem mexer nas regras.
