@@ -1,0 +1,36 @@
+{
+    "results": [
+        {
+            "symbol": "MXRF11",
+            "name": "MAXI RENDA FUNDO DE INVESTIMENTO IMOBILIÁRIO - FII - RESPONSABILIDADE LIMITADA",
+            "longName": "Maxi Renda Fundo de Investimento Imobiliario Cotas",
+            "assetType": "fund",
+            "subType": "fii",
+            "isActive": true
+        },
+        {
+            "symbol": "knri11 ",
+            "name": "KINEA RENDA",
+            "longName": null,
+            "assetType": "fund",
+            "subType": "fii",
+            "isActive": true
+        },
+        { "symbol": "!!!", "name": "inválido", "isActive": true },
+        {
+            "symbol": "OLDX11",
+            "name": "Encerrado",
+            "longName": "Encerrado",
+            "isActive": false
+        }
+    ],
+    "pagination": {
+        "page": 1,
+        "limit": 20,
+        "totalItems": 5,
+        "totalPages": 2,
+        "hasNextPage": true
+    },
+    "requestedAt": "2026-10-30T17:58:28.170Z",
+    "took": 23
+}

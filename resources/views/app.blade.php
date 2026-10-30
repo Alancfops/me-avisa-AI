@@ -1,32 +1,35 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="pt-BR" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
+        {{-- Aplica o tema antes da primeira pintura, para não piscar. --}}
         <script>
-            (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
+            (function () {
+                var saved = null;
 
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                try {
+                    saved = localStorage.getItem('appearance');
+                } catch (error) {}
 
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
-                }
+                var appearance = saved || @js($appearance ?? 'system');
+                var dark = appearance === 'dark'
+                    || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+                document.documentElement.classList.toggle('dark', dark);
+                document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
             })();
         </script>
 
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
+        {{-- O mesmo --background do app.css, antes de o CSS carregar. --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: oklch(0.985 0.002 250);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: oklch(0.13 0.004 260);
             }
         </style>
 

@@ -1,0 +1,31 @@
+{
+    "results": [
+        {
+            "requestedSymbol": "KNRI11",
+            "symbol": "KNRI11",
+            "changed": false,
+            "data": {
+                "shortName": "KNRI11",
+                "longName": "Kinea Renda Imobiliaria Fundo de Investimento Imobiliario - FII Cotas",
+                "currency": "BRL",
+                "regularMarketPrice": 149.91,
+                "regularMarketDayHigh": 150.64,
+                "regularMarketDayLow": 148.31,
+                "regularMarketDayRange": "148.31 - 150.64",
+                "regularMarketChange": 0.31,
+                "regularMarketChangePercent": 0.21,
+                "regularMarketTime": "2026-10-30T17:57:30.000Z",
+                "marketCap": null,
+                "regularMarketVolume": 27898,
+                "regularMarketPreviousClose": 149.6,
+                "regularMarketOpen": 149.6,
+                "fiftyTwoWeekRange": "145.3 - 171.45",
+                "fiftyTwoWeekLow": 145.3,
+                "fiftyTwoWeekHigh": 171.45,
+                "logourl": "https://icons.brapi.dev/icons/KNRI11.svg"
+            }
+        }
+    ],
+    "requestedAt": "2026-10-30T17:58:27.554Z",
+    "took": 0
+}

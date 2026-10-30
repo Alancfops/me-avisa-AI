@@ -7,7 +7,7 @@ it('shows saved favorites on the dashboard', function () {
 
     $this->get('/')->assertInertia(fn ($page) => $page
         ->component('dashboard')
-        ->where('favorites', [['ticker' => 'MXRF11']]));
+        ->where('favorites.0.ticker', 'MXRF11'));
 });
 
 it('shows an empty dashboard without favorites', function () {
@@ -19,5 +19,6 @@ it('lists favorites in a stable order', function () {
     FavoriteModel::create(['ticker' => 'KNRI11']);
 
     $this->get('/')->assertInertia(fn ($page) => $page
-        ->where('favorites', [['ticker' => 'KNRI11'], ['ticker' => 'VISC11']]));
+        ->where('favorites.0.ticker', 'KNRI11')
+        ->where('favorites.1.ticker', 'VISC11'));
 });

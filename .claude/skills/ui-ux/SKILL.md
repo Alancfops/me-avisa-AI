@@ -5,7 +5,7 @@ description: UI/UX e acessibilidade (WCAG 2.2 AA) do front do Me Avisa Aí — R
 
 # UI/UX do Me Avisa Aí
 
-O Me Avisa Aí acompanha os FIIs favoritos de uma pessoa e avisa no Telegram quando
+O Me Avisa Aí acompanha os FIIs favoritos de uma pessoa e avisa no site quando
 algum chega num preço bom. O site é onde ela **olha rápido** ("tem algo bom hoje?")
 e **ajusta quando quer ser avisada** (alvo, faixa, regra automática). Toda decisão
 de interface serve a essas duas coisas.
@@ -80,8 +80,8 @@ não um conselho, porque o app informa e não recomenda:
 |---|---|---|---|
 | alvo | "No seu alvo" | verde | preço ≤ alvo |
 | faixa | "Na faixa de compra" | verde | preço dentro da faixa |
-| automático | "Abaixo da média" | verde | sem alvo/faixa, preço < média 30d × 0,95 e P/VP < 1 |
-| queda | "Queda forte" | vermelho | queda ≥ 3% no dia (tem prioridade visual) |
+| automático | "Abaixo da média" | verde | modo automático: preço < média 30d × 0,95 e P/VP < mediana de 12 meses do fundo (reserva: P/VP < 1,0 com menos de 60 pregões, dito na tela) |
+| queda | "Queda forte" | vermelho | variação do dia abaixo de −3%; exatamente −3% não conta (tem prioridade visual) |
 | observando | "Observando" | cinza | nenhuma regra bateu |
 
 O badge sempre tem texto e um ponto/ícone; a cor só reforça. As regras vêm de

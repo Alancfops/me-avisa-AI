@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { LayoutGrid, Settings } from 'lucide-react';
+import { Activity, Bell, LayoutGrid, Settings } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -19,6 +19,16 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Avisos',
+        href: '/avisos',
+        icon: Bell,
+    },
+    {
+        title: 'Saúde',
+        href: '/saude',
+        icon: Activity,
+    },
+    {
         title: 'Configurações',
         href: '/settings/appearance',
         icon: Settings,
@@ -27,26 +37,28 @@ const mainNavItems: NavItem[] = [
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link
-                                href="/"
-                                prefetch
-                                aria-label="Me Avisa Aí, ir para o painel"
-                            >
-                                <AppLogo />
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            </SidebarHeader>
+        <Sidebar collapsible="icon">
+            <nav aria-label="Menu principal" className="contents">
+                <SidebarHeader>
+                    <SidebarMenu>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton size="lg" asChild>
+                                <Link
+                                    href="/"
+                                    prefetch
+                                    aria-label="Me Avisa Aí, ir para o painel"
+                                >
+                                    <AppLogo />
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarHeader>
 
-            <SidebarContent>
-                <NavMain items={mainNavItems} />
-            </SidebarContent>
+                <SidebarContent>
+                    <NavMain items={mainNavItems} />
+                </SidebarContent>
+            </nav>
         </Sidebar>
     );
 }

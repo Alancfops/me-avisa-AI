@@ -50,12 +50,18 @@ Se o usuário **não** configurar alvo/faixa manualmente (favorito novo começa 
 - **P/VP de cada dia:** fechamento ÷ VP do informe vigente naquele dia. O informe vale a partir da data de entrega à CVM.
 - **Histórico curto:** com menos de 60 pregões, comparar com **P/VP abaixo de 1,0** e dizer isso na tela.
 - **Sem VP:** a regra não dispara e a tela explica o motivo.
+- **Fechamento do dia:** a barra de hoje só vale como fechamento a partir das 19:00 (São Paulo). Antes disso ela é o preço ao vivo.
+- **Mínimo de 30 fechamentos:** com menos, a média não existe, e a regra não dispara e diz por quê.
+- **Fechamentos velhos:** com mais de 2 dias úteis sem fechamento antes da cotação, a média não vale, e a regra não dispara e diz por quê. O limite cobre o carnaval (sexta a quarta), porque o app não tem calendário de feriados.
+- **Contagem dos 60 pregões:** contam os dias da janela de 12 meses com P/VP calculável, ou seja, com fechamento e informe já entregue.
 
 ---
 
 ### 4. Queda brusca
 
 **Regra:** queda **diária** superior a **3%** (variação do pregão inferior a −3%; exatamente −3% não dispara). Cada pregão é um evento novo.
+
+**Variação:** preço ÷ fechamento anterior − 1, com os números da própria cotação. O percentual da brapi vem arredondado para 2 casas e só é usado se o fechamento anterior faltar.
 
 ---
 
@@ -68,6 +74,16 @@ Valem **por regra de cada favorito**: uma queda brusca de manhã não impede o a
 - Antes disso, ou enquanto a regra continua valendo, reenviar **somente** se preço ≤ preço do último alerta daquela regra × **0,98**.
 - Alerta bloqueado pelo limite de 24 h sai quando o limite liberar, se a regra ainda valer.
 - Mudar a configuração do favorito reavalia na hora e começa um ciclo novo para a regra alterada.
+- **Sem dado não é deixar de valer:** a regra que não pôde ser avaliada mantém o ciclo, para não repetir o aviso quando o dado voltar.
+
+---
+
+## Recuperação de dados perdidos
+
+A agenda não refaz o que perdeu com a máquina desligada. A cada 30 minutos, em qualquer dia, o app confere:
+
+- **Fechamentos:** se o último é anterior ao pregão esperado (o dia útil anterior), busca o histórico de novo, uma vez por dia por fundo; se a fonte falhar, tenta na rodada seguinte. Se seguirem velhos, a falha aparece na Saúde.
+- **Informes da CVM:** se a última importação tem mais de 26 h, importa de novo, com 2 h entre tentativas que falharam.
 
 ---
 
