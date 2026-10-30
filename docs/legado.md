@@ -2,7 +2,9 @@
 
 A primeira versão (Rails + React + Supabase, branches `develop` e
 `feature/fii-dashboard-brapi-catalog` deste repositório) foi descartada no
-recomeço de 2026-10-29. O que dela continua valendo:
+recomeço de 2026-10-29. O que dela continua valendo, exceto onde divergir do
+design atual (`docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`), que
+prevalece, por exemplo nas rotas da brapi e no envio do token por header:
 
 ## Mapeamento da brapi já testado
 

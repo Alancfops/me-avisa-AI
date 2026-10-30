@@ -26,6 +26,8 @@ O repositório antigo (`Alancfops/me-avisa-AI`, branch `develop`) é só referê
 | Protótipo visual | `docs/prototipo-lovable/` |
 | UI/UX e WCAG | skill `ui-ux` (`.claude/skills/ui-ux/`) |
 | Front | subagente `frontend-senior` |
+| Backend, arquitetura e checklist de review | skill `backend` (`.claude/skills/backend/`) |
+| Revisão do backend | subagente `backend-reviewer` |
 
 ## Sessões
 

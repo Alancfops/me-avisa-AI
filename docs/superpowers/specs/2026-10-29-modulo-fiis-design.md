@@ -28,7 +28,8 @@ testável a atalhos, sem cair em cerimônia que não se paga para um usuário s�
 5. Avaliar as regras a cada atualização e registrar **avisos** quando uma regra
    começa a valer, com antispam.
 6. Mostrar tudo no site: Painel, Fundo, Favoritar, Avisos, Configurações mínimas.
-7. Subir com um comando e voltar sozinho quando a máquina liga.
+7. Subir com um comando e voltar sozinho quando a máquina liga, com Docker ou sem
+   ele (ver "Distribuição").
 
 ## Fora do escopo (agora)
 
@@ -67,6 +68,25 @@ testável a atalhos, sem cair em cerimônia que não se paga para um usuário s�
   `docs/prototipo-lovable/` como referência visual.
 - **Regras de domínio** vêm de `docs/fiis/`; se o código precisar de algo que
   não está lá, atualizar o doc primeiro (`docs/legado.md`).
+
+## Distribuição (acrescentado em 2026-10-30)
+
+O projeto é pessoal, serve de portfólio e deve poder ser instalado por outras
+pessoas. Cada instalação atende uma pessoa, com as próprias chaves.
+
+- **Docker Compose** é o caminho padrão, com imagem publicada para `amd64` e
+  `arm64` (Mac com Apple Silicon roda sem emulação).
+- **Mac com Compose mais leve:** o mesmo `compose.yaml` deve funcionar em OrbStack
+  e Colima, sem arquivo específico.
+- **Sem Docker:** instalação nativa documentada com PHP, Composer, Node e Postgres
+  (Homebrew, ou Herd com Postgres à parte). Web, scheduler e worker sobem juntos
+  por um comando, e o início com a máquina usa `launchd` no Mac.
+- **Banco:** Postgres nos dois caminhos, para não testar dois bancos.
+- **Repositório:** só `.env.example`, sem dados de cotação; licença MIT; aviso de
+  que o app informa e não recomenda investimento. O app escuta só em `127.0.0.1`.
+- **Atualização:** versões marcadas, com migrations aplicadas sem perder dados.
+- **Portfólio:** modo de demonstração com dados fictícios, que não exige token;
+  README com imagens e registro das decisões de arquitetura.
 
 ## Decisões
 
