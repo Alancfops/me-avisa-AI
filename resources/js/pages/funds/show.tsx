@@ -1,223 +1,67 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import type { FormEvent } from 'react';
-import InputError from '@/components/input-error';
-import { RuleBadges, ruleLabel } from '@/components/rule-badges';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-    brl,
-    dateTime,
-    monthLabel,
-    percentFromFraction,
-    ratio,
-    signedPercent,
-} from '@/lib/format';
+import { Head, Link } from '@inertiajs/react';
+import { ArrowLeft, Check, Minus, TriangleAlert } from 'lucide-react';
+import { DayChange, QuoteTime } from '@/components/quote-info';
+import { RemoveFavorite } from '@/components/remove-favorite';
+import { SignalBadges } from '@/components/signal-badges';
+import { WhenToAlert } from '@/components/when-to-alert';
+import { brl, monthLabel, percentFromFraction, ratio } from '@/lib/format';
+import { hasSharpDrop, ruleName } from '@/lib/rules';
+import type { Fund, RuleStatus, Settings } from '@/types/fiis';
 
-type Fund = {
-    ticker: string;
-    name: string | null;
-    price: string | null;
-    changePercent: string | null;
-    quotedAt: string | null;
-    average30d: string | null;
-    priceToBook: string | null;
-    medianPriceToBook: string | null;
-    priceToBookDays: number;
-    bookValueMonth: string | null;
-    dividendYield12m: string | null;
-    matchedRules: string[];
-};
+/** Abaixo disso a regra automática usa P/VP 1,0 no lugar da mediana (alert.md). */
+const MIN_DAYS_FOR_MEDIAN = 60;
 
-type Settings = {
-    mode: 'automatic' | 'target' | 'range';
-    target: string | null;
-    rangeMin: string | null;
-    rangeMax: string | null;
-    sharpDrop: boolean;
-};
-
-type RuleStatus = {
-    rule: string;
-    matched: boolean;
-    reason: string | null;
-    unavailableReason: string | null;
-    note: string | null;
-};
-
-const modes: { value: Settings['mode']; label: string }[] = [
-    { value: 'target', label: 'Preço alvo' },
-    { value: 'range', label: 'Faixa de compra' },
-    { value: 'automatic', label: 'Automático' },
-];
-
-function toField(value: string | null): string {
-    return value === null ? '' : value.replace('.', ',');
-}
-
-function PriceField({
-    id,
+function Info({
     label,
     value,
-    error,
-    onChange,
+    detail,
 }: {
-    id: string;
     label: string;
     value: string;
-    error?: string;
-    onChange: (value: string) => void;
+    detail?: string;
 }) {
     return (
-        <div className="space-y-1">
-            <Label htmlFor={id}>{label}</Label>
-            <div className="flex items-center gap-2">
-                <span aria-hidden="true">R$</span>
-                <Input
-                    id={id}
-                    inputMode="decimal"
-                    value={value}
-                    onChange={(event) => onChange(event.target.value)}
-                    aria-invalid={error !== undefined}
-                    aria-describedby={error ? `${id}-erro` : undefined}
-                />
-            </div>
-            {error && (
-                <p id={`${id}-erro`} className="text-sm text-destructive">
-                    {error}
-                </p>
+        <div className="min-w-0">
+            <dt className="text-xs text-muted-foreground">{label}</dt>
+            <dd className="num text-lg font-semibold">{value}</dd>
+            {detail && (
+                <dd className="text-xs text-muted-foreground">{detail}</dd>
             )}
         </div>
     );
 }
 
-function WhenToAlert({
-    ticker,
-    settings,
-}: {
-    ticker: string;
-    settings: Settings;
-}) {
-    const form = useForm({
-        mode: settings.mode,
-        target: toField(settings.target),
-        rangeMin: toField(settings.rangeMin),
-        rangeMax: toField(settings.rangeMax),
-        sharpDrop: settings.sharpDrop,
-    });
-
-    function submit(event: FormEvent) {
-        event.preventDefault();
-        form.put(`/fundos/${ticker}/regras`, { preserveScroll: true });
-    }
+function RuleLine({ status }: { status: RuleStatus }) {
+    const Icon = status.matched
+        ? Check
+        : status.unavailableReason
+          ? TriangleAlert
+          : Minus;
 
     return (
-        <section
-            aria-labelledby="quando-avisar"
-            className="space-y-4 rounded-xl border p-5"
-        >
-            <h2 id="quando-avisar" className="text-lg font-semibold">
-                Quando me avisar
-            </h2>
-
-            <form onSubmit={submit} className="space-y-4">
-                <fieldset className="space-y-2">
-                    <legend className="font-medium">Referência</legend>
-                    {modes.map((mode) => (
-                        <div
-                            key={mode.value}
-                            className="flex items-center gap-2"
-                        >
-                            <input
-                                type="radio"
-                                id={`modo-${mode.value}`}
-                                name="mode"
-                                value={mode.value}
-                                checked={form.data.mode === mode.value}
-                                onChange={() =>
-                                    form.setData('mode', mode.value)
-                                }
-                            />
-                            <Label htmlFor={`modo-${mode.value}`}>
-                                {mode.label}
-                            </Label>
-                        </div>
-                    ))}
-                    <InputError message={form.errors.mode} />
-                </fieldset>
-
-                {form.data.mode === 'target' && (
-                    <PriceField
-                        id="target"
-                        label="Preço alvo"
-                        value={form.data.target}
-                        error={form.errors.target}
-                        onChange={(value) => form.setData('target', value)}
-                    />
-                )}
-
-                {form.data.mode === 'range' && (
-                    <>
-                        <PriceField
-                            id="rangeMin"
-                            label="Mínimo da faixa"
-                            value={form.data.rangeMin}
-                            error={form.errors.rangeMin}
-                            onChange={(value) =>
-                                form.setData('rangeMin', value)
-                            }
-                        />
-                        <PriceField
-                            id="rangeMax"
-                            label="Máximo da faixa"
-                            value={form.data.rangeMax}
-                            error={form.errors.rangeMax}
-                            onChange={(value) =>
-                                form.setData('rangeMax', value)
-                            }
-                        />
-                    </>
-                )}
-
-                {form.data.mode === 'automatic' && (
-                    <p className="text-sm text-muted-foreground">
-                        Avisa quando o preço fica abaixo de 95% da média de 30
-                        pregões e o P/VP está abaixo da mediana de 12 meses do
-                        próprio fundo.
+        <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+            <Icon
+                className={
+                    status.matched
+                        ? 'mt-0.5 size-4 shrink-0 text-signal'
+                        : 'mt-0.5 size-4 shrink-0 text-muted-foreground'
+                }
+                aria-hidden="true"
+            />
+            <div className="min-w-0 text-sm">
+                <p className="font-medium">{ruleName(status.rule)}</p>
+                <p className="wrap-anywhere text-muted-foreground">
+                    {status.unavailableReason ??
+                        status.reason ??
+                        'Não bateu agora.'}
+                </p>
+                {status.note && (
+                    <p className="text-xs text-muted-foreground">
+                        {status.note}
                     </p>
                 )}
-
-                <div className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        id="sharpDrop"
-                        checked={form.data.sharpDrop}
-                        onChange={(event) =>
-                            form.setData('sharpDrop', event.target.checked)
-                        }
-                    />
-                    <Label htmlFor="sharpDrop">
-                        Queda forte no dia (mais de 3%)
-                    </Label>
-                </div>
-
-                <p className="rounded-md bg-muted p-3 text-sm">
-                    No máximo 1 aviso por regra a cada 24 h, salvo se o preço
-                    cair mais 2% desde o último aviso.
-                </p>
-
-                <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={form.processing}
-                >
-                    Salvar
-                </Button>
-                <p role="status" className="text-sm">
-                    {form.recentlySuccessful && 'Configuração salva.'}
-                </p>
-            </form>
-        </section>
+            </div>
+        </li>
     );
 }
 
@@ -230,122 +74,149 @@ export default function FundShow({
     settings: Settings;
     rules: RuleStatus[];
 }) {
+    const shortHistory = fund.priceToBookDays < MIN_DAYS_FOR_MEDIAN;
+
     return (
         <>
             <Head title={fund.ticker} />
 
-            <div className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-8">
-                <Link href="/" className="underline">
-                    ← Voltar para o painel
+            <div className="mx-auto w-full max-w-6xl space-y-6">
+                <Link
+                    href="/"
+                    className="inline-flex min-h-6 items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft className="size-4" aria-hidden="true" />
+                    Voltar para o painel
                 </Link>
 
-                <header className="space-y-2">
-                    <h1 className="text-2xl font-semibold">{fund.ticker}</h1>
-                    {fund.name && (
-                        <p className="text-muted-foreground">{fund.name}</p>
-                    )}
-                    <RuleBadges
-                        rules={fund.matchedRules}
-                        hasQuote={fund.price !== null}
-                    />
+                <header className="flex flex-wrap items-end justify-between gap-4">
+                    <div className="min-w-0 space-y-1">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-3xl font-semibold md:text-4xl">
+                                {fund.ticker}
+                            </h1>
+                            <SignalBadges
+                                rules={fund.matchedRules}
+                                hasQuote={fund.price !== null}
+                            />
+                        </div>
+                        {fund.name && (
+                            <p className="wrap-anywhere text-muted-foreground">
+                                {fund.name}
+                            </p>
+                        )}
+                    </div>
 
                     {fund.price === null || fund.quotedAt === null ? (
-                        <p>Cotação indisponível por enquanto.</p>
+                        <p className="text-muted-foreground">
+                            Cotação indisponível por enquanto.
+                        </p>
                     ) : (
-                        <>
-                            <p className="text-3xl font-semibold tabular-nums">
+                        <div className="space-y-0.5 sm:text-right">
+                            <p className="num text-4xl font-semibold">
                                 {brl(fund.price)}
                             </p>
-                            <p className="tabular-nums">
-                                {fund.changePercent === null
-                                    ? 'Variação indisponível'
-                                    : `${signedPercent(fund.changePercent)} hoje`}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                                Cotação de {dateTime(fund.quotedAt)}
-                            </p>
-                        </>
+                            <DayChange
+                                changePercent={fund.changePercent}
+                                quotedAt={fund.quotedAt}
+                                sharpDrop={hasSharpDrop(fund.matchedRules)}
+                            />
+                            <QuoteTime quotedAt={fund.quotedAt} />
+                        </div>
                     )}
                 </header>
 
-                <WhenToAlert ticker={fund.ticker} settings={settings} />
+                {/*
+                 * "Quando me avisar" vem antes no DOM: no celular fica logo depois
+                 * do preço, e em lg a grade o põe à direita sem usar `order`.
+                 */}
+                <div className="grid items-start gap-6 lg:grid-cols-3">
+                    <div className="space-y-4 lg:col-start-3 lg:row-start-1">
+                        <WhenToAlert
+                            ticker={fund.ticker}
+                            settings={settings}
+                            shortHistory={shortHistory}
+                        />
+                        <RemoveFavorite ticker={fund.ticker} />
+                    </div>
 
-                <section aria-labelledby="dados" className="space-y-2">
-                    <h2 id="dados" className="text-lg font-semibold">
-                        Dados do fundo
-                    </h2>
-                    <p>
-                        Média de 30 pregões:{' '}
-                        {fund.average30d === null
-                            ? 'indisponível'
-                            : brl(fund.average30d)}
-                    </p>
-                    <p>
-                        P/VP:{' '}
-                        {fund.priceToBook === null
-                            ? 'VP indisponível'
-                            : ratio(fund.priceToBook)}
-                        {fund.bookValueMonth &&
-                            ` (VP de ${monthLabel(fund.bookValueMonth)})`}
-                    </p>
-                    {fund.priceToBookDays >= 60 &&
-                        fund.medianPriceToBook !== null && (
-                            <p>
-                                Mediana do P/VP em 12 meses:{' '}
-                                {ratio(fund.medianPriceToBook)}
-                            </p>
-                        )}
-                    <p>
-                        DY 12m, informes da CVM:{' '}
-                        {fund.dividendYield12m === null
-                            ? 'indisponível'
-                            : percentFromFraction(fund.dividendYield12m)}
-                    </p>
-                </section>
-
-                {rules.length > 0 && (
-                    <section aria-labelledby="regras" className="space-y-2">
-                        <h2 id="regras" className="text-lg font-semibold">
-                            Situação das regras
-                        </h2>
-                        <ul className="space-y-2">
-                            {rules.map((status) => (
-                                <li key={status.rule}>
-                                    <strong>{ruleLabel(status.rule)}:</strong>{' '}
-                                    {status.unavailableReason ??
-                                        status.reason ??
-                                        'não bateu agora.'}
-                                    {status.note && (
-                                        <span className="block text-sm text-muted-foreground">
-                                            {status.note}
-                                        </span>
+                    <div className="space-y-6 lg:col-span-2 lg:col-start-1 lg:row-start-1">
+                        <section
+                            aria-labelledby="dados"
+                            className="surface p-5"
+                        >
+                            <h2 id="dados" className="text-lg font-semibold">
+                                Dados do fundo
+                            </h2>
+                            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+                                <Info
+                                    label="Média de 30 pregões"
+                                    value={
+                                        fund.average30d === null
+                                            ? 'Indisponível'
+                                            : brl(fund.average30d)
+                                    }
+                                />
+                                <Info
+                                    label="P/VP"
+                                    value={
+                                        fund.priceToBook === null
+                                            ? 'Indisponível'
+                                            : ratio(fund.priceToBook)
+                                    }
+                                    detail={
+                                        fund.bookValueMonth
+                                            ? `VP de ${monthLabel(fund.bookValueMonth)}`
+                                            : 'Sem informe da CVM para calcular.'
+                                    }
+                                />
+                                {!shortHistory &&
+                                    fund.medianPriceToBook !== null && (
+                                        <Info
+                                            label="Mediana do P/VP em 12 meses"
+                                            value={ratio(
+                                                fund.medianPriceToBook,
+                                            )}
+                                        />
                                     )}
-                                </li>
-                            ))}
-                        </ul>
-                    </section>
-                )}
+                                <Info
+                                    label="DY 12 meses"
+                                    value={
+                                        fund.dividendYield12m === null
+                                            ? 'Indisponível'
+                                            : percentFromFraction(
+                                                  fund.dividendYield12m,
+                                              )
+                                    }
+                                    detail="Soma dos informes mensais da CVM."
+                                />
+                            </dl>
+                        </section>
 
-                <Button
-                    variant="ghost"
-                    className="text-destructive"
-                    onClick={() => {
-                        if (
-                            window.confirm(
-                                `Remover ${fund.ticker} dos favoritos?`,
-                            )
-                        ) {
-                            router.delete(`/favoritos/${fund.ticker}`);
-                        }
-                    }}
-                >
-                    Remover dos favoritos
-                </Button>
+                        {rules.length > 0 && (
+                            <section
+                                aria-labelledby="regras"
+                                className="surface p-5"
+                            >
+                                <h2
+                                    id="regras"
+                                    className="text-lg font-semibold"
+                                >
+                                    Situação das regras
+                                </h2>
+                                <ul className="mt-4 divide-y">
+                                    {rules.map((status) => (
+                                        <RuleLine
+                                            key={status.rule}
+                                            status={status}
+                                        />
+                                    ))}
+                                </ul>
+                            </section>
+                        )}
+                    </div>
+                </div>
             </div>
         </>
     );
 }
-
-FundShow.layout = {
-    breadcrumbs: [{ title: 'Painel', href: '/' }],
-};

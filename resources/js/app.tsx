@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/app-layout';
 const appName = import.meta.env.VITE_APP_NAME || 'Me Avisa Aí';
 
 void createInertiaApp({
-    title: (title) => (title ? `${title} - ${appName}` : appName),
+    title: (title) => (title ? `${title} — ${appName}` : appName),
     layout: () => AppLayout,
     strictMode: true,
     withApp(app) {
@@ -19,7 +19,7 @@ void createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        color: 'var(--primary)',
     },
 });
 
