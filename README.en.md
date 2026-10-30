@@ -6,8 +6,11 @@ Tracks your favorite Brazilian real estate funds (FIIs) and tells you when one r
 the price you set or drops more than usual. Instead of opening your brokerage app to
 check prices, you look at one screen and see whether there's anything to analyze today.
 
-> **Under construction.** There is no installable code yet: the commands below show how
-> installation will work and will be checked with each release.
+> **Under construction.** The app's foundation already runs with Docker, but for now it
+> only lists favorites: the rules, quotes and alerts described below are still being built.
+>
+> Installation status: **Docker** tested on Linux; **OrbStack** and **Podman** not tested
+> yet; **without containers** not available yet.
 
 The name is Brazilian Portuguese for roughly "give me a heads-up". The "Aí" is not "AI".
 
@@ -36,7 +39,8 @@ Each installation serves one person, with their own keys, and is reachable only 
 their computer. There is no login, so don't expose the app to the internet.
 
 **Before you start:** create a free [brapi](https://brapi.dev/dashboard) account and
-copy your token. The free plan allows 15,000 requests a month, about 350 per tracked fund.
+copy your token. The free plan allows 15,000 requests a month, and each tracked fund uses
+about 350.
 
 Pick one of the options below:
 
@@ -45,9 +49,9 @@ Pick one of the options below:
 | [Docker](#docker) | Linux and Windows, or anyone already using Docker |
 | [OrbStack](#orbstack-mac) | Mac, with lower resource use than Docker Desktop |
 | [Podman](#podman) | Anyone who prefers not to use Docker |
-| [Without containers](#without-containers) | Anyone who wants everything installed directly |
+| [Without containers](#without-containers) | Anyone who wants everything installed directly (coming soon) |
 
-All of them use PostgreSQL and the same `make` commands day to day.
+All of them use PostgreSQL. The day-to-day `make` commands apply to the container options.
 
 ### Docker
 
@@ -77,6 +81,9 @@ Without `make`, which is common on Windows, use Compose directly:
 cp .env.example .env
 docker compose up -d --build
 ```
+
+On Linux, if your user's UID isn't 1000, set `APP_UID=$(id -u)` before these commands, or
+the app can't write to `.env`.
 
 ### OrbStack (Mac)
 
@@ -114,6 +121,9 @@ booting, run `podman machine start` if you're on a Mac, then `make start COMPOSE
 
 ### Without containers
 
+> **Not available yet.** The `make native-*` commands don't exist yet; this section shows
+> how this option will work.
+
 Requires PHP 8.4 (with `pdo_pgsql` and `bcmath`), Composer, Node 22, PostgreSQL 17 and
 `make`. On a Mac, with [Homebrew](https://brew.sh):
 
@@ -143,10 +153,10 @@ doesn't start with the computer by default.
 | `make install` | Creates `.env` without overwriting an existing one, builds the images and prepares the database |
 | `make start` / `make stop` | Starts or stops the app |
 | `make restart` / `make logs` | Restarts or follows the logs |
-| `make test` | Runs the tests |
+| `make test` | Runs the tests on a separate database, without touching your data |
 | `make lint` / `make format` | Checks or fixes formatting |
 | `make migrate` | Updates the database |
-| `make shell` | Opens a terminal in the app container |
+| `make shell` | Opens a terminal in a tools container |
 | `make check` | Runs what CI checks |
 
 ## Architecture

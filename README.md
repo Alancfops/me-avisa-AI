@@ -6,8 +6,11 @@ Acompanha seus fundos imobiliários (FIIs) favoritos e avisa quando algum chega 
 preço que você definiu ou cai além do normal. Em vez de abrir o home broker para
 conferir preço, você olha uma tela e sabe se tem algo para analisar hoje.
 
-> **Em construção.** Ainda não há código instalável: os comandos abaixo mostram como a
-> instalação vai funcionar e serão conferidos a cada versão.
+> **Em construção.** A base do app já roda com Docker, mas por enquanto só lista os
+> favoritos: as regras, as cotações e os avisos descritos abaixo ainda estão sendo feitos.
+>
+> Situação da instalação: **Docker** testado no Linux; **OrbStack** e **Podman** ainda não
+> testados; **sem contêineres** ainda não disponível.
 
 O "Aí" vem de "me avisa aí". Não é IA.
 
@@ -36,8 +39,8 @@ Cada instalação atende uma pessoa, com as próprias chaves, e fica acessível 
 seu computador. Não há login, então não exponha o app na internet.
 
 **Antes de começar:** crie uma conta gratuita na [brapi](https://brapi.dev/dashboard)
-e copie seu token. O plano gratuito permite 15 mil requisições por mês, cerca de 350
-por fundo acompanhado.
+e copie seu token. O plano gratuito permite 15 mil requisições por mês, e cada fundo
+acompanhado consome cerca de 350.
 
 Escolha uma das formas abaixo:
 
@@ -46,9 +49,9 @@ Escolha uma das formas abaixo:
 | [Docker](#docker) | Linux e Windows, ou quem já usa Docker |
 | [OrbStack](#orbstack-mac) | Mac, com um consumo menor que o do Docker Desktop |
 | [Podman](#podman) | Quem prefere não usar o Docker |
-| [Sem contêineres](#sem-contêineres) | Quem quer instalar tudo direto na máquina |
+| [Sem contêineres](#sem-contêineres) | Quem quer instalar tudo direto na máquina (em breve) |
 
-Todas usam PostgreSQL e os mesmos comandos de `make` no dia a dia.
+Todas usam PostgreSQL. Os comandos de `make` do dia a dia valem para as formas com contêiner.
 
 ### Docker
 
@@ -78,6 +81,9 @@ Sem `make`, como costuma ser no Windows, use o Compose direto:
 cp .env.example .env
 docker compose up -d --build
 ```
+
+No Linux, se o seu usuário não tiver o UID 1000, defina `APP_UID=$(id -u)` antes desses
+comandos, ou o app não consegue gravar no `.env`.
 
 ### OrbStack (Mac)
 
@@ -115,6 +121,9 @@ máquina, rode `podman machine start`, se estiver no Mac, e `make start COMPOSE=
 
 ### Sem contêineres
 
+> **Ainda não disponível.** Os comandos `make native-*` não existem ainda; esta seção
+> mostra como essa forma vai funcionar.
+
 Requer PHP 8.4 (com `pdo_pgsql` e `bcmath`), Composer, Node 22, PostgreSQL 17 e `make`.
 No Mac, com o [Homebrew](https://brew.sh):
 
@@ -144,10 +153,10 @@ não inicia sozinho com o computador por padrão.
 | `make install` | Cria o `.env` sem sobrescrever um existente, constrói as imagens e prepara o banco |
 | `make start` / `make stop` | Sobe ou para o app |
 | `make restart` / `make logs` | Reinicia ou acompanha os logs |
-| `make test` | Roda os testes |
+| `make test` | Roda os testes em um banco separado, sem tocar nos seus dados |
 | `make lint` / `make format` | Confere ou corrige a formatação |
 | `make migrate` | Atualiza o banco |
-| `make shell` | Abre um terminal no contêiner do app |
+| `make shell` | Abre um terminal em um contêiner de ferramentas |
 | `make check` | Roda o que o CI confere |
 
 ## Arquitetura

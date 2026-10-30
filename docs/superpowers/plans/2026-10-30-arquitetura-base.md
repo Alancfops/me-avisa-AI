@@ -239,3 +239,13 @@ it('shows an empty dashboard without favorites', function () {
 - [ ] **Step 3: Verificar de novo e commitar.** `docker compose run --rm web php artisan test`. Expected: PASS. `git commit -m "docs: document installation and current state"`.
 
 - [ ] **Step 4: Abrir o PR, se o usuário pedir.** `git push -u origin feature/arquitetura-base` e `gh pr create --base develop`. Sem pedido, relatar que a branch está pronta e parar.
+
+---
+
+## Desvios registrados na execução
+
+- **Kit:** `laravel/react-starter-kit` em `dev-main` (Laravel 13), porque a tag instalada pelo comando acima trazia Laravel 12 e o design pede a versão estável atual. Trocar por uma tag estável quando sair uma com Laravel 13.
+- **Removidos:** Wayfinder (exigia `php artisan` no estágio de build do front), `User`, tabela `users`, Fortify e `.github/` do kit.
+- **Volumes:** montagem seletiva do código-fonte; `vendor` e `public/build` vêm da imagem, então um `composer require` exige novo build.
+- **Revisão:** `code-review` mandou separar o serviço `tools`, porque `compose run web` migra o banco real. Os comandos `docker compose run --rm web ...` deste plano ficaram superados: use `make test`, `make lint`, `make check`.
+- **Testes:** abortam antes de tocar em banco que não seja `testing`.
