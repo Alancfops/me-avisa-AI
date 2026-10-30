@@ -1,9 +1,10 @@
-import { Form, Head, router } from "@inertiajs/react";
-import InputError from "@/components/input-error";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { brl, clockTime, dateTime, signedPercent } from "@/lib/format";
+import { Form, Head, Link, router } from '@inertiajs/react';
+import InputError from '@/components/input-error';
+import { RuleBadges } from '@/components/rule-badges';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { brl, clockTime, dateTime, signedPercent } from '@/lib/format';
 
 type Favorite = {
     ticker: string;
@@ -11,6 +12,7 @@ type Favorite = {
     price: string | null;
     changePercent: string | null;
     quotedAt: string | null;
+    matchedRules: string[];
 };
 
 type Search = {
@@ -21,11 +23,11 @@ type Search = {
 
 function isToday(iso: string): boolean {
     return (
-        new Date(iso).toLocaleDateString("pt-BR", {
-            timeZone: "America/Sao_Paulo",
+        new Date(iso).toLocaleDateString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
         }) ===
-        new Date().toLocaleDateString("pt-BR", {
-            timeZone: "America/Sao_Paulo",
+        new Date().toLocaleDateString('pt-BR', {
+            timeZone: 'America/Sao_Paulo',
         })
     );
 }
@@ -33,10 +35,19 @@ function isToday(iso: string): boolean {
 function FavoriteCard({ favorite }: { favorite: Favorite }) {
     return (
         <li className="space-y-2 rounded-xl border bg-card p-5 text-card-foreground">
-            <h2 className="text-lg font-semibold">{favorite.ticker}</h2>
+            <h2 className="text-lg font-semibold">
+                <Link href={`/fundos/${favorite.ticker}`}>
+                    {favorite.ticker}
+                </Link>
+            </h2>
             {favorite.name && (
                 <p className="text-sm text-muted-foreground">{favorite.name}</p>
             )}
+
+            <RuleBadges
+                rules={favorite.matchedRules}
+                hasQuote={favorite.price !== null}
+            />
 
             {favorite.price === null || favorite.quotedAt === null ? (
                 <p>Cotação indisponível por enquanto.</p>
@@ -47,7 +58,7 @@ function FavoriteCard({ favorite }: { favorite: Favorite }) {
                     </p>
                     <p className="text-sm tabular-nums">
                         {favorite.changePercent === null
-                            ? "Variação indisponível"
+                            ? 'Variação indisponível'
                             : `${signedPercent(favorite.changePercent)} hoje`}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -82,7 +93,7 @@ function FundSearch({ search }: { search: Search }) {
 
             {search.catalogEmpty ? (
                 <p>
-                    O catálogo de fundos ainda não foi carregado. Rode{" "}
+                    O catálogo de fundos ainda não foi carregado. Rode{' '}
                     <code>fiis:sync-catalog</code> ou aguarde a próxima
                     atualização.
                 </p>
@@ -101,7 +112,7 @@ function FundSearch({ search }: { search: Search }) {
                 </form>
             )}
 
-            {search.query !== "" && search.results.length === 0 && (
+            {search.query !== '' && search.results.length === 0 && (
                 <p role="status">
                     Nenhum FII encontrado. Confira o código na B3.
                 </p>
@@ -191,8 +202,8 @@ export default function Dashboard({
 Dashboard.layout = {
     breadcrumbs: [
         {
-            title: "Painel",
-            href: "/",
+            title: 'Painel',
+            href: '/',
         },
     ],
 };

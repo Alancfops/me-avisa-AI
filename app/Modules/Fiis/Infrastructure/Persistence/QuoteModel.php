@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 final class QuoteModel extends Model
 {
+    use StoresInstants;
+
     protected $table = 'quotes';
 
     protected $primaryKey = 'ticker';

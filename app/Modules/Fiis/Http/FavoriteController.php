@@ -11,9 +11,10 @@ final class FavoriteController
 {
     public function store(AddFavoriteRequest $request, AddFavorite $addFavorite): RedirectResponse
     {
-        $addFavorite->handle($request->string('ticker')->toString());
+        $ticker = $request->string('ticker')->toString();
+        $addFavorite->handle($ticker);
 
-        return redirect()->route('home');
+        return redirect()->route('funds.show', $ticker);
     }
 
     public function destroy(string $ticker, RemoveFavorite $removeFavorite): RedirectResponse

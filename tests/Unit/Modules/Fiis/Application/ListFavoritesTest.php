@@ -1,11 +1,14 @@
 <?php
 
+use App\Modules\Fiis\Application\BuildFundSnapshot;
 use App\Modules\Fiis\Application\CatalogRepository;
+use App\Modules\Fiis\Application\DescribeFund;
 use App\Modules\Fiis\Application\ListFavorites;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Domain\Money;
 use Tests\Support\Fiis\InMemoryFavorites;
 use Tests\Support\Fiis\InMemoryMarketData;
+use Tests\Support\Fiis\InMemoryReports;
 
 function catalogNaming(array $names): CatalogRepository
 {
@@ -41,7 +44,9 @@ it('joins each favorite with its name and latest quote', function () {
     $market = new InMemoryMarketData;
     $market->saveQuote(new Quote('MXRF11', Money::fromString('8.91'), null, null, new DateTimeImmutable('2026-10-30T14:00:00-03:00')));
 
-    $views = (new ListFavorites(new InMemoryFavorites(['MXRF11', 'KNRI11']), catalogNaming(['MXRF11' => 'Maxi Renda']), $market))->handle();
+    $favorites = new InMemoryFavorites(['MXRF11', 'KNRI11']);
+    $describe = new DescribeFund($favorites, catalogNaming(['MXRF11' => 'Maxi Renda']), $market, new BuildFundSnapshot($market, new InMemoryReports));
+    $views = (new ListFavorites($favorites, $describe))->handle();
 
     expect($views)->toHaveCount(2)
         ->and($views[0]->ticker)->toBe('KNRI11')
