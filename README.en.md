@@ -157,7 +157,7 @@ doesn't start with the computer by default.
 | `make lint` / `make format` | Checks or fixes formatting |
 | `make migrate` | Updates the database |
 | `make shell` | Opens a terminal in a tools container |
-| `make check` | Runs what CI checks |
+| `make check` | Runs the backend CI checks |
 
 ## Architecture
 

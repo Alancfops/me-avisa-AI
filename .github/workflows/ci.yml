@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend e Docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # O smoke test chama o Compose sem o Makefile, e os dois precisam da mesma imagem.
+      - name: Definir o UID da imagem
+        run: echo "APP_UID=$(id -u)" >> "$GITHUB_ENV"
+      - name: Instalar como um usuário faria
+        run: make install
+      - name: Pint, PHPStan e testes
+        run: make check
+      - name: Teste de fumaça
+        run: sh docker/smoke-test.sh
+
+  frontend:
+    name: Front
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Lint e formatação
+        run: npm run check
+      - name: Tipos
+        run: npm run types:check
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APP_NAME: Me Avisa Aí
+
+  security:
+    name: Segurança
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A busca de segredos olha todo o histórico.
+          fetch-depth: 0
+      - name: Dependências do PHP
+        run: docker run --rm -v "$PWD:/app" -w /app composer:2 audit --no-interaction --locked
+      - name: Dependências do front
+        run: npm audit --audit-level=high
+      - name: Segredos
+        run: docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:v8.28.0 detect --source=/repo --no-banner --redact
