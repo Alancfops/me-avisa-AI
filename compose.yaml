@@ -53,6 +53,16 @@ services:
       retries: 12
       start_period: 20s
 
+  # Testes, formatação e terminal. Sem o entrypoint do web, para não migrar o banco
+  # real como efeito colateral, e em profile, para não subir com o app.
+  tools:
+    <<: *app
+    profiles: ["tools"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   scheduler:
     <<: *app
     command: ["php", "artisan", "schedule:work"]

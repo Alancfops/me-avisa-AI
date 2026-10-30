@@ -10,6 +10,7 @@ help: ## Lista os comandos
 install: ## Cria o .env sem sobrescrever um existente, constrói as imagens e prepara o banco
 	@test -f .env || cp .env.example .env
 	$(COMPOSE) build
+	# O entrypoint do web gera a APP_KEY e migra.
 	$(COMPOSE) run --rm web true
 
 start: ## Sobe o app
@@ -25,20 +26,21 @@ logs: ## Acompanha os logs
 	$(COMPOSE) logs -f
 
 test: ## Roda os testes
-	$(COMPOSE) run --rm web php artisan test
+	$(COMPOSE) run --rm tools php artisan test
 
 lint: ## Confere a formatação
-	$(COMPOSE) run --rm web vendor/bin/pint --test
+	$(COMPOSE) run --rm tools vendor/bin/pint --test
 
 format: ## Corrige a formatação
-	$(COMPOSE) run --rm web vendor/bin/pint
+	$(COMPOSE) run --rm tools vendor/bin/pint
 
 migrate: ## Atualiza o banco
-	$(COMPOSE) run --rm web php artisan migrate --force
+	# O entrypoint do web migra: é o único lugar que faz isso.
+	$(COMPOSE) run --rm web true
 
 shell: ## Abre um terminal no contêiner do app
-	$(COMPOSE) run --rm web bash
+	$(COMPOSE) run --rm tools bash
 
 check: lint ## Roda o que o CI confere
-	$(COMPOSE) run --rm web vendor/bin/phpstan analyse --no-progress --memory-limit=1G
-	$(COMPOSE) run --rm web php artisan test
+	$(COMPOSE) run --rm tools vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+	$(COMPOSE) run --rm tools php artisan test

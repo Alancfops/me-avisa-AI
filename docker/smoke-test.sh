@@ -21,7 +21,7 @@ services_matching() {
 }
 
 # Fica numa variável e nunca é impressa: a configuração resolvida traz a senha do banco.
-config="$($COMPOSE config)"
+config="$($COMPOSE --profile tools config)"
 
 [ "$(printf '%s\n' "$config" | grep -c 'published:')" = 1 ] \
     || fail "deve haver exatamente uma porta publicada"
@@ -34,7 +34,17 @@ echo "ok: porta publicada só em 127.0.0.1"
 [ -z "$(services_matching 'migrate')" ] || fail "nenhum comando do Compose pode migrar"
 [ "$(grep -rl 'migrate --force' docker --include='*' --exclude=smoke-test.sh)" = docker/entrypoint-web.sh ] \
     || fail "só o entrypoint-web.sh roda migrate --force"
-echo "ok: só o web migra"
+# Ferramentas não migram: o `make test` não pode alterar o banco real.
+[ "$(services_matching 'profiles:')" = tools ] || fail "falta o serviço tools em profiles"
+for target in test lint format shell check; do
+    commands="$(make -n "$target")"
+    printf '%s\n' "$commands" | grep -q 'run --rm tools' || fail "make $target deve usar o serviço tools"
+    ! printf '%s\n' "$commands" | grep -q 'run --rm web' || fail "make $target não pode usar o web, que migra"
+done
+for target in install migrate; do
+    make -n "$target" | grep -q 'run --rm web' || fail "make $target deve migrar pelo web"
+done
+echo "ok: só o web migra, e só make install e make migrate o usam para isso"
 
 [ "$(services_matching 'restart: unless-stopped')" = "postgres scheduler web worker" ] \
     || fail "os quatro serviços precisam de restart: unless-stopped"
