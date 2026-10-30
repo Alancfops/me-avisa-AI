@@ -41,6 +41,6 @@ migrate: ## Atualiza o banco
 shell: ## Abre um terminal no contêiner do app
 	$(COMPOSE) run --rm tools bash
 
-check: lint ## Roda o que o CI confere
+check: lint ## Roda as checagens de backend do CI
 	$(COMPOSE) run --rm tools vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 	$(COMPOSE) run --rm tools php artisan test

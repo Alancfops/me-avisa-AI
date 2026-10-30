@@ -32,7 +32,11 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href="/" prefetch aria-label="Me Avisa Aí, ir para o painel">
+                            <Link
+                                href="/"
+                                prefetch
+                                aria-label="Me Avisa Aí, ir para o painel"
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

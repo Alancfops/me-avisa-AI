@@ -157,7 +157,7 @@ não inicia sozinho com o computador por padrão.
 | `make lint` / `make format` | Confere ou corrige a formatação |
 | `make migrate` | Atualiza o banco |
 | `make shell` | Abre um terminal em um contêiner de ferramentas |
-| `make check` | Roda o que o CI confere |
+| `make check` | Roda as checagens de backend do CI |
 
 ## Arquitetura
 
