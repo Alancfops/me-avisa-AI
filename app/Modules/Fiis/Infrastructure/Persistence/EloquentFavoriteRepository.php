@@ -65,4 +65,16 @@ final class EloquentFavoriteRepository implements FavoriteRepository
     {
         FavoriteModel::query()->where('ticker', $ticker)->update(['last_evaluated_quote_at' => $quotedAt->format(DATE_ATOM)]);
     }
+
+    public function historyCheckedOn(string $ticker): ?string
+    {
+        $day = FavoriteModel::query()->where('ticker', $ticker)->value('history_checked_on');
+
+        return is_string($day) ? substr($day, 0, 10) : null;
+    }
+
+    public function markHistoryChecked(string $ticker, string $day): void
+    {
+        FavoriteModel::query()->where('ticker', $ticker)->update(['history_checked_on' => $day]);
+    }
 }

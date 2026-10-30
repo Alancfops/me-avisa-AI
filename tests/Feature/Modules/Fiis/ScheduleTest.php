@@ -72,3 +72,12 @@ it('runs the daily jobs once a day, outside the session', function (string $comm
     ['fiis:sync-catalog', '07:00'],
     ['fiis:import-reports', '20:00'],
 ]);
+
+it('catches up before refreshing, on every half hour of any day', function () {
+    $commands = collect(app(Schedule::class)->events())->pluck('command')->map(fn ($c) => (string) $c);
+
+    expect($commands->search(fn ($c) => str_contains($c, 'fiis:catch-up')))
+        ->toBeLessThan($commands->search(fn ($c) => str_contains($c, 'fiis:refresh-quotes')))
+        ->and(runsAt('fiis:catch-up', '2026-10-31 21:30:00-03:00'))->toBeTrue()
+        ->and(runsAt('fiis:catch-up', '2026-10-31 21:15:00-03:00'))->toBeFalse();
+});

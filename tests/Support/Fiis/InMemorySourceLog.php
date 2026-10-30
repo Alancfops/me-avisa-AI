@@ -3,6 +3,7 @@
 namespace Tests\Support\Fiis;
 
 use App\Modules\Fiis\Application\Source;
+use App\Modules\Fiis\Application\SourceError;
 use App\Modules\Fiis\Application\SourceLog;
 use App\Modules\Fiis\Application\SourceStatus;
 
@@ -13,6 +14,12 @@ final class InMemorySourceLog implements SourceLog
 
     /** @var list<string> */
     public array $successes = [];
+
+    /** @var array<string, \DateTimeImmutable> */
+    public array $lastSuccess = [];
+
+    /** @var array<string, list<SourceError>> */
+    public array $recentErrors = [];
 
     public function success(Source $source): void
     {
@@ -26,6 +33,6 @@ final class InMemorySourceLog implements SourceLog
 
     public function status(Source $source): SourceStatus
     {
-        throw new \LogicException('não usado');
+        return new SourceStatus($source, $this->lastSuccess[$source->value] ?? null, $this->recentErrors[$source->value] ?? []);
     }
 }

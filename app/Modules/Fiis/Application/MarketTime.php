@@ -19,4 +19,10 @@ final class MarketTime
     {
         return self::local($moment)->format('Y-m-d');
     }
+
+    /** Com data real: `2028-02-29` menos um ano não existe e o Postgres recusaria. */
+    public static function yearBefore(string $day): string
+    {
+        return (new DateTimeImmutable($day))->modify('-1 year')->format('Y-m-d');
+    }
 }

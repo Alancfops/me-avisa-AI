@@ -22,6 +22,12 @@ final readonly class AutomaticRule implements AlertRule
             return RuleResult::unavailable('VP indisponível: sem o informe da CVM não dá para calcular o P/VP.');
         }
 
+        if ($fund->closesAreStale) {
+            $day = implode('/', array_reverse(explode('-', (string) $fund->lastCloseDay)));
+
+            return RuleResult::unavailable("Fechamentos desatualizados: o último é de {$day}, e a média de 30 pregões ficaria velha.");
+        }
+
         if ($fund->average30d === null) {
             return RuleResult::unavailable('Média de 30 pregões indisponível: histórico de preços insuficiente.');
         }

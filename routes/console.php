@@ -3,6 +3,13 @@
 use App\Modules\Fiis\Application\MarketTime;
 use Illuminate\Support\Facades\Schedule;
 
+// Definido antes da cotação, porque a agenda roda em ordem no mesmo minuto. Fora do
+// pregão também, para recuperar o que se perdeu com a máquina desligada. Só gasta
+// requisição quando o histórico está atrasado.
+Schedule::command('fiis:catch-up')
+    ->timezone(MarketTime::ZONE)
+    ->everyThirtyMinutes();
+
 Schedule::command('fiis:refresh-quotes')
     ->timezone(MarketTime::ZONE)
     ->everyThirtyMinutes()

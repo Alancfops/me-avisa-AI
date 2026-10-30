@@ -20,7 +20,7 @@ final class FavoriteModel extends Model
 
     protected $table = 'favorites';
 
-    protected $fillable = ['ticker', 'mode', 'target', 'range_min', 'range_max', 'sharp_drop', 'last_evaluated_quote_at'];
+    protected $fillable = ['ticker', 'mode', 'target', 'range_min', 'range_max', 'sharp_drop', 'last_evaluated_quote_at', 'history_checked_on'];
 
     protected function casts(): array
     {

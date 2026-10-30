@@ -64,4 +64,17 @@ final class InMemoryFavorites implements FavoriteRepository
     {
         $this->evaluated[$ticker] = $quotedAt;
     }
+
+    /** @var array<string, string> */
+    public array $historyChecked = [];
+
+    public function historyCheckedOn(string $ticker): ?string
+    {
+        return $this->historyChecked[$ticker] ?? null;
+    }
+
+    public function markHistoryChecked(string $ticker, string $day): void
+    {
+        $this->historyChecked[$ticker] = $day;
+    }
 }

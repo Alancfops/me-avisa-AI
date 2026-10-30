@@ -23,4 +23,9 @@ interface FavoriteRepository
     public function lastEvaluatedQuoteAt(string $ticker): ?DateTimeImmutable;
 
     public function markEvaluated(string $ticker, DateTimeImmutable $quotedAt): void;
+
+    /** Último dia em que o histórico foi buscado de novo por estar atrasado. */
+    public function historyCheckedOn(string $ticker): ?string;
+
+    public function markHistoryChecked(string $ticker, string $day): void;
 }

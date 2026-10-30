@@ -1,6 +1,9 @@
 <?php
 
 use App\Modules\Fiis\Domain\AutomaticRule;
+use App\Modules\Fiis\Domain\FundSnapshot;
+use App\Modules\Fiis\Domain\Money;
+use App\Modules\Fiis\Domain\Ratio;
 
 require_once __DIR__.'/RulesTestHelpers.php';
 
@@ -66,4 +69,21 @@ it('states the price and the comparison when it fires', function () {
 
     expect($result->reason)->toBe('Preço R$ 9,00 abaixo de R$ 9,50 (média de 30 pregões × 0,95) e P/VP 0,90 abaixo da mediana 0,95')
         ->and($result->reference)->toBe('média 30d R$ 10,00; P/VP 0,90 abaixo da mediana 0,95');
+});
+
+it('does not fire on stale closes, and says why', function () {
+    $fund = new FundSnapshot(
+        'MXRF11',
+        Money::fromString('5.00'),
+        priceToBook: Ratio::fromString('0.5'),
+        medianPriceToBook: Ratio::fromString('0.9'),
+        priceToBookDays: 100,
+        closesAreStale: true,
+        lastCloseDay: '2026-08-01',
+    );
+
+    $result = (new AutomaticRule)->evaluate($fund);
+
+    expect($result->matched)->toBeFalse()
+        ->and($result->unavailableReason)->toBe('Fechamentos desatualizados: o último é de 01/08/2026, e a média de 30 pregões ficaria velha.');
 });

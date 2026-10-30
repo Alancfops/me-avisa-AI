@@ -7,6 +7,12 @@ final readonly class FundSnapshot
     /** docs/fiis/alert.md, "Média de 30 dias". */
     public const AVERAGE_WINDOW = 30;
 
+    /**
+     * Cobre o carnaval (sexta a quarta, 2 dias úteis sem pregão). Sem calendário de
+     * feriados, um limite menor calaria a regra depois de todo feriado longo.
+     */
+    public const MAX_MISSING_TRADING_DAYS = 2;
+
     public function __construct(
         public string $ticker,
         public Money $price,
@@ -17,6 +23,9 @@ final readonly class FundSnapshot
         public int $priceToBookDays = 0,
         /** Competência do VP usado, em `Y-m`. */
         public ?string $bookValueMonth = null,
+        /** O histórico parou antes do que os pregões permitem: a média não vale para este preço. */
+        public bool $closesAreStale = false,
+        public ?string $lastCloseDay = null,
     ) {}
 
     /**
@@ -40,15 +49,20 @@ final readonly class FundSnapshot
         $report = self::reportInForce($reports, $day);
         $dailyRatios = self::dailyRatios($earlier, $reports, self::twelveMonthsBefore($day));
 
+        $lastCloseDay = $earlier === [] ? null : $earlier[count($earlier) - 1]->date;
+        $stale = $lastCloseDay !== null && TradingDays::missingBetween($lastCloseDay, $day) > self::MAX_MISSING_TRADING_DAYS;
+
         return new self(
             $ticker,
             $price,
             $changePercent,
-            self::average30d($earlier),
+            $stale ? null : self::average30d($earlier),
             $report === null ? null : Ratio::of($price, $report->bookValue),
             Ratio::median($dailyRatios),
             count($dailyRatios),
             $report?->month,
+            $stale,
+            $lastCloseDay,
         );
     }
 
