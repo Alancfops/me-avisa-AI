@@ -7,18 +7,21 @@ use App\Modules\Fiis\Application\CatalogRepository;
 use App\Modules\Fiis\Application\Clock;
 use App\Modules\Fiis\Application\FavoriteRepository;
 use App\Modules\Fiis\Application\FundCatalog;
+use App\Modules\Fiis\Application\FundReports;
 use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\Quotes;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiFundCatalog;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotes;
+use App\Modules\Fiis\Infrastructure\Console\ImportReportsCommand;
 use App\Modules\Fiis\Infrastructure\Console\RefreshQuotesCommand;
 use App\Modules\Fiis\Infrastructure\Console\SyncCatalogCommand;
+use App\Modules\Fiis\Infrastructure\Cvm\CvmFundReports;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentAlertRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentCatalogRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentFavoriteRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentMarketData;
-use App\Modules\Fiis\Infrastructure\Persistence\NoReports;
+use App\Modules\Fiis\Infrastructure\Persistence\EloquentReportRepository;
 use App\Modules\Fiis\Infrastructure\SystemClock;
 use Illuminate\Support\ServiceProvider;
 
@@ -31,15 +34,17 @@ final class FiisServiceProvider extends ServiceProvider
         Clock::class => SystemClock::class,
         FavoriteRepository::class => EloquentFavoriteRepository::class,
         FundCatalog::class => BrapiFundCatalog::class,
+        FundReports::class => CvmFundReports::class,
         MarketData::class => EloquentMarketData::class,
         Quotes::class => BrapiQuotes::class,
-        ReportRepository::class => NoReports::class,
+        ReportRepository::class => EloquentReportRepository::class,
     ];
 
     public function boot(): void
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
+                ImportReportsCommand::class,
                 RefreshQuotesCommand::class,
                 SyncCatalogCommand::class,
             ]);

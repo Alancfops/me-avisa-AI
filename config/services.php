@@ -19,6 +19,10 @@ return [
         'token' => env('BRAPI_TOKEN'),
     ],
 
+    'cvm' => [
+        'reports_url' => env('CVM_REPORTS_URL', 'https://dados.cvm.gov.br/dados/FII/DOC/INF_MENSAL/DADOS'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

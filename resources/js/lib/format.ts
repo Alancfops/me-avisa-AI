@@ -32,3 +32,38 @@ export function dateTime(iso: string): string {
         timeZone: 'America/Sao_Paulo',
     });
 }
+
+export function ratio(value: string): string {
+    return Number(value).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+}
+
+export function percentFromFraction(value: string): string {
+    return `${(Number(value) * 100).toLocaleString('pt-BR', {
+        minimumFractionDigits: 1,
+        maximumFractionDigits: 1,
+    })}%`;
+}
+
+const months = [
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro',
+];
+
+export function monthLabel(yearMonth: string): string {
+    const [year, month] = yearMonth.split('-');
+
+    return `${months[Number(month) - 1]}/${year}`;
+}

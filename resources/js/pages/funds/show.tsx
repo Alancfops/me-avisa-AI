@@ -5,7 +5,14 @@ import { RuleBadges, ruleLabel } from '@/components/rule-badges';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { brl, dateTime, signedPercent } from '@/lib/format';
+import {
+    brl,
+    dateTime,
+    monthLabel,
+    percentFromFraction,
+    ratio,
+    signedPercent,
+} from '@/lib/format';
 
 type Fund = {
     ticker: string;
@@ -14,6 +21,11 @@ type Fund = {
     changePercent: string | null;
     quotedAt: string | null;
     average30d: string | null;
+    priceToBook: string | null;
+    medianPriceToBook: string | null;
+    priceToBookDays: number;
+    bookValueMonth: string | null;
+    dividendYield12m: string | null;
     matchedRules: string[];
 };
 
@@ -267,6 +279,27 @@ export default function FundShow({
                         {fund.average30d === null
                             ? 'indisponível'
                             : brl(fund.average30d)}
+                    </p>
+                    <p>
+                        P/VP:{' '}
+                        {fund.priceToBook === null
+                            ? 'VP indisponível'
+                            : ratio(fund.priceToBook)}
+                        {fund.bookValueMonth &&
+                            ` (VP de ${monthLabel(fund.bookValueMonth)})`}
+                    </p>
+                    {fund.priceToBookDays >= 60 &&
+                        fund.medianPriceToBook !== null && (
+                            <p>
+                                Mediana do P/VP em 12 meses:{' '}
+                                {ratio(fund.medianPriceToBook)}
+                            </p>
+                        )}
+                    <p>
+                        DY 12m, informes da CVM:{' '}
+                        {fund.dividendYield12m === null
+                            ? 'indisponível'
+                            : percentFromFraction(fund.dividendYield12m)}
                     </p>
                 </section>
 

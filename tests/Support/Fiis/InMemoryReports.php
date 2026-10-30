@@ -14,4 +14,16 @@ final class InMemoryReports implements ReportRepository
     {
         return $this->reports[$ticker] ?? [];
     }
+
+    public function monthlyYields(string $ticker): array
+    {
+        return [];
+    }
+
+    public function save(array $reports): void {}
+
+    public function ambiguousTickers(): array
+    {
+        return [];
+    }
 }

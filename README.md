@@ -124,7 +124,7 @@ máquina, rode `podman machine start`, se estiver no Mac, e `make start COMPOSE=
 > **Ainda não disponível.** Os comandos `make native-*` não existem ainda; esta seção
 > mostra como essa forma vai funcionar.
 
-Requer PHP 8.4 (com `pdo_pgsql` e `bcmath`), Composer, Node 22, PostgreSQL 17 e `make`.
+Requer PHP 8.4 (com `pdo_pgsql`, `bcmath` e `zip`), Composer, Node 22, PostgreSQL 17 e `make`.
 No Mac, com o [Homebrew](https://brew.sh):
 
 ```bash

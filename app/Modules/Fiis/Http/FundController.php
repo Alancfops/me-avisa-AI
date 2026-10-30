@@ -65,6 +65,11 @@ final class FundController
             'changePercent' => $view->quote?->changePercent?->toDecimal(),
             'quotedAt' => $view->quote === null ? null : MarketTime::local($view->quote->quotedAt)->format(DATE_ATOM),
             'average30d' => $view->snapshot?->average30d?->toDecimal(),
+            'priceToBook' => $view->snapshot?->priceToBook?->toDecimal(),
+            'medianPriceToBook' => $view->snapshot?->medianPriceToBook?->toDecimal(),
+            'priceToBookDays' => $view->snapshot === null ? 0 : $view->snapshot->priceToBookDays,
+            'bookValueMonth' => $view->snapshot?->bookValueMonth,
+            'dividendYield12m' => $view->dividendYield12m,
             'matchedRules' => array_map(fn (RuleStatus $status): string => $status->rule->value, $matched),
         ];
     }

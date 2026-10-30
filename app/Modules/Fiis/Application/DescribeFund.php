@@ -2,6 +2,7 @@
 
 namespace App\Modules\Fiis\Application;
 
+use App\Modules\Fiis\Domain\DividendYield;
 use App\Modules\Fiis\Domain\RuleKind;
 
 final readonly class DescribeFund
@@ -11,6 +12,8 @@ final readonly class DescribeFund
         private CatalogRepository $catalog,
         private MarketData $market,
         private BuildFundSnapshot $snapshots,
+        private ReportRepository $reports,
+        private Clock $clock,
     ) {}
 
     /** @return FavoriteView|null `null` se o fundo não for um favorito */
@@ -32,6 +35,14 @@ final readonly class DescribeFund
             }
         }
 
-        return new FavoriteView($ticker, $this->catalog->nameOf($ticker), $quote, $settings, $snapshot, $rules);
+        return new FavoriteView(
+            $ticker,
+            $this->catalog->nameOf($ticker),
+            $quote,
+            $settings,
+            $snapshot,
+            $rules,
+            DividendYield::trailing12Months($this->reports->monthlyYields($ticker), MarketTime::day($this->clock->now())),
+        );
     }
 }
