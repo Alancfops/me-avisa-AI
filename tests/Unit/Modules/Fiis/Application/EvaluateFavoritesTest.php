@@ -2,12 +2,15 @@
 
 use App\Modules\Fiis\Application\BuildFundSnapshot;
 use App\Modules\Fiis\Application\EvaluateFavorites;
+use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\UpdateFavoriteSettings;
 use App\Modules\Fiis\Domain\FavoriteSettings;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
 use App\Modules\Fiis\Domain\RuleKind;
+use Psr\Log\AbstractLogger;
+use Psr\Log\NullLogger;
 use Tests\Support\Fiis\FixedClock;
 use Tests\Support\Fiis\InMemoryAlerts;
 use Tests\Support\Fiis\InMemoryFavorites;
@@ -40,6 +43,7 @@ final class EvaluationWorld
             $this->alerts,
             new BuildFundSnapshot($this->market, new InMemoryReports),
             $this->clock,
+            new NullLogger,
         );
     }
 
@@ -270,4 +274,46 @@ it('does not reevaluate the same quote after a settings change', function () {
     $world->evaluator()->handle();
 
     expect($world->alertRules())->toHaveCount(1);
+});
+
+it('keeps evaluating the others when one favorite blows up, and logs it', function () {
+    $world = world();
+    $world->favorites->add('AAAA11');
+    $world->favorites->saveSettings('AAAA11', FavoriteSettings::target(Money::fromString('9.50'), false));
+    $world->quote('2026-10-29 14:00:00-03:00', '9.42');
+    $world->market->quotes['AAAA11'] = new Quote('AAAA11', Money::fromString('9.42'), null, null, new DateTimeImmutable('2026-10-29 14:00:00-03:00'));
+    $market = new class($world->market) implements MarketData
+    {
+        public function __construct(private MarketData $inner) {}
+
+        public function latestQuote(string $ticker): ?Quote
+        {
+            return $ticker === 'AAAA11' ? throw new RuntimeException('coluna quebrada') : $this->inner->latestQuote($ticker);
+        }
+
+        public function saveQuote(Quote $quote): void {}
+
+        public function deleteQuote(string $ticker): void {}
+
+        public function saveCloses(string $ticker, array $closes): void {}
+
+        public function closesBefore(string $ticker, string $day, string $fromDay): array
+        {
+            return [];
+        }
+    };
+    $logger = new class extends AbstractLogger
+    {
+        public array $messages = [];
+
+        public function log($level, string|Stringable $message, array $context = []): void
+        {
+            $this->messages[] = (string) $message;
+        }
+    };
+
+    (new EvaluateFavorites($world->favorites, $market, $world->alerts, new BuildFundSnapshot($market, new InMemoryReports), $world->clock, $logger))->handle();
+
+    expect($world->alertRules())->toBe(['price_target'])
+        ->and($logger->messages[0])->toContain('AAAA11');
 });

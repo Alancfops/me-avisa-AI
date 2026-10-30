@@ -6,9 +6,6 @@ use App\Modules\Fiis\Domain\FundSnapshot;
 
 final readonly class BuildFundSnapshot
 {
-    /** Cobre os 12 meses da mediana, que também contêm os 30 pregões da média. */
-    private const HISTORY_YEARS = 1;
-
     public function __construct(
         private MarketData $market,
         private ReportRepository $reports,
@@ -17,8 +14,9 @@ final readonly class BuildFundSnapshot
     public function handle(Quote $quote): FundSnapshot
     {
         $day = MarketTime::day($quote->quotedAt);
-        $fromDay = ((int) substr($day, 0, 4) - self::HISTORY_YEARS).substr($day, 4);
+        $fromDay = MarketTime::yearBefore($day);
 
+        // Um ano cobre os 12 meses da mediana e os 30 pregões da média.
         return FundSnapshot::fromHistory(
             $quote->ticker,
             $quote->price,

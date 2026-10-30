@@ -5,6 +5,8 @@ namespace App\Modules\Fiis\Application;
 use App\Modules\Fiis\Domain\AlertPolicy;
 use App\Modules\Fiis\Domain\RuleKind;
 use App\Modules\Fiis\Domain\RuleResult;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 final readonly class EvaluateFavorites
 {
@@ -14,19 +16,30 @@ final readonly class EvaluateFavorites
         private AlertRepository $alerts,
         private BuildFundSnapshot $snapshots,
         private Clock $clock,
+        private LoggerInterface $logger,
     ) {}
 
     public function handle(): void
     {
         foreach ($this->favorites->tickers() as $ticker) {
-            $quote = $this->market->latestQuote($ticker);
-            $evaluated = $this->favorites->lastEvaluatedQuoteAt($ticker);
-
-            // Feriado e bolsa fechada repetem a mesma cotação: sem novidade não há o
-            // que avaliar, mesmo que o relógio já tenha aberto o teto de 24 h.
-            if ($quote !== null && ($evaluated === null || $quote->quotedAt > $evaluated)) {
-                $this->evaluate($quote);
+            try {
+                $this->evaluateIfNew($ticker);
+            } catch (Throwable $failure) {
+                // Um favorito com problema não pode calar os avisos dos outros.
+                $this->logger->error("Avaliação de {$ticker} falhou: ".$failure::class);
             }
+        }
+    }
+
+    private function evaluateIfNew(string $ticker): void
+    {
+        $quote = $this->market->latestQuote($ticker);
+        $evaluated = $this->favorites->lastEvaluatedQuoteAt($ticker);
+
+        // Feriado e bolsa fechada repetem a mesma cotação: sem novidade não há o
+        // que avaliar, mesmo que o relógio já tenha aberto o teto de 24 h.
+        if ($quote !== null && ($evaluated === null || $quote->quotedAt > $evaluated)) {
+            $this->evaluate($quote);
         }
     }
 

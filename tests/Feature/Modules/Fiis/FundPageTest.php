@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Fiis\Application\EvaluateFavorites;
 use App\Modules\Fiis\Infrastructure\Persistence\AlertModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FavoriteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundModel;
@@ -128,4 +129,13 @@ it('evaluates after refreshing, only once per quote', function () {
     $this->artisan('fiis:refresh-quotes')->assertSuccessful();
 
     expect(AlertModel::count())->toBe(1);
+});
+
+it('survives a leap day: the year before is a real date', function () {
+    Carbon::setTestNow('2028-02-29 15:00:00-03:00');
+    storeQuote('9.42', '-1', '2028-02-29T14:00:00-03:00');
+
+    $this->get('/fundos/MXRF11')->assertOk();
+    app(EvaluateFavorites::class)->handle();
+    expect(FavoriteModel::find(FavoriteModel::first()->id)->last_evaluated_quote_at)->not->toBeNull();
 });
