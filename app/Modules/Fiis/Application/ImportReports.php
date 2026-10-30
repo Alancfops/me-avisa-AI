@@ -13,6 +13,7 @@ final readonly class ImportReports
         private CatalogRepository $catalog,
         private Clock $clock,
         private LoggerInterface $logger,
+        private SourceLog $sourceLog,
     ) {}
 
     /**
@@ -32,8 +33,10 @@ final readonly class ImportReports
                 $stored = $this->matched($this->source->forYear($reportYear));
                 $this->reports->save($stored);
                 $imported += count($stored);
+                $this->sourceLog->success(Source::Cvm);
             } catch (SourceUnavailable $failure) {
                 $failures[] = $failure;
+                $this->sourceLog->failure(Source::Cvm, $failure->getMessage());
                 $this->logger->warning("Informes da CVM de {$reportYear} não importados: {$failure->getMessage()}");
             }
         }

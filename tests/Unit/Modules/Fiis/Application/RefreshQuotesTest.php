@@ -9,6 +9,7 @@ use App\Modules\Fiis\Domain\Money;
 use Psr\Log\AbstractLogger;
 use Tests\Support\Fiis\InMemoryFavorites;
 use Tests\Support\Fiis\InMemoryMarketData;
+use Tests\Support\Fiis\InMemorySourceLog;
 
 function quoteOf(string $ticker, string $price, string $at = '2026-10-30T14:00:00-03:00'): Quote
 {
@@ -62,8 +63,9 @@ it('keeps refreshing the other funds when one fails, and keeps the good data', f
         'VISC11' => new SourceUnavailable('resposta inválida'),
     ]);
     $logger = spyLogger();
+    $log = new InMemorySourceLog;
 
-    $result = (new RefreshQuotes(new InMemoryFavorites(['KNRI11', 'VISC11', 'MXRF11']), $quotes, $market, $logger))->handle();
+    $result = (new RefreshQuotes(new InMemoryFavorites(['KNRI11', 'VISC11', 'MXRF11']), $quotes, $market, $logger, $log))->handle();
 
     expect($quotes->asked)->toBe(['KNRI11', 'MXRF11', 'VISC11'])
         ->and($result->updated)->toBe(['KNRI11', 'MXRF11'])
@@ -71,13 +73,24 @@ it('keeps refreshing the other funds when one fails, and keeps the good data', f
         ->and((string) $market->latestQuote('VISC11')->price)->toBe('R$ 10,00')
         ->and((string) $market->latestQuote('KNRI11')->price)->toBe('R$ 149,91')
         ->and($logger->records)->toHaveCount(1)
-        ->and($logger->records[0][1])->toContain('VISC11');
+        ->and($logger->records[0][1])->toContain('VISC11')
+        ->and($log->failures)->toBe([['brapi', 'VISC11: resposta inválida']])
+        ->and($log->successes)->toBe(['brapi']);
 });
 
 it('does not ask for the same ticker twice in a round', function () {
     $quotes = quotesReturning(['KNRI11' => quoteOf('KNRI11', '149.91')]);
 
-    (new RefreshQuotes(new InMemoryFavorites(['KNRI11']), $quotes, new InMemoryMarketData, spyLogger()))->handle();
+    (new RefreshQuotes(new InMemoryFavorites(['KNRI11']), $quotes, new InMemoryMarketData, spyLogger(), new InMemorySourceLog))->handle();
 
     expect($quotes->asked)->toBe(['KNRI11']);
+});
+
+it('does not report success when every fund failed', function () {
+    $quotes = quotesReturning(['KNRI11' => new SourceUnavailable('fora do ar')]);
+    $log = new InMemorySourceLog;
+
+    (new RefreshQuotes(new InMemoryFavorites(['KNRI11']), $quotes, new InMemoryMarketData, spyLogger(), $log))->handle();
+
+    expect($log->successes)->toBe([])->and($log->failures)->toHaveCount(1);
 });

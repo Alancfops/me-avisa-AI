@@ -11,6 +11,7 @@ final readonly class RefreshQuotes
         private Quotes $quotes,
         private MarketData $market,
         private LoggerInterface $logger,
+        private SourceLog $sourceLog,
     ) {}
 
     public function handle(): RefreshResult
@@ -24,8 +25,13 @@ final readonly class RefreshQuotes
                 $updated[] = $ticker;
             } catch (SourceUnavailable $failure) {
                 $this->logger->warning("Cotação de {$ticker} não atualizada: {$failure->getMessage()}");
+                $this->sourceLog->failure(Source::Brapi, "{$ticker}: {$failure->getMessage()}");
                 $failed[] = $ticker;
             }
+        }
+
+        if ($updated !== []) {
+            $this->sourceLog->success(Source::Brapi);
         }
 
         return new RefreshResult($updated, $failed);

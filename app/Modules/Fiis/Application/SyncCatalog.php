@@ -7,6 +7,7 @@ final readonly class SyncCatalog
     public function __construct(
         private FundCatalog $source,
         private CatalogRepository $catalog,
+        private SourceLog $sourceLog,
     ) {}
 
     /**
@@ -16,8 +17,16 @@ final readonly class SyncCatalog
      */
     public function handle(): int
     {
-        $entries = $this->source->all();
+        try {
+            $entries = $this->source->all();
+        } catch (SourceUnavailable $failure) {
+            $this->sourceLog->failure(Source::Brapi, "Catálogo: {$failure->getMessage()}");
+
+            throw $failure;
+        }
+
         $this->catalog->save($entries);
+        $this->sourceLog->success(Source::Brapi);
 
         return count($entries);
     }

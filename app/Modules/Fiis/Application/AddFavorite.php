@@ -10,6 +10,7 @@ final readonly class AddFavorite
         private FavoriteRepository $favorites,
         private ImportPriceHistory $history,
         private LoggerInterface $logger,
+        private SourceLog $sourceLog,
     ) {}
 
     public function handle(string $ticker): void
@@ -26,6 +27,7 @@ final readonly class AddFavorite
             // Sem histórico a média fica indisponível e a regra diz por quê; o
             // fechamento diário tenta de novo, e o favorito não se perde por isso.
             $this->logger->warning("Histórico de {$ticker} não importado: {$failure->getMessage()}");
+            $this->sourceLog->failure(Source::Brapi, "{$ticker}: {$failure->getMessage()}");
         }
     }
 }

@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Bell, LayoutGrid, Settings } from 'lucide-react';
+import { Activity, Bell, LayoutGrid, Settings } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -22,6 +22,11 @@ const mainNavItems: NavItem[] = [
         title: 'Avisos',
         href: '/avisos',
         icon: Bell,
+    },
+    {
+        title: 'Saúde',
+        href: '/saude',
+        icon: Activity,
     },
     {
         title: 'Configurações',
