@@ -37,25 +37,37 @@ O usuário define um intervalo.
 
 ### 3. Alerta automático (sistema)
 
-Se o usuário **não** configurar alvo/faixa manualmente:
+Se o usuário **não** configurar alvo/faixa manualmente (favorito novo começa neste modo):
 
 **Regra:**
 
-- preço **abaixo de** média móvel de **30 dias** × **0,95**
-- **e** P/VP **abaixo de** **1,0**
+- preço **abaixo de** média de **30 dias** × **0,95**
+- **e** P/VP **abaixo da** mediana do P/VP **do próprio fundo** nos últimos **12 meses**
+
+**Definições:**
+
+- **Média de 30 dias:** fechamentos dos últimos 30 pregões, sem o preço ao vivo de hoje.
+- **P/VP de cada dia:** fechamento ÷ VP do informe vigente naquele dia. O informe vale a partir da data de entrega à CVM.
+- **Histórico curto:** com menos de 60 pregões, comparar com **P/VP abaixo de 1,0** e dizer isso na tela.
+- **Sem VP:** a regra não dispara e a tela explica o motivo.
 
 ---
 
 ### 4. Queda brusca
 
-**Regra:** queda **diária** superior a **3%** (variação do pregão inferior a −3%).
+**Regra:** queda **diária** superior a **3%** (variação do pregão inferior a −3%; exatamente −3% não dispara). Cada pregão é um evento novo.
 
 ---
 
 ## Regras de controle (anti-spam)
 
-- No máximo **1 alerta por FII a cada 24 h**.
-- Reenviar antes disso **somente** se, após o último alerta, o preço **cair mais 2%** (ajuste fino conforme implementação).
+Valem **por regra de cada favorito**: uma queda brusca de manhã não impede o aviso de preço alvo à tarde.
+
+- O alerta nasce quando a regra **passa a valer**. Se ela deixa de valer, um novo cruzamento gera novo alerta.
+- No máximo **1 alerta por regra de cada FII a cada 24 h**.
+- Antes disso, ou enquanto a regra continua valendo, reenviar **somente** se preço ≤ preço do último alerta daquela regra × **0,98**.
+- Alerta bloqueado pelo limite de 24 h sai quando o limite liberar, se a regra ainda valer.
+- Mudar a configuração do favorito reavalia na hora e começa um ciclo novo para a regra alterada.
 
 ---
 
@@ -64,7 +76,7 @@ Se o usuário **não** configurar alvo/faixa manualmente:
 - Preço atual (e horário da cotação).
 - Histórico de preços (para média de 30 dias).
 - P/VP.
-- Dividendos (últimos 12 meses ou último provento, conforme o cálculo de DY no sistema).
+- DY 12m: soma dos 12 últimos DY mensais do Informe da CVM (só exibição; nenhuma regra usa).
 
 ---
 
@@ -77,7 +89,7 @@ Se o usuário **não** configurar alvo/faixa manualmente:
 **Sua referência:** faixa R$ 9,00–R$ 9,60 (ou alvo R$ 9,60)
 
 **P/VP:** 0,98  
-**DY estimado (mensal):** 1,1% — *especificar no produto se o número é mensal, anualizado ou TTM (12 meses).*
+**DY 12m (informes da CVM):** 11,8%
 
 **Status:** dentro da faixa de compra ✅
 
