@@ -21,7 +21,7 @@
         </include>
     </source>
     <php>
-        <!-- force: uma variável real do ambiente não pode levar os testes ao banco do app. -->
+        <!-- force só vence o getenv: variável real em $_SERVER e config:cache passam por cima. Quem protege o banco do app é Tests\TestCase::createApplication(). -->
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
