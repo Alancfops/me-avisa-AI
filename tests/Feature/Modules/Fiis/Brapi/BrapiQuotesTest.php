@@ -1,8 +1,14 @@
 <?php
 
+use App\Modules\Fiis\Application\MarketData;
+use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\Quotes;
 use App\Modules\Fiis\Application\RefreshQuotes;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\FundSnapshot;
+use App\Modules\Fiis\Domain\Money;
+use App\Modules\Fiis\Domain\Percentage;
+use App\Modules\Fiis\Domain\SharpDropRule;
 use App\Modules\Fiis\Infrastructure\Persistence\FavoriteModel;
 use Illuminate\Http\Client\Request;
 use Illuminate\Log\Events\MessageLogged;
@@ -31,7 +37,7 @@ it('parses a recorded quote and sends the token by header', function () {
 
     expect($quote->ticker)->toBe('KNRI11')
         ->and((string) $quote->price)->toBe('R$ 149,91')
-        ->and($quote->changePercent->toDecimal())->toBe('0.21')
+        ->and($quote->changePercent->toDecimal())->toBe('0.2072192513')
         ->and($quote->volume)->toBe(27898)
         ->and($quote->quotedAt->getTimestamp())->toBe(strtotime('2026-10-30T17:57:30Z'));
 
@@ -148,3 +154,37 @@ it('never logs the token', function (Closure $fake) {
     'corpo quebrado que ecoa o token' => [fn () => Http::fake(['*' => Http::response('Bearer test-token')])],
     'falha de conexão' => [fn () => Http::fake(['*' => Http::failedConnection('Bearer test-token')])],
 ]);
+
+it('computes the day change from the previous close, because the source rounds its own', function () {
+    // −3,0013%: o campo arredondado dá −3,00, e a queda forte não dispararia.
+    Http::fake(['*' => Http::response(quoteBody([
+        'regularMarketPrice' => 145.11,
+        'regularMarketPreviousClose' => 149.60,
+        'regularMarketChangePercent' => -3.00,
+        'regularMarketTime' => '2026-10-30T17:57:30.000Z',
+    ]))]);
+
+    $quote = app(Quotes::class)->latest('KNRI11');
+    $fund = new FundSnapshot('KNRI11', $quote->price, changePercent: $quote->changePercent);
+
+    expect($quote->changePercent->toDecimal())->toBe('-3.0013368984')
+        ->and((new SharpDropRule)->evaluate($fund)->matched)->toBeTrue();
+});
+
+it('falls back to the rounded field without a usable previous close', function (mixed $previous) {
+    Http::fake(['*' => Http::response(quoteBody([
+        'regularMarketPrice' => 145.11,
+        'regularMarketPreviousClose' => $previous,
+        'regularMarketChangePercent' => -3.00,
+        'regularMarketTime' => '2026-10-30T17:57:30.000Z',
+    ]))]);
+
+    expect(app(Quotes::class)->latest('KNRI11')->changePercent->toDecimal())->toBe('-3');
+})->with([null, 0, -1, 'n/a']);
+
+it('keeps the day change exact when stored, so the -3% limit survives the database', function () {
+    $market = app(MarketData::class);
+    $market->saveQuote(new Quote('KNRI11', Money::fromString('145.11'), Percentage::fromString('-3.0000000123'), null, new DateTimeImmutable('2026-10-30T14:00:00-03:00')));
+
+    expect($market->latestQuote('KNRI11')->changePercent->toDecimal())->toBe('-3.0000000123');
+});

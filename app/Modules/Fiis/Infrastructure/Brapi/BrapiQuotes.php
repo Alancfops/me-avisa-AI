@@ -35,7 +35,7 @@ final readonly class BrapiQuotes implements Quotes
         return new Quote(
             $ticker,
             Money::fromString($price),
-            $this->changePercent($data),
+            $this->changePercent($data, Money::fromString($price)),
             is_int($data['regularMarketVolume'] ?? null) ? $data['regularMarketVolume'] : null,
             $this->quotedAt($data['regularMarketTime'] ?? null),
         );
@@ -90,9 +90,20 @@ final readonly class BrapiQuotes implements Quotes
         return str_starts_with($decimal, '-') ? '0' : $decimal;
     }
 
-    /** @param array<mixed> $data */
-    private function changePercent(array $data): ?Percentage
+    /**
+     * A brapi arredonda `regularMarketChangePercent` para 2 casas: −3,004% chegaria como
+     * −3,00 e a queda forte não dispararia. O campo fica só para quando falta o anterior.
+     *
+     * @param  array<mixed>  $data
+     */
+    private function changePercent(array $data, Money $price): ?Percentage
     {
+        $previous = BrapiNumbers::decimal($data['regularMarketPreviousClose'] ?? null);
+
+        if ($previous !== null && ! str_starts_with($previous, '-') && Money::fromString($previous)->isPositive()) {
+            return Percentage::change(Money::fromString($previous), $price);
+        }
+
         $raw = $data['regularMarketChangePercent'] ?? null;
 
         if ($raw === null) {
