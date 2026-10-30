@@ -76,11 +76,18 @@ pessoas. Cada instalação atende uma pessoa, com as próprias chaves.
 
 - **Docker Compose** é o caminho padrão, com imagem publicada para `amd64` e
   `arm64` (Mac com Apple Silicon roda sem emulação).
-- **Mac com Compose mais leve:** o mesmo `compose.yaml` deve funcionar em OrbStack
-  e Colima, sem arquivo específico.
-- **Sem Docker:** instalação nativa documentada com PHP, Composer, Node e Postgres
-  (Homebrew, ou Herd com Postgres à parte). Web, scheduler e worker sobem juntos
-  por um comando, e o início com a máquina usa `launchd` no Mac.
+- **OrbStack e Podman:** o mesmo `compose.yaml` deve funcionar nos dois, sem arquivo
+  específico. Um usuário de Mac consultado usa OrbStack e, às vezes, Podman. O
+  `Makefile` aceita `COMPOSE="podman compose"`.
+- **Sem contêineres:** instalação nativa documentada com PHP, Composer, Node e
+  Postgres. `make native-install` e `make native-start` sobem web, scheduler e
+  worker juntos. Início automático com a máquina fica opcional e fora da primeira
+  versão desse caminho.
+- **Comandos:** `Makefile` como caminho principal (`make install`, `make start` etc.).
+- **Commits:** Conventional Commits (`feat:`, `fix:`, `docs:`...), para o CI gerar
+  versão e notas de release depois.
+- **READMEs:** `README.md` em português e `README.en.md` em inglês; cada forma de
+  instalação só é dada como pronta depois de testada.
 - **Banco:** Postgres nos dois caminhos, para não testar dois bancos.
 - **Repositório:** só `.env.example`, sem dados de cotação; licença MIT; aviso de
   que o app informa e não recomenda investimento. O app escuta só em `127.0.0.1`.
@@ -198,8 +205,10 @@ Seguir `.claude/skills/ui-ux/references/telas.md`, limitado a:
 
 - **Painel**, **Fundo** (com "Quando me avisar": alvo / faixa / automático +
   queda forte), **Favoritar** (diálogo de busca), **Avisos**.
-- **Configurações** só com: tema e status das fontes de dados (última
-  atualização de cotação e da CVM). Seções de Telegram e MCP ficam fora.
+- **Configurações** só com tema. Seções de Telegram e MCP ficam fora.
+- **Saúde** (tela própria): para cada fonte, a última atualização bem-sucedida e
+  os erros recentes em linguagem simples; para a brapi, o consumo da cota
+  (`GET /api/v2/user/usage`). Serve para quem instalou descobrir o que deu errado.
 - Remover o status "Telegram conectado" da sidebar neste módulo.
 - Busca do diálogo: catálogo local de FIIs vindo da brapi (ticker + nome). A
   ligação com a CVM só serve para VP e DY.

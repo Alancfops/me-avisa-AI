@@ -22,6 +22,7 @@
 - Segredos só no `.env`; nunca no git nem na imagem.
 - Sem `float` em comparação de regra; ausente é `null`, nunca `0`.
 - Código em inglês; textos de tela em português do Brasil.
+- Mensagens de commit em Conventional Commits.
 
 ## Review Focus
 
@@ -80,7 +81,7 @@ it('opens the app without login', function () {
 ### Task 2: Docker Compose com Postgres
 
 **Files:**
-- Create: `Dockerfile`, `compose.yaml`, `.dockerignore`, `docker/entrypoint-web.sh`
+- Create: `Dockerfile`, `compose.yaml`, `.dockerignore`, `docker/entrypoint-web.sh`, `Makefile`
 - Modify: `.env.example`, `config/app.php`, `phpunit.xml` (o padrão do kit é SQLite em memória; usar `pgsql` com banco `testing`)
 - Test: `tests/Feature/TimezoneTest.php`, `tests/Feature/DatabaseTest.php`, `docker/smoke-test.sh`
 
@@ -111,6 +112,7 @@ it('runs on Postgres', fn () => expect(DB::connection()->getDriverName())->toBe(
   - `.dockerignore`: `.env`, `.env.*`, `.git`, `node_modules`, `vendor`, `docs`.
   - `.env.example`: `DB_CONNECTION=pgsql`, `QUEUE_CONNECTION=database`, `APP_TIMEZONE=America/Sao_Paulo`, `BRAPI_TOKEN=`.
   - Em `.env`, ajustar as mesmas chaves sem imprimir o token.
+  - `Makefile`, com `COMPOSE ?= docker compose` e os alvos da seção "Comandos" do `README.md`: `help` (padrão), `install`, `start`, `stop`, `restart`, `logs`, `test`, `lint`, `format`, `migrate`, `shell` e `check`. `install` nunca sobrescreve um `.env` existente. Sem alvo que apague volumes. Depois desta task, os testes podem rodar com `make test`.
 
 - [ ] **Step 4: Verificar.** `sh docker/smoke-test.sh && docker compose run --rm web php artisan test`. Expected: tudo PASS.
 
@@ -229,7 +231,7 @@ it('shows an empty dashboard without favorites', function () {
 **Interfaces:**
 - Consumes: tudo acima.
 
-- [ ] **Step 1: Atualizar docs.** README com instalação em três passos: copiar `.env.example`, preencher `BRAPI_TOKEN`, `docker compose up -d`. `CLAUDE.md` deixa de dizer "Ainda não há código".
+- [ ] **Step 1: Atualizar docs.** Conferir `README.md` e `README.en.md` contra o projeto real, testando o caminho Docker com `make`. Podman e sem contêineres continuam marcados como não testados até haver verificação. `CLAUDE.md` deixa de dizer "Ainda não há código".
 
 - [ ] **Step 2: Revisar.** Rodar o subagente `code-review` sobre `main...develop` e corrigir o que for "Bloqueia".
 
