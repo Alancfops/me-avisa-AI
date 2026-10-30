@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'brapi' => [
+        'url' => env('BRAPI_URL', 'https://brapi.dev'),
+        'token' => env('BRAPI_TOKEN'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

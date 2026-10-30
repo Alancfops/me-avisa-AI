@@ -4,6 +4,7 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -28,6 +29,9 @@ abstract class TestCase extends BaseTestCase
 
         // Os testes conferem o back: não dependem do build do front.
         $this->withoutVite();
+
+        // Teste nunca chama brapi nem CVM: requisição sem Http::fake é erro.
+        Http::preventStrayRequests();
     }
 
     public static function abortUnlessTestingDatabase(string $database): void
