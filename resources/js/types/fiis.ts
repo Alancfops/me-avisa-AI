@@ -19,7 +19,11 @@ export type Fund = {
     profile?: FundProfile | null;
 };
 
-export type WindowAverage = { months: number; monthsStored: number; value: string | null };
+export type WindowAverage = {
+    months: number;
+    monthsStored: number;
+    value: string | null;
+};
 
 export type FundProfile = {
     month: string;

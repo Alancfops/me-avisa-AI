@@ -1,35 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import { ArrowLeft, Check, Minus, TriangleAlert } from 'lucide-react';
+import {
+    DecisionSummary,
+    MIN_DAYS_FOR_MEDIAN,
+} from '@/components/fund/decision-summary';
+import { DividendsChart } from '@/components/fund/dividends-chart';
+import { FundProfile } from '@/components/fund/fund-profile';
+import { PriceChart } from '@/components/fund/price-chart';
+import { PriceToBookChart } from '@/components/fund/price-to-book-chart';
 import { DayChange, QuoteTime } from '@/components/quote-info';
 import { RemoveFavorite } from '@/components/remove-favorite';
 import { SignalBadges } from '@/components/signal-badges';
 import { WhenToAlert } from '@/components/when-to-alert';
-import { brl, monthLabel, percentFromFraction, ratio } from '@/lib/format';
+import { brl } from '@/lib/format';
+import type { Period } from '@/lib/history';
 import { hasSharpDrop, ruleName } from '@/lib/rules';
 import type { Fund, RuleStatus, Settings } from '@/types/fiis';
-
-/** Abaixo disso a regra automática usa P/VP 1,0 no lugar da mediana (alert.md). */
-const MIN_DAYS_FOR_MEDIAN = 60;
-
-function Info({
-    label,
-    value,
-    detail,
-}: {
-    label: string;
-    value: string;
-    detail?: string;
-}) {
-    return (
-        <div className="min-w-0">
-            <dt className="text-xs text-muted-foreground">{label}</dt>
-            <dd className="num text-lg font-semibold">{value}</dd>
-            {detail && (
-                <dd className="text-xs text-muted-foreground">{detail}</dd>
-            )}
-        </div>
-    );
-}
 
 function RuleLine({ status }: { status: RuleStatus }) {
     const Icon = status.matched
@@ -75,6 +62,9 @@ export default function FundShow({
     rules: RuleStatus[];
 }) {
     const shortHistory = fund.priceToBookDays < MIN_DAYS_FOR_MEDIAN;
+    const [period, setPeriod] = useState<Period>(6);
+    const history = fund.history ?? [];
+    const segment = fund.profile?.segment ?? null;
 
     return (
         <>
@@ -100,9 +90,11 @@ export default function FundShow({
                                 hasQuote={fund.price !== null}
                             />
                         </div>
-                        {fund.name && (
+                        {(fund.name || segment) && (
                             <p className="wrap-anywhere text-muted-foreground">
-                                {fund.name}
+                                {[fund.name, segment]
+                                    .filter(Boolean)
+                                    .join(' · ')}
                             </p>
                         )}
                     </div>
@@ -128,70 +120,44 @@ export default function FundShow({
 
                 {/*
                  * "Quando me avisar" vem antes no DOM: no celular fica logo depois
-                 * do preço, e em lg a grade o põe à direita sem usar `order`.
+                 * do preço. Em lg a grade põe o conteúdo à esquerda e a lateral à
+                 * direita (Sobre, Quando me avisar, Remover) sem usar `order`.
                  */}
-                <div className="grid items-start gap-6 lg:grid-cols-3">
-                    <div className="space-y-4 lg:col-start-3 lg:row-start-1">
+                <div className="grid items-start gap-6 lg:grid-cols-3 lg:grid-rows-[auto_auto_1fr]">
+                    <div className="min-w-0 lg:col-start-3 lg:row-start-2">
                         <WhenToAlert
                             ticker={fund.ticker}
                             settings={settings}
                             shortHistory={shortHistory}
                         />
-                        <RemoveFavorite ticker={fund.ticker} />
                     </div>
 
-                    <div className="space-y-6 lg:col-span-2 lg:col-start-1 lg:row-start-1">
-                        <section
-                            aria-labelledby="dados"
-                            className="surface p-5"
-                        >
-                            <h2 id="dados" className="text-lg font-semibold">
-                                Dados do fundo
-                            </h2>
-                            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-                                <Info
-                                    label="Média de 30 pregões"
-                                    value={
-                                        fund.average30d === null
-                                            ? 'Indisponível'
-                                            : brl(fund.average30d)
-                                    }
-                                />
-                                <Info
-                                    label="P/VP"
-                                    value={
-                                        fund.priceToBook === null
-                                            ? 'Indisponível'
-                                            : ratio(fund.priceToBook)
-                                    }
-                                    detail={
-                                        fund.bookValueMonth
-                                            ? `VP de ${monthLabel(fund.bookValueMonth)}`
-                                            : 'Sem informe da CVM para calcular.'
-                                    }
-                                />
-                                {!shortHistory &&
-                                    fund.medianPriceToBook !== null && (
-                                        <Info
-                                            label="Mediana do P/VP em 12 meses"
-                                            value={ratio(
-                                                fund.medianPriceToBook,
-                                            )}
-                                        />
-                                    )}
-                                <Info
-                                    label="DY 12 meses"
-                                    value={
-                                        fund.dividendYield12m === null
-                                            ? 'Indisponível'
-                                            : percentFromFraction(
-                                                  fund.dividendYield12m,
-                                              )
-                                    }
-                                    detail="Soma dos informes mensais da CVM."
-                                />
-                            </dl>
-                        </section>
+                    <div className="min-w-0 space-y-6 lg:col-span-2 lg:col-start-1 lg:row-span-3 lg:row-start-1">
+                        <DecisionSummary fund={fund} />
+
+                        <PriceChart
+                            history={history}
+                            price={fund.price}
+                            average30d={fund.average30d}
+                            target={
+                                settings.mode === 'target'
+                                    ? settings.target
+                                    : null
+                            }
+                            period={period}
+                            onPeriodChange={setPeriod}
+                        />
+
+                        <PriceToBookChart
+                            history={history}
+                            period={period}
+                            onPeriodChange={setPeriod}
+                        />
+
+                        <DividendsChart
+                            dividends={fund.dividends ?? []}
+                            dividendYield12m={fund.dividendYield12m}
+                        />
 
                         {rules.length > 0 && (
                             <section
@@ -214,6 +180,14 @@ export default function FundShow({
                                 </ul>
                             </section>
                         )}
+                    </div>
+
+                    <div className="min-w-0 lg:col-start-3 lg:row-start-1">
+                        <FundProfile profile={fund.profile ?? null} />
+                    </div>
+
+                    <div className="min-w-0 lg:col-start-3 lg:row-start-3">
+                        <RemoveFavorite ticker={fund.ticker} />
                     </div>
                 </div>
             </div>
