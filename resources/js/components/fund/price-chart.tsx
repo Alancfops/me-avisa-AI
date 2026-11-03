@@ -2,7 +2,6 @@ import {
     Area,
     AreaChart,
     CartesianGrid,
-    ReferenceArea,
     ReferenceLine,
     ResponsiveContainer,
     Tooltip,
@@ -11,6 +10,8 @@ import {
 } from 'recharts';
 import {
     ChartPeriod,
+    SHORT_HISTORY,
+    noHistoryArea,
     axisTick,
     dateFromTime,
     periodWords,
@@ -31,9 +32,6 @@ import {
 } from '@/lib/history';
 import type { HistoryPoint, Period } from '@/lib/history';
 import { cn } from '@/lib/utils';
-
-const SHORT_HISTORY =
-    'O app guarda um fechamento por dia, então este período ainda não está completo. A média usa só o que há.';
 
 function plainBrl(value: number): string {
     return value.toLocaleString('pt-BR', {
@@ -175,7 +173,8 @@ function Body({
                     {signedPercent(String(change))}
                 </b>{' '}
                 <span className="text-muted-foreground">
-                    no período · de {brl(firstClose)} para {brl(current)}
+                    {incomplete ? 'no histórico guardado' : 'no período'} · de{' '}
+                    {brl(firstClose)} para {brl(current)}
                 </span>
             </p>
 
@@ -245,20 +244,7 @@ function Body({
                                 'Fechamento',
                             ]}
                         />
-                        {firstTime - start > 0 && incomplete && (
-                            <ReferenceArea
-                                x1={start}
-                                x2={firstTime}
-                                fill="var(--muted)"
-                                fillOpacity={0.8}
-                                label={{
-                                    value: 'ainda sem histórico',
-                                    fill: 'var(--muted-foreground)',
-                                    fontSize: 12,
-                                    position: 'insideTop',
-                                }}
-                            />
-                        )}
+                        {incomplete && noHistoryArea(start, firstTime)}
                         {average !== null && (
                             <ReferenceLine
                                 y={average}

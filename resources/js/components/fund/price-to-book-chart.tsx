@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 import {
     ChartPeriod,
+    noHistoryArea,
     axisTick,
     dateFromTime,
     periodWords,
@@ -21,6 +22,7 @@ import { dayMonth, ratio } from '@/lib/format';
 import {
     axisTicks,
     inPeriod,
+    isIncomplete,
     monthlyLast,
     paddedDomain,
     periodStart,
@@ -44,14 +46,14 @@ export function PriceToBookChart({
     period: Period;
     onPeriodChange: (period: Period) => void;
 }) {
-    // Pontos sem P/VP (fundo sem informe naquele dia) ficam fora.
-    const withValue = history.filter(
+    const lastDay =
+        history.length > 0 ? history[history.length - 1].date : null;
+    // A janela segue o último dia de todo o histórico; só depois saem os dias
+    // sem P/VP (fundo sem informe naquele dia).
+    const points = inPeriod(history, period).filter(
         (point): point is HistoryPoint & { priceToBook: string } =>
             point.priceToBook !== null,
     );
-    const points = inPeriod(withValue, period);
-    const lastDay =
-        history.length > 0 ? history[history.length - 1].date : null;
 
     return (
         <section aria-labelledby="pvp" className="surface p-5">
@@ -97,6 +99,7 @@ function Body({
     const first = points[0].priceToBook;
     const last = points[points.length - 1].priceToBook;
     const rows = monthlyLast(points);
+    const incomplete = isIncomplete(points, period);
 
     return (
         <>
@@ -143,6 +146,7 @@ function Body({
                             }
                             formatter={(v) => [plain(Number(v)), 'P/VP']}
                         />
+                        {incomplete && noHistoryArea(start, data[0].time)}
                         <ReferenceLine
                             y={1}
                             stroke="var(--muted-foreground)"
@@ -177,6 +181,13 @@ function Body({
                     dashed
                 />
             </ul>
+
+            {incomplete && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                    O app guarda um fechamento por dia, então este período ainda
+                    não está completo.
+                </p>
+            )}
 
             <table className="sr-only">
                 <caption>

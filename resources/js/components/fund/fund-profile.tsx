@@ -7,12 +7,12 @@ function Row({ label, value }: { label: string; value: string | null }) {
     }
 
     return (
-        <>
+        <div className="flex flex-wrap justify-between gap-x-4 gap-y-0.5">
             <dt className="text-muted-foreground">{label}</dt>
-            <dd className="text-right num font-semibold wrap-anywhere">
+            <dd className="min-w-0 num font-semibold wrap-break-word">
                 {value}
             </dd>
-        </>
+        </div>
     );
 }
 
@@ -29,7 +29,7 @@ export function FundProfile({ profile }: { profile: Profile | null }) {
                 </p>
             ) : (
                 <>
-                    <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
+                    <dl className="mt-4 space-y-3 text-sm">
                         <Row label="Segmento" value={profile.segment} />
                         <Row
                             label="Administrador"

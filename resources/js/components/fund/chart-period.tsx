@@ -1,3 +1,4 @@
+import { ReferenceArea } from 'recharts';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { dayMonth, shortMonthLabel } from '@/lib/format';
 import { PERIODS } from '@/lib/history';
@@ -56,12 +57,40 @@ export function ChartPeriod({
                 <ToggleGroupItem
                     key={months}
                     value={String(months)}
-                    aria-label={`${months} meses`}
                     className="min-h-8 min-w-11 px-3"
                 >
                     {months}m
+                    <span className="sr-only">
+                        {' '}
+                        ({periodWords(months as Period)})
+                    </span>
                 </ToggleGroupItem>
             ))}
         </ToggleGroup>
+    );
+}
+
+export const SHORT_HISTORY =
+    'O app guarda um fechamento por dia, então este período ainda não está completo. A média usa só o que há.';
+
+/** Trecho do eixo anterior ao primeiro dado guardado, apagado e rotulado. */
+export function noHistoryArea(start: number, firstTime: number) {
+    if (firstTime <= start) {
+        return null;
+    }
+
+    return (
+        <ReferenceArea
+            x1={start}
+            x2={firstTime}
+            fill="var(--muted)"
+            fillOpacity={0.8}
+            label={{
+                value: 'ainda sem histórico',
+                fill: 'var(--muted-foreground)',
+                fontSize: 12,
+                position: 'insideTop',
+            }}
+        />
     );
 }
