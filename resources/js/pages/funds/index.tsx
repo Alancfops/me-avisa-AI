@@ -62,6 +62,8 @@ export default function FundIndex({
         setKind('all');
         setBase('all');
         setSort(DEFAULT_SORT);
+        // O botão some junto com o aviso; o foco volta para o primeiro filtro.
+        document.getElementById('busca-fundos')?.focus();
     }
 
     return (

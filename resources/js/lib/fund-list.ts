@@ -107,20 +107,41 @@ export function sortFunds(funds: FundListItem[], key: SortKey): FundListItem[] {
 }
 
 /**
- * Rendimento por cota dos últimos 12 meses ÷ taxa anual desejada.
+ * Rendimento por cota dos 12 meses de calendário mais recentes (terminando no
+ * último mês informado) ÷ taxa anual desejada. O backend manda no máximo 12
+ * competências "AAAA-MM", uma por mês, da mais antiga para a mais nova, mas
+ * pode haver buracos; por isso contamos só os meses dentro da janela.
  * `annualRate` em pontos percentuais (10 = 10% ao ano) e maior que zero.
  */
 export function ceilingPrice(
     dividends: { month: string; perShare: string }[],
     annualRate: number,
 ): { value: number } | { missingMonths: number } {
-    if (dividends.length < CEILING_MONTHS) {
-        return { missingMonths: CEILING_MONTHS - dividends.length };
+    if (dividends.length === 0) {
+        return { missingMonths: CEILING_MONTHS };
     }
 
-    const total = dividends
-        .slice(-CEILING_MONTHS)
-        .reduce((sum, dividend) => sum + Number(dividend.perShare), 0);
+    const index = (month: string): number => {
+        const [year, number] = month.split('-').map(Number);
+
+        return year * 12 + number;
+    };
+    const latest = Math.max(...dividends.map((d) => index(d.month)));
+    const window = new Map<number, number>();
+
+    for (const dividend of dividends) {
+        const position = index(dividend.month);
+
+        if (position > latest - CEILING_MONTHS) {
+            window.set(position, Number(dividend.perShare));
+        }
+    }
+
+    if (window.size < CEILING_MONTHS) {
+        return { missingMonths: CEILING_MONTHS - window.size };
+    }
+
+    const total = [...window.values()].reduce((sum, value) => sum + value, 0);
 
     return { value: total / (annualRate / 100) };
 }
@@ -141,15 +162,26 @@ const BASE_PARAMS: Record<string, BaseFilter> = {
 
 export const DEFAULT_SORT: SortKey = 'priceToBook';
 
+/** Só chaves próprias: `?ordem=constructor` não pode virar função. */
+function lookup<T>(
+    table: Record<string, T>,
+    key: string | null,
+): T | undefined {
+    return key !== null && Object.hasOwn(table, key) ? table[key] : undefined;
+}
+
 export function readFilters(search: string): Filters & { sort: SortKey } {
     const params = new URLSearchParams(search);
     const kind = params.get('tipo');
 
     return {
         query: params.get('q') ?? '',
-        kind: kind !== null && kind in KIND_LABELS ? (kind as FundKind) : 'all',
-        base: BASE_PARAMS[params.get('base') ?? ''] ?? 'all',
-        sort: SORT_PARAMS[params.get('ordem') ?? ''] ?? DEFAULT_SORT,
+        kind:
+            kind !== null && Object.hasOwn(KIND_LABELS, kind)
+                ? (kind as FundKind)
+                : 'all',
+        base: lookup(BASE_PARAMS, params.get('base')) ?? 'all',
+        sort: lookup(SORT_PARAMS, params.get('ordem')) ?? DEFAULT_SORT,
     };
 }
 

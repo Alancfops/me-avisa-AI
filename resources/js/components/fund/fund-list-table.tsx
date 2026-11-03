@@ -21,7 +21,7 @@ function KindChip({ kind }: { kind: FundKind | null }) {
         <span
             className={cn(
                 'inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-muted-foreground',
-                kind === 'tijolo' && 'bg-primary-soft text-primary',
+                kind === 'tijolo' && 'bg-primary-soft text-foreground',
             )}
         >
             {kind === null ? 'Sem dados' : KIND_LABELS[kind]}
