@@ -6,6 +6,7 @@ use App\Modules\Fiis\Application\FundReports;
 use App\Modules\Fiis\Application\ImportReports;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\FundKind;
 use Psr\Log\NullLogger;
 use Tests\Support\Fiis\FixedClock;
 use Tests\Support\Fiis\InMemoryCatalog;
@@ -41,6 +42,16 @@ function failingStore(int $failuresWanted): ReportRepository
         }
 
         public function profile(string $ticker): ?FundProfile
+        {
+            return null;
+        }
+
+        public function kinds(): array
+        {
+            return [];
+        }
+
+        public function kindOf(string $ticker): ?FundKind
         {
             return null;
         }

@@ -5,6 +5,7 @@ namespace Tests\Support\Fiis;
 use App\Modules\Fiis\Application\FundProfile;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Domain\BookValueReport;
+use App\Modules\Fiis\Domain\FundKind;
 
 final class InMemoryReports implements ReportRepository
 {
@@ -22,6 +23,16 @@ final class InMemoryReports implements ReportRepository
     }
 
     public function profile(string $ticker): ?FundProfile
+    {
+        return null;
+    }
+
+    public function kinds(): array
+    {
+        return [];
+    }
+
+    public function kindOf(string $ticker): ?FundKind
     {
         return null;
     }
