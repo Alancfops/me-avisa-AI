@@ -235,3 +235,67 @@ it('treats values outside the storable range as missing, instead of failing the 
 
     expect($row->book_value)->toBeNull()->and($row->dividend_yield)->toBeNull();
 });
+
+it('reads the fund profile from the latest version', function () {
+    fakeCvm();
+
+    $september = collect(app(FundReports::class)->forYear(2026))
+        ->first(fn ($r) => $r->cnpj === '97.521.225/0001-25' && $r->month === '2026-09');
+
+    expect($september->segment)->toBe('Títulos e Valores Mobiliários')
+        ->and($september->administrator)->toBe('BTG PACTUAL SERVIÇOS FINANCEIROS S.A. DTVM')
+        ->and($september->startedOn)->toBe('2012-08-01')
+        ->and($september->netAssets)->toBe('3900000000.55')
+        ->and($september->holders)->toBe(1250000);
+});
+
+it('imports a year whose files lack the profile columns', function () {
+    fakeCvm(cvmZip(
+        "Tipo_Fundo_Classe;CNPJ_Fundo_Classe;Data_Referencia;Versao;Data_Entrega;Nome_Fundo_Classe;Codigo_ISIN\nClasse;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;1;9.50;0.01\n",
+    ));
+
+    $records = app(FundReports::class)->forYear(2026);
+
+    expect($records)->toHaveCount(1)
+        ->and($records[0]->bookValue)->toBe('9.50')
+        ->and($records[0]->dividendYield)->toBe('0.01')
+        ->and($records[0]->segment)->toBeNull()
+        ->and($records[0]->administrator)->toBeNull()
+        ->and($records[0]->startedOn)->toBeNull()
+        ->and($records[0]->netAssets)->toBeNull()
+        ->and($records[0]->holders)->toBeNull();
+});
+
+it('stores the profile columns', function () {
+    fakeCvm();
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->first();
+
+    expect($row->segment)->toBe('Títulos e Valores Mobiliários')
+        ->and($row->administrator)->toBe('BTG PACTUAL SERVIÇOS FINANCEIROS S.A. DTVM')
+        ->and(substr((string) $row->started_on, 0, 10))->toBe('2012-08-01')
+        ->and((string) $row->net_assets)->toBe('3900000000.55')
+        ->and($row->holders)->toBe(1250000);
+});
+
+it('turns an invalid profile value into null without dropping the row', function (string $started, string $netAssets, string $holders, array $expected) {
+    $geral = "Tipo_Fundo_Classe;CNPJ_Fundo_Classe;Data_Referencia;Versao;Data_Entrega;Nome_Fundo_Classe;Codigo_ISIN;Segmento_Atuacao;Nome_Administrador;Data_Funcionamento\n"
+        ."Classe;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008;Shoppings;ADM;{$started}\n";
+    $complemento = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Patrimonio_Liquido;Valor_Patrimonial_Cotas;Percentual_Dividend_Yield_Mes;Total_Numero_Cotistas\n"
+        ."1;2026-09-01;1;{$netAssets};9.50;0.01;{$holders}\n";
+    fakeCvm(cvmZip($geral, $complemento));
+
+    $records = app(FundReports::class)->forYear(2026);
+
+    expect($records)->toHaveCount(1)
+        ->and($records[0]->bookValue)->toBe('9.50')
+        ->and($records[0]->segment)->toBe('Shoppings')
+        ->and([$records[0]->startedOn, $records[0]->netAssets, $records[0]->holders])->toBe($expected);
+})->with([
+    'cotistas abc' => ['2012-08-01', '100.50', 'abc', ['2012-08-01', '100.50', null]],
+    'data brasileira' => ['31/12/2010', '100.50', '10', [null, '100.50', 10]],
+    'data impossível' => ['2012-02-30', '100.50', '10', [null, '100.50', 10]],
+    'patrimônio negativo' => ['2012-08-01', '-5', '10', ['2012-08-01', null, 10]],
+]);

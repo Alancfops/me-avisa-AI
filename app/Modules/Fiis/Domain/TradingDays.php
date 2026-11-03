@@ -22,6 +22,12 @@ final class TradingDays
         return $missing;
     }
 
+    /** Dias corridos de `$from` até `$to`; negativo se `$to` for anterior. */
+    public static function calendarDaysBetween(string $from, string $to): int
+    {
+        return self::dayNumber($to) - self::dayNumber($from);
+    }
+
     /** Dias desde 01/01/1970. O Domain não usa relógio nem classes de data do PHP. */
     private static function dayNumber(string $day): int
     {

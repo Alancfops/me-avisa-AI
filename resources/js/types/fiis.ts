@@ -11,6 +11,27 @@ export type Fund = {
     bookValueMonth: string | null;
     dividendYield12m: string | null;
     matchedRules: string[];
+    // Só na página do fundo; a lista do painel não traz estes campos.
+    average6m?: WindowAverage;
+    average12m?: WindowAverage;
+    history?: { date: string; close: string; priceToBook: string | null }[];
+    dividends?: { month: string; perShare: string }[];
+    profile?: FundProfile | null;
+};
+
+export type WindowAverage = {
+    months: number;
+    monthsStored: number;
+    value: string | null;
+};
+
+export type FundProfile = {
+    month: string;
+    segment: string | null;
+    administrator: string | null;
+    startedOn: string | null;
+    netAssets: string | null;
+    holders: number | null;
 };
 
 export type Search = {

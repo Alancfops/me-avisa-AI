@@ -2,6 +2,7 @@
 
 namespace App\Modules\Fiis\Infrastructure\Persistence;
 
+use App\Modules\Fiis\Application\FundProfile;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Domain\BookValueReport;
 use App\Modules\Fiis\Domain\Money;
@@ -46,6 +47,33 @@ final class EloquentReportRepository implements ReportRepository
             ->all());
     }
 
+    public function profile(string $ticker): ?FundProfile
+    {
+        if ($this->isAmbiguous($ticker)) {
+            return null;
+        }
+
+        $row = FundReportModel::query()
+            ->where('ticker', $ticker)
+            ->where(fn ($query) => $query
+                ->whereNotNull('segment')
+                ->orWhereNotNull('administrator')
+                ->orWhereNotNull('started_on')
+                ->orWhereNotNull('net_assets')
+                ->orWhereNotNull('holders'))
+            ->orderByDesc('month')
+            ->first();
+
+        return $row === null ? null : new FundProfile(
+            $row->month,
+            $row->segment,
+            $row->administrator,
+            $row->started_on === null ? null : substr($row->started_on, 0, 10),
+            $row->net_assets === null ? null : (string) $row->net_assets,
+            $row->holders,
+        );
+    }
+
     public function save(array $reports): void
     {
         DB::transaction(function () use ($reports): void {
@@ -74,12 +102,17 @@ final class EloquentReportRepository implements ReportRepository
                         'delivered_on' => $record->deliveredOn,
                         'book_value' => $record->bookValue,
                         'dividend_yield' => $record->dividendYield,
+                        'segment' => $record->segment,
+                        'administrator' => $record->administrator,
+                        'started_on' => $record->startedOn,
+                        'net_assets' => $record->netAssets,
+                        'holders' => $record->holders,
                     ];
                 }
             }
 
             foreach (array_chunk($rows, 500) as $chunk) {
-                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield']);
+                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield', 'segment', 'administrator', 'started_on', 'net_assets', 'holders']);
             }
         });
     }

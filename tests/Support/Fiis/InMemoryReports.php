@@ -2,6 +2,7 @@
 
 namespace Tests\Support\Fiis;
 
+use App\Modules\Fiis\Application\FundProfile;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Domain\BookValueReport;
 
@@ -18,6 +19,11 @@ final class InMemoryReports implements ReportRepository
     public function monthlyYields(string $ticker): array
     {
         return [];
+    }
+
+    public function profile(string $ticker): ?FundProfile
+    {
+        return null;
     }
 
     public function save(array $reports): void {}

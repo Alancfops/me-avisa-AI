@@ -13,5 +13,11 @@ final readonly class FundReportRecord
         public string $deliveredOn,
         public ?string $bookValue,
         public ?string $dividendYield,
+        public ?string $segment = null,
+        public ?string $administrator = null,
+        /** Data de início do fundo, em `Y-m-d`. */
+        public ?string $startedOn = null,
+        public ?string $netAssets = null,
+        public ?int $holders = null,
     ) {}
 }
