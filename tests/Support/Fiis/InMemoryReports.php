@@ -27,6 +27,21 @@ final class InMemoryReports implements ReportRepository
         return null;
     }
 
+    public function allBookValues(): array
+    {
+        return $this->reports;
+    }
+
+    public function allMonthlyYields(): array
+    {
+        return [];
+    }
+
+    public function profiles(): array
+    {
+        return [];
+    }
+
     public function kinds(): array
     {
         return [];

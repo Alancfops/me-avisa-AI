@@ -11,6 +11,10 @@ export type Fund = {
     bookValueMonth: string | null;
     dividendYield12m: string | null;
     matchedRules: string[];
+    favorite: boolean;
+    // 'quote' é a cotação da brapi (favoritos); 'close' é o fechamento da B3, com o dia em closeDay.
+    priceSource: 'quote' | 'close';
+    closeDay: string | null;
     // Só na página do fundo; a lista do painel não traz estes campos.
     average6m?: WindowAverage;
     average12m?: WindowAverage;
@@ -79,4 +83,20 @@ export type Usage = {
     limit: number;
     used: number;
     remaining: number;
+};
+
+export type FundKind = 'tijolo' | 'papel' | 'fundo_de_fundos' | 'hibrido';
+
+// Item de GET /fundos. Campos nulos são dado ausente (sem informe, sem fechamento recente), nunca zero.
+export type FundListItem = {
+    ticker: string;
+    name: string;
+    kind: FundKind | null;
+    segment: string | null;
+    close: string | null;
+    closeDay: string | null;
+    priceToBook: string | null;
+    dividendYield12m: string | null;
+    netAssets: string | null;
+    favorite: boolean;
 };

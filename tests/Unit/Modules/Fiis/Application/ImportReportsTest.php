@@ -46,6 +46,21 @@ function failingStore(int $failuresWanted): ReportRepository
             return null;
         }
 
+        public function allBookValues(): array
+        {
+            return [];
+        }
+
+        public function allMonthlyYields(): array
+        {
+            return [];
+        }
+
+        public function profiles(): array
+        {
+            return [];
+        }
+
         public function kinds(): array
         {
             return [];

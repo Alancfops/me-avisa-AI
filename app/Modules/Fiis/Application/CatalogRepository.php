@@ -10,6 +10,9 @@ interface CatalogRepository
     /** @return list<CatalogEntry> */
     public function search(string $query): array;
 
+    /** @return list<CatalogEntry> em ordem de ticker */
+    public function all(): array;
+
     /** @return list<string> */
     public function tickers(): array;
 

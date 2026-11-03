@@ -44,6 +44,28 @@ final class InMemoryMarketData implements MarketData
         }
     }
 
+    public function latestClose(string $ticker): ?DailyClose
+    {
+        $byDay = $this->closes[$ticker] ?? [];
+        ksort($byDay);
+
+        return $byDay === [] ? null : end($byDay);
+    }
+
+    public function latestCloses(int $tradingDays = 10): array
+    {
+        $latest = [];
+
+        foreach ($this->closes as $ticker => $byDay) {
+            if ($byDay !== []) {
+                ksort($byDay);
+                $latest[$ticker] = end($byDay);
+            }
+        }
+
+        return $latest;
+    }
+
     public function closesBefore(string $ticker, string $day, string $fromDay): array
     {
         $closes = array_filter(

@@ -58,7 +58,7 @@ export default function FundShow({
     rules,
 }: {
     fund: Fund;
-    settings: Settings;
+    settings: Settings | null;
     rules: RuleStatus[];
 }) {
     const shortHistory = fund.priceToBookDays < MIN_DAYS_FOR_MEDIAN;
@@ -125,11 +125,13 @@ export default function FundShow({
                  */}
                 <div className="grid items-start gap-6 lg:grid-cols-3 lg:grid-rows-[auto_auto_1fr]">
                     <div className="min-w-0 lg:col-start-3 lg:row-start-2">
-                        <WhenToAlert
-                            ticker={fund.ticker}
-                            settings={settings}
-                            shortHistory={shortHistory}
-                        />
+                        {settings && (
+                            <WhenToAlert
+                                ticker={fund.ticker}
+                                settings={settings}
+                                shortHistory={shortHistory}
+                            />
+                        )}
                     </div>
 
                     <div className="min-w-0 space-y-6 lg:col-span-2 lg:col-start-1 lg:row-span-3 lg:row-start-1">
@@ -140,7 +142,7 @@ export default function FundShow({
                             price={fund.price}
                             average30d={fund.average30d}
                             target={
-                                settings.mode === 'target'
+                                settings?.mode === 'target'
                                     ? settings.target
                                     : null
                             }
@@ -187,7 +189,9 @@ export default function FundShow({
                     </div>
 
                     <div className="min-w-0 lg:col-start-3 lg:row-start-3">
-                        <RemoveFavorite ticker={fund.ticker} />
+                        {fund.favorite && (
+                            <RemoveFavorite ticker={fund.ticker} />
+                        )}
                     </div>
                 </div>
             </div>

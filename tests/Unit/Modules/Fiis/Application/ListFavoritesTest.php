@@ -24,6 +24,11 @@ function catalogNaming(array $names): CatalogRepository
             return [];
         }
 
+        public function all(): array
+        {
+            return [];
+        }
+
         public function tickers(): array
         {
             return array_map(strval(...), array_keys($this->names));

@@ -57,6 +57,20 @@ it('keeps the favorite when the history fails, and tries again later', function 
         ->and(DailyPriceModel::count())->toBe(0);
 });
 
+it('goes back to the previous page when asked to stay', function () {
+    Http::fake(['*/stocks/historical*' => Http::response(fixtureBody('historical-knri11'))]);
+
+    $this->from('/fundos')->post('/favoritos', ['ticker' => 'KNRI11', 'stay' => true])->assertRedirect('/fundos');
+
+    expect(FavoriteModel::where('ticker', 'KNRI11')->exists())->toBeTrue();
+});
+
+it('opens the fund page when not asked to stay', function () {
+    Http::fake(['*/stocks/historical*' => Http::response(fixtureBody('historical-knri11'))]);
+
+    $this->from('/fundos')->post('/favoritos', ['ticker' => 'KNRI11'])->assertRedirect('/fundos/KNRI11');
+});
+
 it('does not favorite twice', function () {
     Http::fake(['*/stocks/historical*' => Http::response(fixtureBody('historical-knri11'))]);
 

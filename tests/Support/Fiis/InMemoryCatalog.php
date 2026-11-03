@@ -2,6 +2,7 @@
 
 namespace Tests\Support\Fiis;
 
+use App\Modules\Fiis\Application\CatalogEntry;
 use App\Modules\Fiis\Application\CatalogRepository;
 
 final class InMemoryCatalog implements CatalogRepository
@@ -14,6 +15,11 @@ final class InMemoryCatalog implements CatalogRepository
     public function search(string $query): array
     {
         return [];
+    }
+
+    public function all(): array
+    {
+        return array_values(array_map(fn (string $ticker): CatalogEntry => new CatalogEntry($ticker, $this->names[$ticker]), $this->tickers()));
     }
 
     public function tickers(): array

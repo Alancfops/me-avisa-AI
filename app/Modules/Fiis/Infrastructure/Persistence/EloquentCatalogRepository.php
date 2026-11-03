@@ -35,6 +35,15 @@ final class EloquentCatalogRepository implements CatalogRepository
             ->all());
     }
 
+    public function all(): array
+    {
+        return array_values(FundModel::query()
+            ->orderBy('ticker')
+            ->get(['ticker', 'name'])
+            ->map(fn (FundModel $fund): CatalogEntry => new CatalogEntry((string) $fund->getAttribute('ticker'), (string) $fund->getAttribute('name')))
+            ->all());
+    }
+
     public function tickers(): array
     {
         return array_values(FundModel::query()->pluck('ticker')->map(fn ($ticker): string => (string) $ticker)->all());

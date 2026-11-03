@@ -14,7 +14,7 @@ final class FavoriteController
         $ticker = $request->string('ticker')->toString();
         $addFavorite->handle($ticker);
 
-        return redirect()->route('funds.show', $ticker);
+        return $request->boolean('stay') ? redirect()->back() : redirect()->route('funds.show', $ticker);
     }
 
     public function destroy(string $ticker, RemoveFavorite $removeFavorite): RedirectResponse

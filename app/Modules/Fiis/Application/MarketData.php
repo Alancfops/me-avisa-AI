@@ -16,6 +16,18 @@ interface MarketData
     /** @param list<DailyClose> $closes */
     public function saveCloses(string $ticker, array $closes): void;
 
+    /** Fechamento mais recente do ticker, de qualquer idade: a página mostra o dia dele. */
+    public function latestClose(string $ticker): ?DailyClose;
+
+    /**
+     * Último fechamento de cada ticker que negociou nos últimos `$tradingDays` dias úteis,
+     * contados a partir do pregão mais recente guardado (e não do relógio: com a máquina
+     * parada, a lista mostra o último dia que o app conhece, em vez de ficar vazia).
+     *
+     * @return array<string, DailyClose>
+     */
+    public function latestCloses(int $tradingDays = 10): array;
+
     /**
      * Fechamentos em `$fromDay ≤ dia < $day`, do mais antigo ao mais novo.
      *

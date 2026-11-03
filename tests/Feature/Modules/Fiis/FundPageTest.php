@@ -30,8 +30,45 @@ it('starts new favorites automatic with sharp drop on', function () {
         ->where('settings', ['mode' => 'automatic', 'target' => null, 'rangeMin' => null, 'rangeMax' => null, 'sharpDrop' => true]));
 });
 
-it('does not show a fund that is not a favorite', function () {
-    $this->get('/fundos/ABCD11')->assertNotFound();
+it('opens a catalog fund that is not a favorite, priced by its last close and without calling brapi', function () {
+    Http::fake();
+    FundModel::create(['ticker' => 'ABCD11', 'name' => 'Fundo Abcd']);
+    DailyPriceModel::create(['ticker' => 'ABCD11', 'day' => '2026-10-29', 'close' => '12.34']);
+
+    $this->get('/fundos/abcd11')->assertInertia(fn ($page) => $page
+        ->component('funds/show')
+        ->where('fund.ticker', 'ABCD11')
+        ->where('fund.favorite', false)
+        ->where('fund.price', '12.34')
+        ->where('fund.priceSource', 'close')
+        ->where('fund.closeDay', '2026-10-29')
+        ->where('fund.quotedAt', null)
+        ->where('settings', null)
+        ->where('rules', []));
+
+    Http::assertNothingSent();
+});
+
+it('marks a favorite as such and prices it by its quote', function () {
+    storeQuote();
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page
+        ->where('fund.favorite', true)
+        ->where('fund.priceSource', 'quote')
+        ->where('fund.closeDay', null));
+});
+
+it('opens a non-favorite fund without any close', function () {
+    FundModel::create(['ticker' => 'ABCD11', 'name' => 'Fundo Abcd']);
+
+    $this->get('/fundos/ABCD11')->assertInertia(fn ($page) => $page
+        ->where('fund.price', null)
+        ->where('fund.priceSource', 'close')
+        ->where('fund.closeDay', null));
+});
+
+it('does not show a ticker outside the catalog', function () {
+    $this->get('/fundos/ZZZZ11')->assertNotFound();
 });
 
 it('explains why the automatic rule cannot run', function () {

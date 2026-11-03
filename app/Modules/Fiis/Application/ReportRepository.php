@@ -41,6 +41,27 @@ interface ReportRepository
     public function kindOf(string $ticker): ?FundKind;
 
     /**
+     * `bookValues` de todos os tickers numa consulta, sem os ambíguos.
+     *
+     * @return array<string, list<BookValueReport>>
+     */
+    public function allBookValues(): array;
+
+    /**
+     * `monthlyYields` de todos os tickers numa consulta, sem os ambíguos.
+     *
+     * @return array<string, list<MonthlyYield>>
+     */
+    public function allMonthlyYields(): array;
+
+    /**
+     * `profile` de todos os tickers numa consulta, sem os ambíguos.
+     *
+     * @return array<string, FundProfile>
+     */
+    public function profiles(): array;
+
+    /**
      * Não troca um informe por uma versão anterior.
      *
      * @param  list<StoredReport>  $reports

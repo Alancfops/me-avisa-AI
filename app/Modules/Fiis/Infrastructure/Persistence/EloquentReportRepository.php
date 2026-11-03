@@ -9,7 +9,9 @@ use App\Modules\Fiis\Domain\FundKind;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\MonthlyYield;
 use App\Modules\Fiis\Domain\Portfolio;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 final class EloquentReportRepository implements ReportRepository
 {
@@ -74,6 +76,67 @@ final class EloquentReportRepository implements ReportRepository
             $row->net_assets === null ? null : (string) $row->net_assets,
             $row->holders,
         );
+    }
+
+    public function allBookValues(): array
+    {
+        $byTicker = [];
+
+        foreach ($this->rows('book_value', ['book_value']) as $row) {
+            $byTicker[$row->ticker][] = new BookValueReport($row->month, $row->delivered_on, Money::fromString((string) $row->book_value));
+        }
+
+        return $byTicker;
+    }
+
+    public function allMonthlyYields(): array
+    {
+        $byTicker = [];
+
+        foreach ($this->rows('dividend_yield', ['dividend_yield']) as $row) {
+            $byTicker[$row->ticker][] = new MonthlyYield($row->month, $row->delivered_on, (string) $row->dividend_yield);
+        }
+
+        return $byTicker;
+    }
+
+    public function profiles(): array
+    {
+        $profiles = [];
+        $rows = $this->rows(null, ['segment', 'administrator', 'started_on', 'net_assets', 'holders'], 'desc')
+            ->filter(fn ($row): bool => $row->segment !== null || $row->administrator !== null || $row->started_on !== null || $row->net_assets !== null || $row->holders !== null);
+
+        foreach ($rows as $row) {
+            // Do mais recente ao mais antigo: vale o primeiro de cada ticker.
+            $profiles[$row->ticker] ??= new FundProfile(
+                $row->month,
+                $row->segment,
+                $row->administrator,
+                $row->started_on === null ? null : substr((string) $row->started_on, 0, 10),
+                $row->net_assets === null ? null : (string) $row->net_assets,
+                $row->holders === null ? null : (int) $row->holders,
+            );
+        }
+
+        return $profiles;
+    }
+
+    /**
+     * Linhas de todos os tickers não ambíguos, numa consulta, sem models: a lista lê o
+     * informe de todo o catálogo.
+     *
+     * @param  list<string>  $columns
+     * @param  'asc'|'desc'  $order
+     * @return Collection<int, stdClass>
+     */
+    private function rows(?string $required, array $columns, string $order = 'asc'): Collection
+    {
+        return FundReportModel::query()->toBase()
+            ->select(['ticker', 'month', 'delivered_on', ...$columns])
+            ->whereNotIn('ticker', $this->ambiguousTickers())
+            ->when($required !== null, fn ($query) => $query->whereNotNull($required))
+            ->orderBy('month', $order)
+            ->get();
     }
 
     public function kinds(): array

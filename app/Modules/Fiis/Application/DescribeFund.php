@@ -25,21 +25,28 @@ final readonly class DescribeFund
     /**
      * @param  bool  $detailed  perfil, médias, histórico e rendimentos: só a página do
      *                          fundo precisa, e a lista não deve carregar um ano de preços por favorito
-     * @return FavoriteView|null `null` se o fundo não for um favorito
+     * @return FavoriteView|null `null` se o fundo não é favorito nem está no catálogo.
+     *                           Quem não é favorito não tem regras nem cotação (a brapi
+     *                           é só dos favoritos): o preço é o último fechamento.
      */
     public function handle(string $ticker, bool $detailed = false): ?FavoriteView
     {
         $settings = $this->favorites->settings($ticker);
 
-        if ($settings === null) {
+        if ($settings === null && ! $this->catalog->exists($ticker)) {
             return null;
         }
 
-        $quote = $this->market->latestQuote($ticker);
-        $snapshot = $quote === null ? null : $this->snapshots->handle($quote);
+        $quote = $settings === null ? null : $this->market->latestQuote($ticker);
+        $close = $settings === null ? $this->market->latestClose($ticker) : null;
+        $snapshot = match (true) {
+            $quote !== null => $this->snapshots->handle($quote),
+            $close !== null => $this->snapshots->atClose($ticker, $close),
+            default => null,
+        };
         $rules = [];
 
-        if ($snapshot !== null) {
+        if ($settings !== null && $snapshot !== null) {
             foreach ($settings->rules() as $kind => $rule) {
                 $rules[] = new RuleStatus(RuleKind::from($kind), $rule->evaluate($snapshot));
             }
@@ -58,6 +65,7 @@ final readonly class DescribeFund
             $rules,
             DividendYield::trailing12Months($yields, MarketTime::day($this->clock->now())),
             ...$details,
+            close: $close,
         );
     }
 
