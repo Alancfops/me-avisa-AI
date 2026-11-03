@@ -19,6 +19,19 @@ final class CvmFundReports implements FundReports
 
     private const COMPLEMENT_COLUMNS = ['CNPJ_Fundo_Classe', 'Data_Referencia', 'Versao', 'Valor_Patrimonial_Cotas', 'Percentual_Dividend_Yield_Mes'];
 
+    /** Perfil do fundo: ausente no arquivo vira null, não "mudou de formato". */
+    private const GENERAL_OPTIONAL_COLUMNS = ['Segmento_Atuacao', 'Nome_Administrador', 'Data_Funcionamento'];
+
+    private const COMPLEMENT_OPTIONAL_COLUMNS = ['Patrimonio_Liquido', 'Total_Numero_Cotistas'];
+
+    private const MAX_SEGMENT_LENGTH = 120;
+
+    private const MAX_ADMINISTRATOR_LENGTH = 255;
+
+    private const MAX_NET_ASSETS = '9999999999999999999999';
+
+    private const MAX_HOLDERS = 4294967295;
+
     /** Limites das colunas: fora disso é dado quebrado, e gravar derrubaria o ano inteiro. */
     private const MAX_BOOK_VALUE = '999999999999999';
 
@@ -35,8 +48,8 @@ final class CvmFundReports implements FundReports
                 throw new SourceUnavailable("O arquivo da CVM de {$year} está corrompido.");
             }
 
-            $complements = $this->complements($this->rows($zip, 'complemento', self::COMPLEMENT_COLUMNS));
-            $records = $this->latestVersions($this->rows($zip, 'geral', self::GENERAL_COLUMNS), $complements);
+            $complements = $this->complements($this->rows($zip, 'complemento', self::COMPLEMENT_COLUMNS, self::COMPLEMENT_OPTIONAL_COLUMNS));
+            $records = $this->latestVersions($this->rows($zip, 'geral', self::GENERAL_COLUMNS, self::GENERAL_OPTIONAL_COLUMNS), $complements);
             $zip->close();
 
             return $records;
@@ -67,9 +80,10 @@ final class CvmFundReports implements FundReports
 
     /**
      * @param  list<string>  $required
+     * @param  list<string>  $optional  lidas só se estiverem no cabeçalho
      * @return list<array<string, string>>
      */
-    private function rows(ZipArchive $zip, string $kind, array $required): array
+    private function rows(ZipArchive $zip, string $kind, array $required, array $optional = []): array
     {
         $stream = $this->openEntry($zip, $kind);
         $header = $this->readRow($stream);
@@ -79,7 +93,7 @@ final class CvmFundReports implements FundReports
         }
 
         $rows = [];
-        $wanted = array_flip($required);
+        $wanted = array_flip([...$required, ...array_intersect($optional, $header)]);
 
         while (($row = $this->readRow($stream)) !== null) {
             // Linha com colunas a menos ou a mais é corrupção: não dá para saber qual é qual.
@@ -206,6 +220,11 @@ final class CvmFundReports implements FundReports
             $delivered,
             $this->validBookValue($bookValue),
             $this->validYield($this->decimal($complement['Percentual_Dividend_Yield_Mes'] ?? '')),
+            $this->text($row['Segmento_Atuacao'] ?? '', self::MAX_SEGMENT_LENGTH),
+            $this->text($row['Nome_Administrador'] ?? '', self::MAX_ADMINISTRATOR_LENGTH),
+            $this->validDate($row['Data_Funcionamento'] ?? ''),
+            $this->validNetAssets($this->decimal($complement['Patrimonio_Liquido'] ?? '')),
+            $this->validHolders($complement['Total_Numero_Cotistas'] ?? ''),
         );
     }
 
@@ -223,6 +242,38 @@ final class CvmFundReports implements FundReports
     private function validYield(?string $value): ?string
     {
         return $value !== null && BigDecimal::of($value)->abs()->isLessThanOrEqualTo(self::MAX_YIELD_MAGNITUDE) ? $value : null;
+    }
+
+    /** Texto maior que a coluna é dado quebrado: vira null em vez de derrubar o ano. */
+    private function text(string $value, int $maxLength): ?string
+    {
+        return $value !== '' && mb_strlen($value) <= $maxLength ? $value : null;
+    }
+
+    private function validDate(string $value): ?string
+    {
+        return $this->isDate($value) && checkdate((int) substr($value, 5, 2), (int) substr($value, 8, 2), (int) substr($value, 0, 4)) ? $value : null;
+    }
+
+    private function validNetAssets(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $number = BigDecimal::of($value);
+
+        return $number->isPositive() && $number->isLessThanOrEqualTo(self::MAX_NET_ASSETS) ? $value : null;
+    }
+
+    private function validHolders(string $value): ?int
+    {
+        // Zero cotistas não existe num fundo com informe: é campo vazio, e ausente é null.
+        if (! ctype_digit($value) || strlen($value) > 10 || (int) $value < 1 || (int) $value > self::MAX_HOLDERS) {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     private function isDate(string $value): bool

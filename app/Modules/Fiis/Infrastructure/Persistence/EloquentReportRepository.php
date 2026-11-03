@@ -74,12 +74,17 @@ final class EloquentReportRepository implements ReportRepository
                         'delivered_on' => $record->deliveredOn,
                         'book_value' => $record->bookValue,
                         'dividend_yield' => $record->dividendYield,
+                        'segment' => $record->segment,
+                        'administrator' => $record->administrator,
+                        'started_on' => $record->startedOn,
+                        'net_assets' => $record->netAssets,
+                        'holders' => $record->holders,
                     ];
                 }
             }
 
             foreach (array_chunk($rows, 500) as $chunk) {
-                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield']);
+                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield', 'segment', 'administrator', 'started_on', 'net_assets', 'holders']);
             }
         });
     }
