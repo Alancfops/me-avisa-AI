@@ -11,6 +11,7 @@ use App\Modules\Fiis\Infrastructure\Persistence\QuoteModel;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 function cvmZip(?string $geral = null, ?string $complemento = null, int $year = 2026, string|false|null $ativoPassivo = null): string
 {
@@ -342,9 +343,12 @@ it('imports book value and yield from a zip without the portfolio file, leaving 
 });
 
 it('imports a year whose portfolio file has an unknown format, without portfolio', function () {
+    Log::spy();
     fakeCvm(cvmZip(null, null, 2026, "a;b\n1;2\n"));
 
     $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    Log::shouldHaveReceived('warning')->withArgs(fn (string $message) => str_contains($message, 'ativo_passivo'))->atLeast()->once();
 
     expect(FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('total_invested'))->toBeNull()
         ->and((float) FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('book_value'))->toBe(9.6);
@@ -388,4 +392,13 @@ it('leaves a ticker claimed by two funds without a kind', function () {
 
     expect(app(ReportRepository::class)->kinds())->not->toHaveKey('XPML11')
         ->and(app(ReportRepository::class)->kindOf('XPML11'))->toBeNull();
+});
+
+it('gives the list and the page the same kind when the latest report has total zero', function () {
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-08', 'version' => 1, 'delivered_on' => '2026-09-10', 'total_invested' => '100', 'real_estate' => '90', 'receivables' => '0', 'fii_shares' => '0']);
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1, 'delivered_on' => '2026-10-10', 'total_invested' => '0', 'real_estate' => '0', 'receivables' => '0', 'fii_shares' => '0']);
+    $reports = app(ReportRepository::class);
+
+    expect($reports->kinds())->toBe(['MXRF11' => FundKind::Brick])
+        ->and($reports->kindOf('MXRF11'))->toBe(FundKind::Brick);
 });

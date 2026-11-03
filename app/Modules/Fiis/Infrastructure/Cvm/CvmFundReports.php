@@ -12,6 +12,7 @@ use Brick\Math\RoundingMode;
 use Generator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use ZipArchive;
 
 final class CvmFundReports implements FundReports
@@ -132,7 +133,10 @@ final class CvmFundReports implements FundReports
                     $portfolios["{$row['CNPJ_Fundo_Classe']}|{$row['Data_Referencia']}|{$row['Versao']}"] = $portfolio;
                 }
             }
-        } catch (SourceUnavailable) {
+        } catch (SourceUnavailable $failure) {
+            // Sem a composição o ano segue com VP e DY; o aviso é só para quem investiga o tipo.
+            Log::warning("Composição da carteira da CVM ignorada: {$failure->getMessage()}");
+
             return [];
         }
 

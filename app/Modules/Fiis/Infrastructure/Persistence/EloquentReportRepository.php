@@ -79,27 +79,7 @@ final class EloquentReportRepository implements ReportRepository
     public function kinds(): array
     {
         $ambiguous = array_flip($this->ambiguousTickers());
-        $kinds = [];
-
-        // Mais recente primeiro: o primeiro informe de cada ticker com composição decide.
-        $rows = FundReportModel::query()->toBase()
-            ->select(['ticker', 'total_invested', 'real_estate', 'receivables', 'fii_shares'])
-            ->whereNotNull('total_invested')
-            ->orderByDesc('month')
-            ->cursor();
-
-        foreach ($rows as $row) {
-            if (isset($ambiguous[$row->ticker]) || array_key_exists($row->ticker, $kinds)) {
-                continue;
-            }
-
-            $kind = (new Portfolio((string) $row->total_invested, (string) $row->real_estate, (string) $row->receivables, (string) $row->fii_shares))->kind();
-
-            if ($kind !== null) {
-                $kinds[$row->ticker] = $kind;
-            }
-        }
-
+        $kinds = array_diff_key($this->classified(null), $ambiguous);
         ksort($kinds);
 
         return $kinds;
@@ -111,13 +91,37 @@ final class EloquentReportRepository implements ReportRepository
             return null;
         }
 
-        $row = FundReportModel::query()
-            ->where('ticker', $ticker)
-            ->whereNotNull('total_invested')
-            ->orderByDesc('month')
-            ->first();
+        return $this->classified($ticker)[$ticker] ?? null;
+    }
 
-        return $row === null ? null : (new Portfolio((string) $row->total_invested, (string) $row->real_estate, (string) $row->receivables, (string) $row->fii_shares))->kind();
+    /**
+     * Único caminho do tipo, para a lista e a página darem a mesma resposta: informe com
+     * total investido <= 0 não tem composição, e vale o mais recente que tem.
+     *
+     * @return array<string, FundKind>
+     */
+    private function classified(?string $ticker): array
+    {
+        $kinds = [];
+
+        $rows = FundReportModel::query()->toBase()
+            ->select(['ticker', 'total_invested', 'real_estate', 'receivables', 'fii_shares'])
+            ->where('total_invested', '>', 0)
+            ->when($ticker !== null, fn ($query) => $query->where('ticker', $ticker))
+            ->orderByDesc('month')
+            ->cursor();
+
+        foreach ($rows as $row) {
+            if (! array_key_exists($row->ticker, $kinds)) {
+                $kind = (new Portfolio((string) $row->total_invested, (string) $row->real_estate, (string) $row->receivables, (string) $row->fii_shares))->kind();
+
+                if ($kind !== null) {
+                    $kinds[$row->ticker] = $kind;
+                }
+            }
+        }
+
+        return $kinds;
     }
 
     public function save(array $reports): void
