@@ -80,25 +80,56 @@ function PriceField({
     );
 }
 
+export type SuggestedTarget = { value: string; id: number };
+
 export function WhenToAlert({
     ticker,
     settings,
     shortHistory,
+    suggestedTarget = null,
 }: {
     ticker: string;
     settings: Settings;
     shortHistory: boolean;
+    /** Alvo vindo do preço teto: preenche o campo, mas só salva quando a pessoa pedir. */
+    suggestedTarget?: SuggestedTarget | null;
 }) {
     const form = useForm(formDataFrom(settings));
     const [feedback, setFeedback] = useState('');
     const [failure, setFailure] = useState('');
     const heading = useRef<HTMLHeadingElement>(null);
+    const lastSuggestion = useRef<number | null>(null);
 
     useEffect(() => {
         if (consumeWhenToAlertFocus()) {
             heading.current?.focus();
         }
     }, []);
+
+    useEffect(() => {
+        if (
+            suggestedTarget === null ||
+            lastSuggestion.current === suggestedTarget.id
+        ) {
+            return;
+        }
+
+        lastSuggestion.current = suggestedTarget.id;
+        form.setData((data) => ({
+            ...data,
+            mode: 'target',
+            target: suggestedTarget.value,
+        }));
+        setFailure('');
+        setFeedback(
+            `Alvo preenchido com R$ ${suggestedTarget.value}. Falta salvar.`,
+        );
+        window.requestAnimationFrame(() =>
+            document.getElementById('target')?.focus(),
+        );
+        // `form` muda a cada render; só uma sugestão nova deve disparar isto.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [suggestedTarget]);
 
     const modes: { value: AlertMode; label: string; description: string }[] = [
         {
