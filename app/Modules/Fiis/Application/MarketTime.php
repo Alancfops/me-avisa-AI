@@ -2,6 +2,7 @@
 
 namespace App\Modules\Fiis\Application;
 
+use App\Modules\Fiis\Domain\PriceHistory;
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -24,5 +25,13 @@ final class MarketTime
     public static function yearBefore(string $day): string
     {
         return (new DateTimeImmutable($day))->modify('-1 year')->format('Y-m-d');
+    }
+
+    /** `yearBefore` com a folga que o `PriceHistory` aceita no início da janela. */
+    public static function yearWindowFetchStart(string $day): string
+    {
+        $days = PriceHistory::WINDOW_START_TOLERANCE_DAYS;
+
+        return (new DateTimeImmutable(self::yearBefore($day)))->modify("-{$days} days")->format('Y-m-d');
     }
 }

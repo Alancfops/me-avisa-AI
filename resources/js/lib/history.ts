@@ -8,7 +8,11 @@ export type HistoryPoint = {
 
 export const PERIODS: Period[] = [3, 6, 12];
 
-/** Quantos dias sem fechamento no começo da janela ainda contam como janela cheia (fim de semana, feriado). */
+/**
+ * Quantos dias sem fechamento no começo da janela ainda contam como janela cheia
+ * (fim de semana, carnaval). Espelha `PriceHistory::WINDOW_START_TOLERANCE_DAYS`
+ * (app/Modules/Fiis/Domain/PriceHistory.php): front e card dizem o mesmo.
+ */
 const GAP_TOLERANCE_DAYS = 5;
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;

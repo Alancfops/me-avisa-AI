@@ -67,7 +67,7 @@ final readonly class DescribeFund
      */
     private function details(string $ticker, string $day, array $yields): array
     {
-        $closes = $this->market->closesBefore($ticker, $day, MarketTime::yearBefore($day));
+        $closes = $this->market->closesBefore($ticker, $day, MarketTime::yearWindowFetchStart($day));
         $bookValues = $this->reports->bookValues($ticker);
 
         return [

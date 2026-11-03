@@ -8,6 +8,14 @@ final class PriceHistory
     public const POINTS_MONTHS = 12;
 
     /**
+     * Quantos dias o primeiro fechamento guardado pode vir depois do início da janela
+     * e ela ainda contar como completa: o início cai em fim de semana ou feriado, e o
+     * carnaval junta até 5 dias sem pregão. O front espelha este número em
+     * `GAP_TOLERANCE_DAYS` (resources/js/lib/history.ts) para dizer o mesmo que o card.
+     */
+    public const WINDOW_START_TOLERANCE_DAYS = 5;
+
+    /**
      * Média dos fechamentos da janela, só quando o histórico cobre a janela inteira:
      * média de janela incompleta enganaria como se fosse de 6 ou 12 meses.
      *
@@ -21,14 +29,16 @@ final class PriceHistory
             return new WindowAverage($months, 0, null);
         }
 
-        $monthsStored = min($months, self::wholeMonthsBetween($earlier[0]->date, $day));
+        $from = self::monthsBefore($day, $months);
 
-        if ($monthsStored < $months) {
-            return new WindowAverage($months, $monthsStored, null);
+        if (TradingDays::calendarDaysBetween($from, $earlier[0]->date) > self::WINDOW_START_TOLERANCE_DAYS) {
+            // Incompleta nunca mostra o total, mesmo que os meses inteiros cheguem a ele.
+            $whole = min($months - 1, self::wholeMonthsBetween($earlier[0]->date, $day));
+
+            return new WindowAverage($months, $whole, null);
         }
 
-        // Em texto, `2026-02-31` não existe, mas serve de limite de comparação.
-        $from = self::monthsBefore($day, $months);
+        $monthsStored = $months;
         $inWindow = array_filter($earlier, fn (DailyClose $close): bool => $close->date >= $from);
 
         return new WindowAverage($months, $monthsStored, Money::average(
@@ -77,11 +87,20 @@ final class PriceHistory
         return $earlier;
     }
 
+    /** Sem estourar o fim do mês: 31/08 menos 6 meses é 28/02, como no front. */
     private static function monthsBefore(string $day, int $months): string
     {
         $index = (int) substr($day, 0, 4) * 12 + (int) substr($day, 5, 2) - 1 - $months;
+        $year = intdiv($index, 12);
+        $month = $index % 12 + 1;
+        $leap = ($year % 4 === 0 && $year % 100 !== 0) || $year % 400 === 0;
+        $daysInMonth = match ($month) {
+            2 => $leap ? 29 : 28,
+            4, 6, 9, 11 => 30,
+            default => 31,
+        };
 
-        return sprintf('%04d-%02d', intdiv($index, 12), $index % 12 + 1).substr($day, 7);
+        return sprintf('%04d-%02d-%02d', $year, $month, min((int) substr($day, 8, 2), $daysInMonth));
     }
 
     private static function wholeMonthsBetween(string $from, string $to): int

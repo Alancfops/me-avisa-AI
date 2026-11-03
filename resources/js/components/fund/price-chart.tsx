@@ -18,7 +18,7 @@ import {
     tickLabel,
     tooltipStyle,
 } from '@/components/fund/chart-period';
-import { brl, dayMonth, signedPercent } from '@/lib/format';
+import { brl, dayMonthYear, signedPercent } from '@/lib/format';
 import {
     axisTicks,
     inPeriod,
@@ -237,7 +237,7 @@ function Body({
                         <Tooltip
                             {...tooltipStyle}
                             labelFormatter={(t) =>
-                                dayMonth(dateFromTime(Number(t)))
+                                dayMonthYear(dateFromTime(Number(t)))
                             }
                             formatter={(v) => [
                                 plainBrl(Number(v)),
@@ -318,7 +318,7 @@ function Body({
                 <tbody>
                     {tableRows.map((row) => (
                         <tr key={row.date}>
-                            <th scope="row">{dayMonth(row.date)}</th>
+                            <th scope="row">{dayMonthYear(row.date)}</th>
                             <td>{brl(row.close)}</td>
                         </tr>
                     ))}

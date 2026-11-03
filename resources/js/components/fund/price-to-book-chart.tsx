@@ -18,7 +18,7 @@ import {
     tooltipStyle,
 } from '@/components/fund/chart-period';
 import { LegendItem } from '@/components/fund/price-chart';
-import { dayMonth, ratio } from '@/lib/format';
+import { dayMonthYear, ratio } from '@/lib/format';
 import {
     axisTicks,
     inPeriod,
@@ -105,7 +105,7 @@ function Body({
         <>
             <div
                 role="img"
-                aria-label={`P/VP foi de ${ratio(first)} para ${ratio(last)} no histórico guardado dos últimos ${periodWords(period)}; a referência é 1,00`}
+                aria-label={`P/VP foi de ${ratio(first)} para ${ratio(last)} ${incomplete ? `no histórico guardado (últimos ${periodWords(period)} ainda incompletos)` : `em ${periodWords(period)}`}; a referência é 1,00`}
                 className="mt-4 h-52 w-full"
             >
                 <ResponsiveContainer width="100%" height="100%">
@@ -142,7 +142,7 @@ function Body({
                         <Tooltip
                             {...tooltipStyle}
                             labelFormatter={(t) =>
-                                dayMonth(dateFromTime(Number(t)))
+                                dayMonthYear(dateFromTime(Number(t)))
                             }
                             formatter={(v) => [plain(Number(v)), 'P/VP']}
                         />
@@ -203,7 +203,7 @@ function Body({
                 <tbody>
                     {rows.map((row) => (
                         <tr key={row.date}>
-                            <th scope="row">{dayMonth(row.date)}</th>
+                            <th scope="row">{dayMonthYear(row.date)}</th>
                             <td>{ratio(row.priceToBook)}</td>
                         </tr>
                     ))}

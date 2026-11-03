@@ -44,11 +44,62 @@ it('counts only the closes inside the window', function () {
 });
 
 it('ignores the closes of the day and after', function () {
-    $history = [...historyCloses(200), new DailyClose('2026-10-30', Money::fromString('1.00'))];
+    $history = [
+        ...historyCloses(200),
+        new DailyClose('2026-10-30', Money::fromString('1.00')),
+        new DailyClose('2026-11-03', Money::fromString('1.00')),
+    ];
 
     $average = PriceHistory::average($history, '2026-10-30', 6);
 
     expect((string) $average->average)->toBe('R$ 10,00');
+});
+
+it('counts the window as complete when its start day had no trading session', function () {
+    // 2026-11-07 foi sábado: o primeiro fechamento guardado é de segunda, 2026-11-09.
+    $weekdays = array_values(array_filter(
+        historyCloses(380, '10.00', '2026-11-09'),
+        fn ($close) => (int) gmdate('N', strtotime($close->date.' 12:00:00 UTC')) < 6,
+    ));
+
+    $average = PriceHistory::average($weekdays, '2027-11-08', 12);
+
+    expect($average->monthsStored)->toBe(12)
+        ->and((string) $average->average)->toBe('R$ 10,00');
+});
+
+it('counts a first close exactly 5 days after the window start as complete', function () {
+    $average = PriceHistory::average(historyCloses(200, '10.00', '2026-05-05'), '2026-10-30', 6);
+
+    expect($average->monthsStored)->toBe(6)
+        ->and($average->average)->not->toBeNull();
+});
+
+it('does not count the window as complete when the first close is 6 days after the start', function () {
+    $average = PriceHistory::average(historyCloses(200, '10.00', '2026-05-06'), '2026-10-30', 6);
+
+    expect($average->average)->toBeNull()
+        ->and($average->monthsStored)->toBe(5);
+});
+
+it('subtracts months from the end of the month without overflowing', function () {
+    // 2026-08-31 menos 6 meses é 2026-02-28 (fevereiro não tem dia 31).
+    $complete = PriceHistory::average(historyCloses(200, '10.00', '2026-02-28'), '2026-08-31', 6);
+    $late = PriceHistory::average(historyCloses(200, '10.00', '2026-03-06'), '2026-08-31', 6);
+
+    expect($complete->monthsStored)->toBe(6)
+        ->and($complete->average)->not->toBeNull()
+        ->and($late->average)->toBeNull();
+});
+
+it('handles the leap day when going back 12 months', function () {
+    // 2028-02-29 menos 12 meses é 2027-02-28.
+    $complete = PriceHistory::average(historyCloses(400, '10.00', '2027-02-28'), '2028-02-29', 12);
+    $late = PriceHistory::average(historyCloses(400, '10.00', '2027-03-06'), '2028-02-29', 12);
+
+    expect($complete->monthsStored)->toBe(12)
+        ->and($complete->average)->not->toBeNull()
+        ->and($late->average)->toBeNull();
 });
 
 it('stores no months without closes', function () {

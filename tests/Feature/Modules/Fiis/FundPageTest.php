@@ -206,6 +206,15 @@ it('says the 12 month average is still being collected', function () {
         ->where('fund.average6m', ['months' => 6, 'monthsStored' => 3, 'value' => null]));
 });
 
+it('fetches closes a few days before the window start so a non-trading start still completes it', function () {
+    storeQuote();
+    storeClose('2025-10-27', '8.00');
+    storeClose('2026-10-20', '10.00');
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page
+        ->where('fund.average12m', ['months' => 12, 'monthsStored' => 12, 'value' => '10']));
+});
+
 it('sends estimated dividends per share', function () {
     storeReport();
 

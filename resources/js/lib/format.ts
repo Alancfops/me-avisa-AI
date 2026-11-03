@@ -97,6 +97,13 @@ export function dayMonth(date: string): string {
     return `${day}/${month}`;
 }
 
+/** "2026-09-15" vira "15/09/26": sem ambiguidade em janelas que cruzam o ano. */
+export function dayMonthYear(date: string): string {
+    const [year, month, day] = date.split('-');
+
+    return `${day}/${month}/${year.slice(2)}`;
+}
+
 /** Valores grandes sem zeros demais: "R$ 4,62 bi". */
 export function compactBrl(value: string): string {
     return new Intl.NumberFormat('pt-BR', {
