@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Activity, Bell, LayoutGrid, Settings } from 'lucide-react';
+import { Activity, Bell, LayoutGrid, List, Settings } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -17,6 +17,11 @@ const mainNavItems: NavItem[] = [
         title: 'Painel',
         href: '/',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Todos os FIIs',
+        href: '/fundos',
+        icon: List,
     },
     {
         title: 'Avisos',

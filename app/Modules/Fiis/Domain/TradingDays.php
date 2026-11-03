@@ -14,12 +14,23 @@ final class TradingDays
         $missing = 0;
 
         for ($day = self::dayNumber($from) + 1, $last = self::dayNumber($to); $day < $last; $day++) {
-            if (($day + self::FIRST_DAY_WEEKDAY_OFFSET) % 7 < 5) {
+            if (self::isWeekdayNumber($day)) {
                 $missing++;
             }
         }
 
         return $missing;
+    }
+
+    /** Segunda a sexta. Feriado não entra: sem calendário, o dia sem pregão aparece como falta. */
+    public static function isBusinessDay(string $day): bool
+    {
+        return self::isWeekdayNumber(self::dayNumber($day));
+    }
+
+    private static function isWeekdayNumber(int $dayNumber): bool
+    {
+        return ($dayNumber + self::FIRST_DAY_WEEKDAY_OFFSET) % 7 < 5;
     }
 
     /** Dias corridos de `$from` até `$to`; negativo se `$to` for anterior. */

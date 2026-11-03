@@ -5,6 +5,7 @@ use App\Modules\Fiis\Application\EvaluateFavorites;
 use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Application\UpdateFavoriteSettings;
+use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\FavoriteSettings;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
@@ -296,6 +297,16 @@ it('keeps evaluating the others when one favorite blows up, and logs it', functi
         public function deleteQuote(string $ticker): void {}
 
         public function saveCloses(string $ticker, array $closes): void {}
+
+        public function latestClose(string $ticker): ?DailyClose
+        {
+            return null;
+        }
+
+        public function latestCloses(int $tradingDays = 10): array
+        {
+            return [];
+        }
 
         public function closesBefore(string $ticker, string $day, string $fromDay): array
         {

@@ -7,6 +7,9 @@ use App\Modules\Fiis\Application\Quote;
 use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
+use App\Modules\Fiis\Domain\TradingDays;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentMarketData implements MarketData
 {
@@ -63,6 +66,50 @@ final class EloquentMarketData implements MarketData
             ['ticker', 'day'],
             ['close'],
         );
+    }
+
+    public function latestClose(string $ticker): ?DailyClose
+    {
+        $row = DailyPriceModel::query()->where('ticker', $ticker)->orderByDesc('day')->first();
+
+        return $row === null ? null : new DailyClose($row->day, Money::fromString($row->close));
+    }
+
+    public function latestCloses(int $tradingDays = 10): array
+    {
+        $latest = DailyPriceModel::query()->max('day');
+
+        if (! is_string($latest)) {
+            return [];
+        }
+
+        $from = CarbonImmutable::parse($latest);
+
+        for ($counted = $this->isBusinessDay($from) ? 1 : 0; $counted < $tradingDays;) {
+            $from = $from->subDay();
+            $counted += $this->isBusinessDay($from) ? 1 : 0;
+        }
+
+        $closes = [];
+
+        // Uma consulta: DISTINCT ON fica com a linha mais nova de cada ticker.
+        $rows = DB::table('daily_prices')
+            ->selectRaw('distinct on (ticker) ticker, day, close')
+            ->where('day', '>=', $from->toDateString())
+            ->orderBy('ticker')
+            ->orderByDesc('day')
+            ->get();
+
+        foreach ($rows as $row) {
+            $closes[(string) $row->ticker] = new DailyClose(substr((string) $row->day, 0, 10), Money::fromString((string) $row->close));
+        }
+
+        return $closes;
+    }
+
+    private function isBusinessDay(CarbonImmutable $day): bool
+    {
+        return TradingDays::isBusinessDay($day->toDateString());
     }
 
     public function closesBefore(string $ticker, string $day, string $fromDay): array

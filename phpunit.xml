@@ -21,6 +21,8 @@
         </include>
     </source>
     <php>
+        <!-- A suíte inteira roda num processo só e já passava de 128 MB; o teto antigo era o limite do php.ini, não do app. -->
+        <ini name="memory_limit" value="256M"/>
         <!-- force só vence o getenv: variável real em $_SERVER e config:cache passam por cima. Quem protege o banco do app é Tests\TestCase::createApplication(). -->
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

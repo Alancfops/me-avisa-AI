@@ -13,3 +13,12 @@ it('counts the weekdays strictly between two days', function (string $from, stri
     'invertido' => ['2026-10-30', '2026-10-01', 0],
     'semanas' => ['2026-10-01', '2026-10-30', 20],
 ]);
+
+it('tells business days from weekends', function (string $day, bool $expected) {
+    expect(TradingDays::isBusinessDay($day))->toBe($expected);
+})->with([
+    'sexta' => ['2026-10-30', true],
+    'sábado' => ['2026-10-31', false],
+    'domingo' => ['2026-11-01', false],
+    'segunda' => ['2026-11-02', true],
+]);

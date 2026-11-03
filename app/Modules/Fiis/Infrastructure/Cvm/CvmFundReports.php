@@ -5,10 +5,14 @@ namespace App\Modules\Fiis\Infrastructure\Cvm;
 use App\Modules\Fiis\Application\FundReportRecord;
 use App\Modules\Fiis\Application\FundReports;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\Portfolio;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
+use Brick\Math\RoundingMode;
+use Generator;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use ZipArchive;
 
 final class CvmFundReports implements FundReports
@@ -23,6 +27,11 @@ final class CvmFundReports implements FundReports
     private const GENERAL_OPTIONAL_COLUMNS = ['Segmento_Atuacao', 'Nome_Administrador', 'Data_Funcionamento'];
 
     private const COMPLEMENT_OPTIONAL_COLUMNS = ['Patrimonio_Liquido', 'Total_Numero_Cotistas'];
+
+    /** Composição da carteira: o arquivo todo é opcional, e a falta dele não derruba VP e DY. */
+    private const PORTFOLIO_KEYS = ['CNPJ_Fundo_Classe', 'Data_Referencia', 'Versao'];
+
+    private const PORTFOLIO_AMOUNTS = ['Total_Investido', 'Direitos_Bens_Imoveis', 'CRI', 'CRI_CRA', 'LCI', 'LCI_LCA', 'Letras_Hipotecarias', 'LIG', 'FII'];
 
     private const MAX_SEGMENT_LENGTH = 120;
 
@@ -49,7 +58,8 @@ final class CvmFundReports implements FundReports
             }
 
             $complements = $this->complements($this->rows($zip, 'complemento', self::COMPLEMENT_COLUMNS, self::COMPLEMENT_OPTIONAL_COLUMNS));
-            $records = $this->latestVersions($this->rows($zip, 'geral', self::GENERAL_COLUMNS, self::GENERAL_OPTIONAL_COLUMNS), $complements);
+            $portfolios = $this->portfolios($zip);
+            $records = $this->latestVersions($this->rows($zip, 'geral', self::GENERAL_COLUMNS, self::GENERAL_OPTIONAL_COLUMNS), $complements, $portfolios);
             $zip->close();
 
             return $records;
@@ -81,9 +91,9 @@ final class CvmFundReports implements FundReports
     /**
      * @param  list<string>  $required
      * @param  list<string>  $optional  lidas só se estiverem no cabeçalho
-     * @return list<array<string, string>>
+     * @return Generator<int, array<string, string>>
      */
-    private function rows(ZipArchive $zip, string $kind, array $required, array $optional = []): array
+    private function rows(ZipArchive $zip, string $kind, array $required, array $optional = []): Generator
     {
         $stream = $this->openEntry($zip, $kind);
         $header = $this->readRow($stream);
@@ -92,20 +102,83 @@ final class CvmFundReports implements FundReports
             throw new SourceUnavailable("O arquivo {$kind} da CVM mudou de formato.");
         }
 
-        $rows = [];
         $wanted = array_flip([...$required, ...array_intersect($optional, $header)]);
 
         while (($row = $this->readRow($stream)) !== null) {
             // Linha com colunas a menos ou a mais é corrupção: não dá para saber qual é qual.
             if (count($row) === count($header)) {
                 // Só as colunas usadas: o arquivo tem 37, e guardar todas estoura a memória.
-                $rows[] = array_intersect_key(array_combine($header, $row), $wanted);
+                yield array_intersect_key(array_combine($header, $row), $wanted);
             }
         }
 
         fclose($stream);
+    }
 
-        return $rows;
+    /**
+     * Composição por CNPJ, competência e versão. Arquivo ausente ou em outro formato
+     * dá mapa vazio: o tipo do fundo fica sem dados, sem derrubar o ano.
+     *
+     * @return array<string, Portfolio>
+     */
+    private function portfolios(ZipArchive $zip): array
+    {
+        $portfolios = [];
+
+        try {
+            foreach ($this->rows($zip, 'ativo_passivo', [...self::PORTFOLIO_KEYS, ...self::PORTFOLIO_AMOUNTS]) as $row) {
+                $portfolio = $this->portfolio($row);
+
+                if ($portfolio !== null) {
+                    $portfolios["{$row['CNPJ_Fundo_Classe']}|{$row['Data_Referencia']}|{$row['Versao']}"] = $portfolio;
+                }
+            }
+        } catch (SourceUnavailable $failure) {
+            // Sem a composição o ano segue com VP e DY; o aviso é só para quem investiga o tipo.
+            Log::warning("Composição da carteira da CVM ignorada: {$failure->getMessage()}");
+
+            return [];
+        }
+
+        return $portfolios;
+    }
+
+    /**
+     * Célula vazia é posição zero (o fundo não tem aquele ativo); texto ilegível ou
+     * fora da coluna invalida a composição inteira, e `null` não vira tipo.
+     *
+     * @param  array<string, string>  $row
+     */
+    private function portfolio(array $row): ?Portfolio
+    {
+        $amounts = [];
+
+        foreach (self::PORTFOLIO_AMOUNTS as $column) {
+            $value = $row[$column] === '' ? '0' : $this->decimal($row[$column]);
+
+            if ($value === null || BigDecimal::of($value)->isNegative() || BigDecimal::of($value)->isGreaterThan(self::MAX_NET_ASSETS)) {
+                return null;
+            }
+
+            $amounts[$column] = BigDecimal::of($value);
+        }
+
+        if ($row['Total_Investido'] === '') {
+            return null;
+        }
+
+        $receivables = $amounts['CRI']->plus($amounts['CRI_CRA'])->plus($amounts['LCI'])->plus($amounts['LCI_LCA'])->plus($amounts['Letras_Hipotecarias'])->plus($amounts['LIG']);
+
+        if ($receivables->isGreaterThan(self::MAX_NET_ASSETS)) {
+            return null;
+        }
+
+        return new Portfolio(
+            (string) $amounts['Total_Investido']->toScale(2, RoundingMode::HalfUp),
+            (string) $amounts['Direitos_Bens_Imoveis']->toScale(2, RoundingMode::HalfUp),
+            (string) $receivables->toScale(2, RoundingMode::HalfUp),
+            (string) $amounts['FII']->toScale(2, RoundingMode::HalfUp),
+        );
     }
 
     /** @return resource */
@@ -145,10 +218,10 @@ final class CvmFundReports implements FundReports
     }
 
     /**
-     * @param  list<array<string, string>>  $rows
+     * @param  iterable<array<string, string>>  $rows
      * @return array<string, array<string, string>> por CNPJ, competência e versão
      */
-    private function complements(array $rows): array
+    private function complements(iterable $rows): array
     {
         $indexed = [];
 
@@ -160,17 +233,19 @@ final class CvmFundReports implements FundReports
     }
 
     /**
-     * @param  list<array<string, string>>  $rows
+     * @param  iterable<array<string, string>>  $rows
      * @param  array<string, array<string, string>>  $complements
+     * @param  array<string, Portfolio>  $portfolios
      * @return list<FundReportRecord>
      */
-    private function latestVersions(array $rows, array $complements): array
+    private function latestVersions(iterable $rows, array $complements, array $portfolios): array
     {
         $latest = [];
         $latestWithBookValue = [];
+        $latestWithPortfolio = [];
 
         foreach ($rows as $row) {
-            $record = $this->record($row, $complements);
+            $record = $this->record($row, $complements, $portfolios);
 
             if ($record === null) {
                 continue;
@@ -182,25 +257,30 @@ final class CvmFundReports implements FundReports
                 $latest[$key] = $record;
             }
 
+            if ($record->portfolio !== null && (! isset($latestWithPortfolio[$key]) || $record->version > $latestWithPortfolio[$key]->version)) {
+                $latestWithPortfolio[$key] = $record;
+            }
+
             if ($record->bookValue !== null && (! isset($latestWithBookValue[$key]) || $record->version > $latestWithBookValue[$key]->version)) {
                 $latestWithBookValue[$key] = $record;
             }
         }
 
-        // Correção que veio sem VP não apaga o último VP válido da competência.
-        return array_values(array_map(
-            fn (FundReportRecord $record): FundReportRecord => $record->bookValue === null
-                ? ($latestWithBookValue["{$record->cnpj}|{$record->month}"] ?? $record)
-                : $record,
-            $latest,
-        ));
+        // Correção que veio sem VP ou sem composição não apaga o último valor válido da competência.
+        return array_values(array_map(function (FundReportRecord $record) use ($latestWithBookValue, $latestWithPortfolio): FundReportRecord {
+            $key = "{$record->cnpj}|{$record->month}";
+            $record = $record->bookValue === null ? ($latestWithBookValue[$key] ?? $record) : $record;
+
+            return $record->portfolio === null ? $record->withPortfolio($latestWithPortfolio[$key]->portfolio ?? null) : $record;
+        }, $latest));
     }
 
     /**
      * @param  array<string, string>  $row
      * @param  array<string, array<string, string>>  $complements
+     * @param  array<string, Portfolio>  $portfolios
      */
-    private function record(array $row, array $complements): ?FundReportRecord
+    private function record(array $row, array $complements, array $portfolios): ?FundReportRecord
     {
         $reference = $row['Data_Referencia'];
         $delivered = $row['Data_Entrega'];
@@ -225,6 +305,7 @@ final class CvmFundReports implements FundReports
             $this->validDate($row['Data_Funcionamento'] ?? ''),
             $this->validNetAssets($this->decimal($complement['Patrimonio_Liquido'] ?? '')),
             $this->validHolders($complement['Total_Numero_Cotistas'] ?? ''),
+            $portfolios["{$row['CNPJ_Fundo_Classe']}|{$reference}|{$row['Versao']}"] ?? null,
         );
     }
 

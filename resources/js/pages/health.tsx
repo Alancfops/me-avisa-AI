@@ -9,6 +9,8 @@ import type { SourceStatus, Usage } from '@/types/fiis';
 const names: Record<string, string> = {
     brapi: 'Cotações (brapi)',
     cvm: 'Informes (CVM)',
+    b3: 'Fechamentos (B3)',
+    b3_history: 'Histórico (B3)',
 };
 
 function hasNewerError(status: SourceStatus): boolean {

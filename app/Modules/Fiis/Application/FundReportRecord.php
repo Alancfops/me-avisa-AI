@@ -2,6 +2,8 @@
 
 namespace App\Modules\Fiis\Application;
 
+use App\Modules\Fiis\Domain\Portfolio;
+
 final readonly class FundReportRecord
 {
     public function __construct(
@@ -19,5 +21,14 @@ final readonly class FundReportRecord
         public ?string $startedOn = null,
         public ?string $netAssets = null,
         public ?int $holders = null,
+        public ?Portfolio $portfolio = null,
     ) {}
+
+    public function withPortfolio(?Portfolio $portfolio): self
+    {
+        return new self(
+            $this->cnpj, $this->isin, $this->month, $this->version, $this->deliveredOn, $this->bookValue, $this->dividendYield,
+            $this->segment, $this->administrator, $this->startedOn, $this->netAssets, $this->holders, $portfolio,
+        );
+    }
 }

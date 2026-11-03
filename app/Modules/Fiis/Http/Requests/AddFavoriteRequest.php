@@ -17,6 +17,7 @@ final class AddFavoriteRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'stay' => ['sometimes', 'boolean'],
             'ticker' => ['required', 'string', function (string $attribute, mixed $value, Closure $fail): void {
                 if (! is_string($value) || ! app(CatalogRepository::class)->exists($value)) {
                     $fail('Esse fundo não está no catálogo. Confira o código na B3.');

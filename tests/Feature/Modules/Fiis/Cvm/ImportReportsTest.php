@@ -1,7 +1,9 @@
 <?php
 
 use App\Modules\Fiis\Application\FundReports;
+use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Application\SourceUnavailable;
+use App\Modules\Fiis\Domain\FundKind;
 use App\Modules\Fiis\Infrastructure\Persistence\FavoriteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundReportModel;
@@ -9,8 +11,9 @@ use App\Modules\Fiis\Infrastructure\Persistence\QuoteModel;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
-function cvmZip(?string $geral = null, ?string $complemento = null, int $year = 2026): string
+function cvmZip(?string $geral = null, ?string $complemento = null, int $year = 2026, string|false|null $ativoPassivo = null): string
 {
     $fixtures = __DIR__.'/../../../../Fixtures/cvm';
     $path = tempnam(sys_get_temp_dir(), 'cvm');
@@ -18,7 +21,9 @@ function cvmZip(?string $geral = null, ?string $complemento = null, int $year = 
     $zip->open($path, ZipArchive::OVERWRITE);
     $zip->addFromString("inf_mensal_fii_geral_{$year}.csv", $geral ?? (string) file_get_contents("{$fixtures}/geral.csv"));
     $zip->addFromString("inf_mensal_fii_complemento_{$year}.csv", $complemento ?? (string) file_get_contents("{$fixtures}/complemento.csv"));
-    $zip->addFromString("inf_mensal_fii_ativo_passivo_{$year}.csv", 'não usado');
+    if ($ativoPassivo !== false) {
+        $zip->addFromString("inf_mensal_fii_ativo_passivo_{$year}.csv", $ativoPassivo ?? (string) file_get_contents("{$fixtures}/ativo_passivo.csv"));
+    }
     $zip->close();
     $content = (string) file_get_contents($path);
     unlink($path);
@@ -299,3 +304,141 @@ it('turns an invalid profile value into null without dropping the row', function
     'data impossível' => ['2012-02-30', '100.50', '10', [null, '100.50', 10]],
     'patrimônio negativo' => ['2012-08-01', '-5', '10', ['2012-08-01', null, 10]],
 ]);
+
+it('stores the portfolio of the highest version', function () {
+    fakeCvm();
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->first();
+
+    expect($row->version)->toBe(2)
+        ->and((string) $row->total_invested)->toBe('5176421015.19')
+        ->and((string) $row->real_estate)->toBe('287878537.64')
+        ->and((string) $row->receivables)->toBe('3892924050.06')
+        ->and((string) $row->fii_shares)->toBe('718369408.35');
+});
+
+it('sums every receivable column', function () {
+    $ativo = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Total_Investido;Direitos_Bens_Imoveis;CRI;CRI_CRA;LCI;LCI_LCA;Letras_Hipotecarias;LIG;FII\n"
+        ."97.521.225/0001-25;2026-09-01;2;100;0;1.10;2.20;3.30;4.40;5.50;6.60;0\n";
+    fakeCvm(cvmZip(null, null, 2026, $ativo));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    expect((string) FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('receivables'))->toBe('23.10');
+});
+
+it('imports book value and yield from a zip without the portfolio file, leaving it null', function () {
+    fakeCvm(cvmZip(null, null, 2026, false));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->first();
+
+    expect((float) $row->book_value)->toBe(9.6)
+        ->and((float) $row->dividend_yield)->toBe(0.011)
+        ->and($row->total_invested)->toBeNull()
+        ->and($row->real_estate)->toBeNull()
+        ->and($row->receivables)->toBeNull()
+        ->and($row->fii_shares)->toBeNull();
+});
+
+it('imports a year whose portfolio file has an unknown format, without portfolio', function () {
+    Log::spy();
+    fakeCvm(cvmZip(null, null, 2026, "a;b\n1;2\n"));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    Log::shouldHaveReceived('warning')->withArgs(fn (string $message) => str_contains($message, 'ativo_passivo'))->atLeast()->once();
+
+    expect(FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('total_invested'))->toBeNull()
+        ->and((float) FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('book_value'))->toBe(9.6);
+});
+
+it('keeps a stored portfolio when a later file brings none', function () {
+    fakeCvm();
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    fakeCvm(cvmZip(null, null, 2026, false));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    expect((string) FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('total_invested'))->toBe('5176421015.19');
+});
+
+it('stores a corrected book value even when the year brings no portfolio, keeping the stored composition', function () {
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1, 'delivered_on' => '2026-10-10', 'book_value' => '9.50',
+        'total_invested' => '100', 'real_estate' => '90', 'receivables' => '5', 'fii_shares' => '5']);
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;2;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;2;9.70;0.01\n",
+        2026,
+        false,
+    ));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('cnpj', '1')->first();
+
+    expect($row->version)->toBe(2)
+        ->and((float) $row->book_value)->toBe(9.7)
+        ->and((string) $row->total_invested)->toBe('100.00')
+        ->and((string) $row->real_estate)->toBe('90.00')
+        ->and((string) $row->receivables)->toBe('5.00')
+        ->and((string) $row->fii_shares)->toBe('5.00');
+});
+
+it('keeps the composition of the latest version that has one when a newer version has none', function () {
+    $ativo = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Total_Investido;Direitos_Bens_Imoveis;CRI;CRI_CRA;LCI;LCI_LCA;Letras_Hipotecarias;LIG;FII\n"
+        ."1;2026-09-01;1;100;10;;;;;;;\n"
+        ."1;2026-09-01;2;200;20;;;;;;;\n";
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008;x\nClasse;1;2026-09-01;2;2026-10-12;MAXI;BRMXRFCTF008;x\nClasse;1;2026-09-01;3;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;1;9.50;0.01\n1;2026-09-01;2;9.60;0.01\n1;2026-09-01;3;9.70;0.01\n",
+        2026,
+        $ativo,
+    ));
+
+    $records = app(FundReports::class)->forYear(2026);
+
+    expect($records)->toHaveCount(1)
+        ->and($records[0]->version)->toBe(3)
+        ->and($records[0]->bookValue)->toBe('9.70')
+        ->and($records[0]->portfolio?->totalInvested)->toBe('200.00');
+});
+
+it('treats an unreadable portfolio value as no portfolio, without dropping the row', function (string $total) {
+    $ativo = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Total_Investido;Direitos_Bens_Imoveis;CRI;CRI_CRA;LCI;LCI_LCA;Letras_Hipotecarias;LIG;FII\n"
+        ."97.521.225/0001-25;2026-09-01;2;{$total};0;;;;;;;\n";
+    fakeCvm(cvmZip(null, null, 2026, $ativo));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->first();
+
+    expect($row->total_invested)->toBeNull()->and((float) $row->book_value)->toBe(9.6);
+})->with(['texto' => 'abc', 'vazio' => '', 'fora da coluna' => '99999999999999999999999999']);
+
+it('classifies each ticker by its latest report with a portfolio', function () {
+    fakeCvm();
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    $kinds = app(ReportRepository::class)->kinds();
+
+    expect($kinds)->toBe(['HGLG11' => FundKind::FundOfFunds, 'MXRF11' => FundKind::Paper, 'VISC11' => FundKind::Brick])
+        ->and(app(ReportRepository::class)->kindOf('MXRF11'))->toBe(FundKind::Paper)
+        ->and(app(ReportRepository::class)->kindOf('KNRI11'))->toBeNull();
+});
+
+it('leaves a ticker claimed by two funds without a kind', function () {
+    fakeCvm();
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+
+    expect(app(ReportRepository::class)->kinds())->not->toHaveKey('XPML11')
+        ->and(app(ReportRepository::class)->kindOf('XPML11'))->toBeNull();
+});
+
+it('gives the list and the page the same kind when the latest report has total zero', function () {
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-08', 'version' => 1, 'delivered_on' => '2026-09-10', 'total_invested' => '100', 'real_estate' => '90', 'receivables' => '0', 'fii_shares' => '0']);
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1, 'delivered_on' => '2026-10-10', 'total_invested' => '0', 'real_estate' => '0', 'receivables' => '0', 'fii_shares' => '0']);
+    $reports = app(ReportRepository::class);
+
+    expect($reports->kinds())->toBe(['MXRF11' => FundKind::Brick])
+        ->and($reports->kindOf('MXRF11'))->toBe(FundKind::Brick);
+});

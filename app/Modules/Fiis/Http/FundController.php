@@ -25,7 +25,7 @@ final class FundController
 
         return Inertia::render('funds/show', [
             'fund' => self::fundProps($view, detailed: true),
-            'settings' => [
+            'settings' => $view->settings === null ? null : [
                 'mode' => $view->settings->mode->value,
                 'target' => $view->settings->target?->toDecimal(),
                 'rangeMin' => $view->settings->rangeMin?->toDecimal(),
@@ -64,7 +64,11 @@ final class FundController
         $props = [
             'ticker' => $view->ticker,
             'name' => $view->name,
-            'price' => $view->quote?->price->toDecimal(),
+            'favorite' => $view->settings !== null,
+            // Favorito tem cotação da brapi; quem não é favorito, só o fechamento da B3.
+            'priceSource' => $view->settings === null ? 'close' : 'quote',
+            'closeDay' => $view->close?->date,
+            'price' => ($view->quote->price ?? $view->close?->close)?->toDecimal(),
             'changePercent' => $view->quote?->changePercent?->toDecimal(),
             'quotedAt' => $view->quote === null ? null : MarketTime::local($view->quote->quotedAt)->format(DATE_ATOM),
             'average30d' => $view->snapshot?->average30d?->toDecimal(),

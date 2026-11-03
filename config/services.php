@@ -19,6 +19,10 @@ return [
         'token' => env('BRAPI_TOKEN'),
     ],
 
+    'b3' => [
+        'history_url' => env('B3_COTAHIST_URL', 'https://bvmf.bmfbovespa.com.br/InstDados/SerHist'),
+    ],
+
     'cvm' => [
         'reports_url' => env('CVM_REPORTS_URL', 'https://dados.cvm.gov.br/dados/FII/DOC/INF_MENSAL/DADOS'),
     ],

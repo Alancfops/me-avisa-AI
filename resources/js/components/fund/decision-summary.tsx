@@ -1,4 +1,10 @@
-import { brl, ratio, shortMonthLabel, signedPercent } from '@/lib/format';
+import {
+    brl,
+    dayMonth,
+    ratio,
+    shortMonthLabel,
+    signedPercent,
+} from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Fund, WindowAverage } from '@/types/fiis';
 
@@ -83,10 +89,13 @@ function PriceToBookCard({ fund }: { fund: Fund }) {
 function AverageCard({
     label,
     price,
+    priceNote,
     average,
 }: {
     label: string;
     price: string | null;
+    /** Só para quem não é favorito: o preço é o fechamento, com a data. */
+    priceNote: string | null;
     average: WindowAverage | undefined;
 }) {
     if (price === null) {
@@ -94,7 +103,11 @@ function AverageCard({
             <Card
                 label={label}
                 value="Indisponível"
-                detail="Sem cotação por enquanto."
+                detail={
+                    priceNote === null
+                        ? 'Sem cotação por enquanto.'
+                        : 'Sem fechamento recente.'
+                }
             />
         );
     }
@@ -121,13 +134,18 @@ function AverageCard({
             label={label}
             value={signedPercent(String(diff))}
             valueClass={diff < 0 ? 'text-signal' : undefined}
-            detail={`Média ${brl(average.value)}`}
+            detail={`Média ${brl(average.value)}${priceNote === null ? '' : ` · preço do ${priceNote}`}`}
         />
     );
 }
 
 export function DecisionSummary({ fund }: { fund: Fund }) {
     const lastDividend = fund.dividends?.at(-1);
+    const priceNote = fund.favorite
+        ? null
+        : fund.closeDay === null
+          ? 'fechamento da B3'
+          : `fechamento de ${dayMonth(fund.closeDay)} (B3)`;
 
     return (
         <section aria-labelledby="resumo" className="@container">
@@ -139,11 +157,13 @@ export function DecisionSummary({ fund }: { fund: Fund }) {
                 <AverageCard
                     label="Preço × média 6m"
                     price={fund.price}
+                    priceNote={priceNote}
                     average={fund.average6m}
                 />
                 <AverageCard
                     label="Preço × média 12m"
                     price={fund.price}
+                    priceNote={priceNote}
                     average={fund.average12m}
                 />
                 {lastDividend === undefined ? (
