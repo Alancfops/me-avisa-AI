@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Fiis\Infrastructure\Persistence\DailyPriceModel;
+use App\Modules\Fiis\Infrastructure\Persistence\ExchangeImportModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FavoriteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundReportModel;
@@ -41,6 +42,7 @@ it('lists every fund with P/VP, 12 month yield, kind, segment and net assets', f
     }
     listedFund('BBBB11', close: '20.00');
     FavoriteModel::create(['ticker' => 'BBBB11']);
+    ExchangeImportModel::create(['day' => '2026-10-30']);
 
     $this->get('/fundos')->assertInertia(fn ($page) => $page
         ->component('funds/index')
@@ -89,15 +91,31 @@ it('leaves out funds that did not trade in the last 10 business days', function 
     'um dia útil antes do limite' => ['2026-10-16', false],
 ]);
 
-it('takes the latest close of each fund and sets closesOn to the most recent day', function () {
+it('takes the latest close of each fund and sets closesOn to the most recent imported B3 day', function () {
     listedFund('AAAA11', '2026-10-28', '8.00');
     DailyPriceModel::create(['ticker' => 'AAAA11', 'day' => '2026-10-27', 'close' => '7.00']);
     listedFund('BBBB11', '2026-10-29', '5.00');
+    ExchangeImportModel::create(['day' => '2026-10-28']);
+    ExchangeImportModel::create(['day' => '2026-10-29']);
 
     $this->get('/fundos')->assertInertia(fn ($page) => $page
         ->where('closesOn', '2026-10-29')
         ->where('funds.0.close', '8')
         ->where('funds.0.closeDay', '2026-10-28'));
+});
+
+it('does not cite the B3 for a day only the brapi recorded', function () {
+    listedFund('AAAA11', '2026-10-30');
+    listedFund('BBBB11', '2026-10-29');
+    ExchangeImportModel::create(['day' => '2026-10-29']);
+
+    $this->get('/fundos')->assertInertia(fn ($page) => $page->where('closesOn', '2026-10-29'));
+});
+
+it('sends closesOn null when no B3 day was imported', function () {
+    listedFund('AAAA11', '2026-10-30');
+
+    $this->get('/fundos')->assertInertia(fn ($page) => $page->has('funds', 1)->where('closesOn', null));
 });
 
 it('sends closesOn null when no fund is listed', function () {

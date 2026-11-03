@@ -364,6 +364,46 @@ it('keeps a stored portfolio when a later file brings none', function () {
     expect((string) FundReportModel::where('ticker', 'MXRF11')->where('month', '2026-09')->value('total_invested'))->toBe('5176421015.19');
 });
 
+it('stores a corrected book value even when the year brings no portfolio, keeping the stored composition', function () {
+    FundReportModel::create(['cnpj' => '1', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1, 'delivered_on' => '2026-10-10', 'book_value' => '9.50',
+        'total_invested' => '100', 'real_estate' => '90', 'receivables' => '5', 'fii_shares' => '5']);
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;2;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;2;9.70;0.01\n",
+        2026,
+        false,
+    ));
+
+    $this->artisan('fiis:import-reports')->assertSuccessful();
+    $row = FundReportModel::where('cnpj', '1')->first();
+
+    expect($row->version)->toBe(2)
+        ->and((float) $row->book_value)->toBe(9.7)
+        ->and((string) $row->total_invested)->toBe('100.00')
+        ->and((string) $row->real_estate)->toBe('90.00')
+        ->and((string) $row->receivables)->toBe('5.00')
+        ->and((string) $row->fii_shares)->toBe('5.00');
+});
+
+it('keeps the composition of the latest version that has one when a newer version has none', function () {
+    $ativo = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Total_Investido;Direitos_Bens_Imoveis;CRI;CRI_CRA;LCI;LCI_LCA;Letras_Hipotecarias;LIG;FII\n"
+        ."1;2026-09-01;1;100;10;;;;;;;\n"
+        ."1;2026-09-01;2;200;20;;;;;;;\n";
+    fakeCvm(cvmZip(
+        CVM_GERAL_HEADER."Classe;1;2026-09-01;1;2026-10-10;MAXI;BRMXRFCTF008;x\nClasse;1;2026-09-01;2;2026-10-12;MAXI;BRMXRFCTF008;x\nClasse;1;2026-09-01;3;2026-10-20;MAXI;BRMXRFCTF008;x\n",
+        CVM_COMPLEMENTO_HEADER."1;2026-09-01;1;9.50;0.01\n1;2026-09-01;2;9.60;0.01\n1;2026-09-01;3;9.70;0.01\n",
+        2026,
+        $ativo,
+    ));
+
+    $records = app(FundReports::class)->forYear(2026);
+
+    expect($records)->toHaveCount(1)
+        ->and($records[0]->version)->toBe(3)
+        ->and($records[0]->bookValue)->toBe('9.70')
+        ->and($records[0]->portfolio?->totalInvested)->toBe('200.00');
+});
+
 it('treats an unreadable portfolio value as no portfolio, without dropping the row', function (string $total) {
     $ativo = "CNPJ_Fundo_Classe;Data_Referencia;Versao;Total_Investido;Direitos_Bens_Imoveis;CRI;CRI_CRA;LCI;LCI_LCA;Letras_Hipotecarias;LIG;FII\n"
         ."97.521.225/0001-25;2026-09-01;2;{$total};0;;;;;;;\n";

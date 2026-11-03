@@ -12,6 +12,9 @@ interface ExchangeImports
 
     public function mark(string $day): void;
 
+    /** Dia mais recente com arquivo lido, ou null se nenhum: é o que a lista pode citar como fonte B3. */
+    public function latestDay(): ?string;
+
     /** Arquivo anual lido por inteiro (a primeira carga de 12 meses). */
     public function hasYear(int $year): bool;
 

@@ -2,6 +2,9 @@
 
 use App\Modules\Fiis\Application\ExchangeClose;
 use App\Modules\Fiis\Application\ExchangeCloses;
+use App\Modules\Fiis\Application\ExchangeFileMissing;
+use App\Modules\Fiis\Application\Source;
+use App\Modules\Fiis\Application\SourceLog;
 use App\Modules\Fiis\Application\SourceUnavailable;
 use App\Modules\Fiis\Infrastructure\Persistence\DailyPriceModel;
 use App\Modules\Fiis\Infrastructure\Persistence\ExchangeImportModel;
@@ -142,6 +145,24 @@ describe('importing', function () {
             ->and(SourceEventModel::where('source', 'b3')->where('kind', 'failure')->count())->toBe(1);
     });
 
+    it('does not download anything with an empty catalog', function () {
+        FundModel::query()->delete();
+        Http::fake();
+
+        $this->artisan('fiis:import-exchange-closes')->assertSuccessful();
+
+        Http::assertNothingSent();
+        expect(ExchangeImportModel::count())->toBe(0)->and(SourceEventModel::count())->toBe(0);
+    });
+
+    it('logs no success when every day file is missing', function () {
+        Http::fake(['*' => Http::response('', 404)]);
+
+        $this->artisan('fiis:import-exchange-closes')->assertSuccessful();
+
+        expect(SourceEventModel::count())->toBe(0);
+    });
+
     it('records a success only when no day failed', function () {
         Http::fake(['*COTAHIST_D30102026.ZIP' => Http::response(b3Zip()), '*' => Http::response('', 404)]);
 
@@ -202,7 +223,8 @@ it('streams a yearly file of 20,000 lines without growing memory', function () {
 it('fails on an annual file that does not exist', function () {
     Http::fake(['*' => Http::response('', 404)]);
 
-    expect(fn () => iterator_to_array(app(ExchangeCloses::class)->forYear(2025)))->toThrow(SourceUnavailable::class);
+    expect(fn () => iterator_to_array(app(ExchangeCloses::class)->forYear(2025)))->toThrow(ExchangeFileMissing::class)
+        ->and(fn () => iterator_to_array(app(ExchangeCloses::class)->forYear(2025)))->toThrow(SourceUnavailable::class);
 });
 
 describe('history command', function () {
@@ -219,7 +241,7 @@ describe('history command', function () {
         $this->artisan('fiis:import-exchange-history')->assertSuccessful();
 
         expect(DailyPriceModel::where('ticker', 'KNRI11')->count())->toBe(1)
-            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
+            ->and(SourceEventModel::where('source', 'b3_history')->where('kind', 'success')->count())->toBe(1);
         Http::assertSentCount(2);
 
         // Anos marcados: a segunda rodada sai sem pedir nada.
@@ -236,8 +258,9 @@ describe('history command', function () {
 
         $this->artisan('fiis:import-exchange-history')->assertSuccessful();
 
-        expect(SourceEventModel::where('source', 'b3')->where('kind', 'failure')->count())->toBe(2)
-            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->exists())->toBeFalse();
+        expect(SourceEventModel::where('source', 'b3_history')->where('kind', 'failure')->count())->toBe(2)
+            ->and(SourceEventModel::where('source', 'b3_history')->where('kind', 'success')->exists())->toBeFalse()
+            ->and(SourceEventModel::where('source', 'b3')->exists())->toBeFalse();
     });
 
     it('retries only the year that failed, even though the other one is loaded', function () {
@@ -256,6 +279,44 @@ describe('history command', function () {
         // Pedidos: 2025 (falhou), 2026, e só 2025 de novo.
         Http::assertSentCount(3);
         expect(ExchangeYearImportModel::pluck('year')->sort()->values()->all())->toBe([2025, 2026])
-            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
+            ->and(SourceEventModel::where('source', 'b3_history')->where('kind', 'success')->count())->toBe(1);
+    });
+
+    it('keeps the history error visible when the daily run later finds only missing files', function () {
+        Http::fake(['*COTAHIST_A*' => Http::response('', 500)]);
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        Carbon::setTestNow('2026-11-04 08:00:00-03:00');
+        Http::fake(['*' => Http::response('', 404)]);
+        $this->artisan('fiis:import-exchange-closes')->assertSuccessful();
+
+        $history = app(SourceLog::class)->status(Source::B3History);
+        expect($history->errors)->toHaveCount(2)
+            ->and($history->lastSuccessAt)->toBeNull()
+            ->and(app(SourceLog::class)->status(Source::B3)->lastSuccessAt)->toBeNull();
+    });
+
+    it('does not show an error nor mark the year when the current-year file is not out yet', function () {
+        Http::fake([
+            '*COTAHIST_A2025.ZIP' => fn () => Http::response(b3Zip('COTAHIST_A2025.TXT')),
+            '*COTAHIST_A2026.ZIP' => Http::response('', 404),
+        ]);
+
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        expect(SourceEventModel::where('kind', 'failure')->exists())->toBeFalse()
+            ->and(ExchangeYearImportModel::pluck('year')->all())->toBe([2025]);
+    });
+
+    it('keeps a missing previous-year file as an error and does not mark it', function () {
+        Http::fake([
+            '*COTAHIST_A2025.ZIP' => Http::response('', 404),
+            '*COTAHIST_A2026.ZIP' => fn () => Http::response(b3Zip('COTAHIST_A2026.TXT')),
+        ]);
+
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        expect(SourceEventModel::where('source', 'b3_history')->where('kind', 'failure')->count())->toBe(1)
+            ->and(ExchangeYearImportModel::pluck('year')->all())->toBe([2026]);
     });
 });

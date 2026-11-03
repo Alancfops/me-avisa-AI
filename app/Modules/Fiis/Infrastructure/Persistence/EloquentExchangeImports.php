@@ -16,6 +16,13 @@ final class EloquentExchangeImports implements ExchangeImports
         ExchangeImportModel::query()->updateOrCreate(['day' => $day]);
     }
 
+    public function latestDay(): ?string
+    {
+        $day = ExchangeImportModel::query()->max('day');
+
+        return $day === null ? null : substr((string) $day, 0, 10);
+    }
+
     public function hasYear(int $year): bool
     {
         return ExchangeYearImportModel::query()->whereKey($year)->exists();

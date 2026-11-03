@@ -15,6 +15,8 @@ use stdClass;
 
 final class EloquentReportRepository implements ReportRepository
 {
+    private const PORTFOLIO_COLUMNS = ['total_invested', 'real_estate', 'receivables', 'fii_shares'];
+
     public function bookValues(string $ticker): array
     {
         if ($this->isAmbiguous($ticker)) {
@@ -193,21 +195,23 @@ final class EloquentReportRepository implements ReportRepository
             // Sem models: são milhares de linhas, e a importação roda com o limite de memória do PHP.
             $stored = [];
 
-            foreach (FundReportModel::query()->toBase()->select(['cnpj', 'month', 'version', 'book_value', 'total_invested'])->cursor() as $row) {
-                $stored["{$row->cnpj}|{$row->month}"] = [(int) $row->version, $row->book_value !== null, $row->total_invested !== null];
+            foreach (FundReportModel::query()->toBase()->select(['cnpj', 'month', 'version', 'book_value'])->cursor() as $row) {
+                $stored["{$row->cnpj}|{$row->month}"] = [(int) $row->version, $row->book_value !== null];
             }
 
             $rows = [];
+            $rowsWithoutPortfolio = [];
 
             foreach ($reports as $report) {
                 $record = $report->record;
 
-                [$storedVersion, $hasBookValue, $hasPortfolio] = $stored["{$record->cnpj}|{$record->month}"] ?? [0, false, false];
-                // Correção sem VP ou sem composição não apaga o último valor válido.
-                $losesData = ($hasBookValue && $record->bookValue === null) || ($hasPortfolio && $record->portfolio === null);
+                [$storedVersion, $hasBookValue] = $stored["{$record->cnpj}|{$record->month}"] ?? [0, false];
+                // Correção sem VP não apaga o último VP válido. A composição não entra aqui: sem ela, a
+                // linha é gravada mesmo assim (a correção do VP vale), só que preservando a composição guardada.
+                $losesData = $hasBookValue && $record->bookValue === null;
 
                 if ($storedVersion <= $record->version && ! $losesData) {
-                    $rows[] = [
+                    $row = [
                         'cnpj' => $record->cnpj,
                         'ticker' => $report->ticker,
                         'month' => $record->month,
@@ -225,11 +229,24 @@ final class EloquentReportRepository implements ReportRepository
                         'receivables' => $record->portfolio?->receivables,
                         'fii_shares' => $record->portfolio?->fiiShares,
                     ];
+
+                    if ($record->portfolio === null) {
+                        $rowsWithoutPortfolio[] = $row;
+                    } else {
+                        $rows[] = $row;
+                    }
                 }
             }
 
+            $columns = ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield', 'segment', 'administrator', 'started_on', 'net_assets', 'holders'];
+
             foreach (array_chunk($rows, 500) as $chunk) {
-                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], ['ticker', 'version', 'delivered_on', 'book_value', 'dividend_yield', 'segment', 'administrator', 'started_on', 'net_assets', 'holders', 'total_invested', 'real_estate', 'receivables', 'fii_shares']);
+                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], [...$columns, ...self::PORTFOLIO_COLUMNS]);
+            }
+
+            // Linha nova entra com a composição nula; linha existente mantém a que já tem.
+            foreach (array_chunk($rowsWithoutPortfolio, 500) as $chunk) {
+                FundReportModel::query()->upsert($chunk, ['cnpj', 'month'], $columns);
             }
         });
     }

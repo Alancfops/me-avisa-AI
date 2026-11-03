@@ -44,10 +44,10 @@ function exchangeSource(array $files): ExchangeCloses
     };
 }
 
-function exchangeImport(ExchangeCloses $source, InMemoryMarketData $market, InMemoryExchangeImports $imports, ?InMemorySourceLog $log = null): void
+function exchangeImport(ExchangeCloses $source, InMemoryMarketData $market, InMemoryExchangeImports $imports, ?InMemorySourceLog $log = null, array $catalog = ['MXRF11' => 'x', 'KNRI11' => 'y']): void
 {
     // Terça 2026-11-03, 21:00.
-    (new ImportExchangeCloses($source, $market, $imports, new InMemoryCatalog(['MXRF11' => 'x', 'KNRI11' => 'y']), new FixedClock('2026-11-03 21:00:00-03:00'), new NullLogger, $log ?? new InMemorySourceLog))->handle();
+    (new ImportExchangeCloses($source, $market, $imports, new InMemoryCatalog($catalog), new FixedClock('2026-11-03 21:00:00-03:00'), new NullLogger, $log ?? new InMemorySourceLog))->handle();
 }
 
 it('imports missing business days for catalog funds only', function () {
@@ -104,4 +104,44 @@ it('does not log a success when a day failed, even if a later one worked', funct
     exchangeImport($source, new InMemoryMarketData, new InMemoryExchangeImports, $log);
 
     expect($log->successes)->toBe([]);
+});
+
+it('logs no success when every day file is missing', function () {
+    $log = new InMemorySourceLog;
+
+    exchangeImport(exchangeSource([]), new InMemoryMarketData, new InMemoryExchangeImports, $log);
+
+    expect($log->successes)->toBe([])->and($log->failures)->toBe([]);
+});
+
+it('logs no success when there is nothing pending', function () {
+    $imports = new InMemoryExchangeImports;
+    foreach (['2026-10-21', '2026-10-22', '2026-10-23', '2026-10-26', '2026-10-27', '2026-10-28', '2026-10-29', '2026-10-30', '2026-11-02', '2026-11-03'] as $day) {
+        $imports->mark($day);
+    }
+    $log = new InMemorySourceLog;
+
+    exchangeImport(exchangeSource([]), new InMemoryMarketData, $imports, $log);
+
+    expect($log->successes)->toBe([]);
+});
+
+it('logs a success when at least one day file had data', function () {
+    $log = new InMemorySourceLog;
+
+    exchangeImport(exchangeSource(['2026-11-03' => ['MXRF11']]), new InMemoryMarketData, new InMemoryExchangeImports, $log);
+
+    expect($log->successes)->toBe(['b3']);
+});
+
+it('does nothing with an empty catalog: no download, no marks, no success', function () {
+    $source = exchangeSource(['2026-11-03' => ['MXRF11']]);
+    $imports = new InMemoryExchangeImports;
+    $log = new InMemorySourceLog;
+
+    exchangeImport($source, new InMemoryMarketData, $imports, $log, catalog: []);
+
+    expect($source->requested)->toBe([])
+        ->and($imports->has('2026-11-03'))->toBeFalse()
+        ->and($log->successes)->toBe([]);
 });

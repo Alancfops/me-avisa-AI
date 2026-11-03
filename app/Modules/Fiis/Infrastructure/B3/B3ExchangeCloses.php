@@ -4,6 +4,7 @@ namespace App\Modules\Fiis\Infrastructure\B3;
 
 use App\Modules\Fiis\Application\ExchangeClose;
 use App\Modules\Fiis\Application\ExchangeCloses;
+use App\Modules\Fiis\Application\ExchangeFileMissing;
 use App\Modules\Fiis\Application\SourceUnavailable;
 use App\Modules\Fiis\Domain\DailyClose;
 use App\Modules\Fiis\Domain\Money;
@@ -106,7 +107,9 @@ final class B3ExchangeCloses implements ExchangeCloses
             return null;
         }
 
-        throw new SourceUnavailable("A B3 não entregou o arquivo de {$label} ({$response->status()}).");
+        $message = "A B3 não entregou o arquivo de {$label} ({$response->status()}).";
+
+        throw $response->status() === 404 ? new ExchangeFileMissing($message) : new SourceUnavailable($message);
     }
 
     private function close(string $line): ?ExchangeClose

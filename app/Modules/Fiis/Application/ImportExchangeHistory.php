@@ -43,22 +43,32 @@ final readonly class ImportExchangeHistory
                 continue;
             }
 
-            $loaded = true;
-
             try {
                 $this->importYear($loadYear, $tickers);
                 $this->imports->markYear($loadYear);
+                $loaded = true;
+            } catch (ExchangeFileMissing $missing) {
+                // Em janeiro o arquivo do ano corrente ainda não existe: não é erro, e sem marcar o ano a próxima rodada tenta de novo.
+                if ($loadYear !== $year) {
+                    $failed = true;
+                    $this->recordFailure($loadYear, $missing);
+                }
             } catch (SourceUnavailable $failure) {
                 $failed = true;
-                $this->logger->warning("Histórico da B3 de {$loadYear} não importado: {$failure->getMessage()}");
-                $this->sourceLog->failure(Source::B3, $failure->getMessage());
+                $this->recordFailure($loadYear, $failure);
             }
         }
 
-        // Rodada sem nada a carregar não registra nada. Só sem falha: um sucesso esconderia o erro na Saúde, e o ano que falhou segue pendente.
+        // Rodada sem nada carregado (tudo marcado, ou só o ano corrente ainda sem arquivo) não registra nada. Só sem falha: um sucesso esconderia o erro na Saúde, e o ano que falhou segue pendente.
         if ($loaded && ! $failed) {
-            $this->sourceLog->success(Source::B3);
+            $this->sourceLog->success(Source::B3History);
         }
+    }
+
+    private function recordFailure(int $year, SourceUnavailable $failure): void
+    {
+        $this->logger->warning("Histórico da B3 de {$year} não importado: {$failure->getMessage()}");
+        $this->sourceLog->failure(Source::B3History, $failure->getMessage());
     }
 
     /** @param array<string, int> $catalogTickers tickers do catálogo como chaves */

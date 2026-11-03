@@ -2,6 +2,7 @@
 
 namespace App\Modules\Fiis\Http;
 
+use App\Modules\Fiis\Application\ExchangeImports;
 use App\Modules\Fiis\Application\FundListItem;
 use App\Modules\Fiis\Application\ListFunds;
 use Inertia\Inertia;
@@ -9,7 +10,7 @@ use Inertia\Response;
 
 final class FundListController
 {
-    public function __invoke(ListFunds $listFunds): Response
+    public function __invoke(ListFunds $listFunds, ExchangeImports $imports): Response
     {
         $items = $listFunds->handle();
 
@@ -26,8 +27,9 @@ final class FundListController
                 'netAssets' => $item->netAssets,
                 'favorite' => $item->favorite,
             ], $items),
-            // Os fechamentos vêm de arquivos diários: o dia mais recente diz quão fresca é a lista.
-            'closesOn' => $items === [] ? null : max(array_map(fn (FundListItem $item): ?string => $item->closeDay, $items)),
+            // Os fechamentos vêm de arquivos diários da B3: o último dia lido diz quão fresca é a lista.
+            // Não sai dos fechamentos gravados, porque a brapi grava o dia dos favoritos antes da B3.
+            'closesOn' => $imports->latestDay(),
         ]);
     }
 }

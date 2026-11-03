@@ -24,11 +24,18 @@ final readonly class ImportExchangeCloses
     public function handle(): void
     {
         $tickers = array_flip($this->catalog->tickers());
+
+        // Catálogo vazio: não há o que gravar, e marcar os dias como feitos esconderia os fechamentos de quando o catálogo chegar.
+        if ($tickers === []) {
+            return;
+        }
+
         $failed = false;
+        $read = false;
 
         foreach ($this->pendingDays() as $day) {
             try {
-                $this->importDay($day, $tickers);
+                $read = $this->importDay($day, $tickers) || $read;
             } catch (SourceUnavailable $failure) {
                 $failed = true;
                 $this->logger->warning("Fechamentos da B3 de {$day} não importados: {$failure->getMessage()}");
@@ -37,14 +44,17 @@ final readonly class ImportExchangeCloses
         }
 
         // Só no fim e sem falha: um sucesso depois da falha esconderia o erro na Saúde,
-        // e o dia falho continua pendente. Arquivo ainda inexistente (404) não é falha.
-        if (! $failed) {
+        // e o dia falho continua pendente. Só conta se algum arquivo trouxe dado: rodada de 404 ou sem dia pendente não atualizou nada.
+        if ($read && ! $failed) {
             $this->sourceLog->success(Source::B3);
         }
     }
 
-    /** @param array<string, int> $catalogTickers tickers do catálogo como chaves */
-    private function importDay(string $day, array $catalogTickers): void
+    /**
+     * @param  array<string, int>  $catalogTickers  tickers do catálogo como chaves
+     * @return bool se o arquivo do dia existia e trouxe dado
+     */
+    private function importDay(string $day, array $catalogTickers): bool
     {
         $byTicker = [];
         $fileHadData = false;
@@ -65,6 +75,8 @@ final readonly class ImportExchangeCloses
         if ($fileHadData) {
             $this->imports->mark($day);
         }
+
+        return $fileHadData;
     }
 
     /** @return list<string> dias úteis ainda não importados, do mais antigo ao mais novo */

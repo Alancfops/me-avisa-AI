@@ -19,6 +19,11 @@ final class InMemoryExchangeImports implements ExchangeImports
         $this->days[$day] = true;
     }
 
+    public function latestDay(): ?string
+    {
+        return $this->days === [] ? null : max(array_keys($this->days));
+    }
+
     /** @var array<int, true> */
     private array $years = [];
 
