@@ -104,7 +104,7 @@ final readonly class FundSnapshot
      *
      * @param  list<BookValueReport>  $reports
      */
-    private static function reportInForce(array $reports, string $day): ?BookValueReport
+    public static function reportInForce(array $reports, string $day): ?BookValueReport
     {
         $inForce = null;
 
