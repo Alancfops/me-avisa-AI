@@ -149,3 +149,95 @@ describe('importing', function () {
         expect(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
     });
 });
+
+it('reads an annual file with several dates', function () {
+    $lines = array_values(array_filter(explode("\n", str_replace("\r", '', (string) file_get_contents(__DIR__.'/../../../../Fixtures/b3/COTAHIST_D30102026.TXT'))),
+        fn ($line) => str_starts_with($line, '012026103012KNRI11') && substr($line, 24, 3) === '010'));
+    $other = '01'.'20261029'.substr($lines[0], 10);
+    Http::fake(['*COTAHIST_A2026.ZIP' => Http::response(b3Zip('COTAHIST_A2026.TXT', $other."\r\n".$lines[0]."\r\n"))]);
+
+    $days = [];
+    foreach (app(ExchangeCloses::class)->forYear(2026) as $close) {
+        $days[] = $close->close->date;
+    }
+
+    expect($days)->toBe(['2026-10-29', '2026-10-30']);
+});
+
+it('streams a yearly file of 20,000 lines without growing memory', function () {
+    $fixture = (string) file_get_contents(__DIR__.'/../../../../Fixtures/b3/COTAHIST_D30102026.TXT');
+    preg_match('/^012026103012KNRI11.{6}010.*$/mU', $fixture, $found);
+    $line = rtrim($found[0]);
+    unset($fixture, $found);
+
+    $text = tempnam(sys_get_temp_dir(), 'b3txt');
+    $handle = fopen($text, 'w');
+    for ($i = 0; $i < 20_000; $i++) {
+        fwrite($handle, $line."\r\n");
+    }
+    fclose($handle);
+    $path = tempnam(sys_get_temp_dir(), 'b3zip');
+    $zip = new ZipArchive;
+    $zip->open($path, ZipArchive::OVERWRITE);
+    $zip->addFile($text, 'COTAHIST_A2026.TXT');
+    $zip->close();
+    Http::fake(['*' => fn () => Http::response((string) file_get_contents($path))]);
+    gc_collect_cycles();
+
+    $before = memory_get_usage();
+    memory_reset_peak_usage();
+    $count = 0;
+    foreach (app(ExchangeCloses::class)->forYear(2026) as $close) {
+        $count++;
+    }
+    $growth = memory_get_peak_usage() - $before;
+    unlink($text);
+    unlink($path);
+
+    expect($count)->toBe(20_000)
+        ->and($growth)->toBeLessThan(20 * 1024 * 1024);
+});
+
+it('fails on an annual file that does not exist', function () {
+    Http::fake(['*' => Http::response('', 404)]);
+
+    expect(fn () => iterator_to_array(app(ExchangeCloses::class)->forYear(2025)))->toThrow(SourceUnavailable::class);
+});
+
+describe('history command', function () {
+    beforeEach(function () {
+        Carbon::setTestNow('2026-11-03 21:00:00-03:00');
+        FundModel::create(['ticker' => 'KNRI11', 'name' => 'KNRI11']);
+    });
+    afterEach(fn () => Carbon::setTestNow());
+
+    it('loads two years once and skips the second run', function () {
+        // Uma resposta nova por pedido: o corpo de uma resposta só pode ser gravado uma vez no sink.
+        Http::fake(['*COTAHIST_A*' => fn () => Http::response(b3Zip('COTAHIST_A.TXT'))]);
+
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        expect(DailyPriceModel::where('ticker', 'KNRI11')->count())->toBe(1)
+            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
+        Http::assertSentCount(2);
+
+        // O fechamento do fixture é de 2026-10-30: ainda sem 300 dias, carregaria de novo.
+        // Com um fechamento de mais de 300 dias, a segunda rodada sai sem pedir nada.
+        DailyPriceModel::query()->update(['day' => '2025-12-01']);
+        Http::fake(['*' => fn () => Http::response(b3Zip('COTAHIST_A.TXT'))]);
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+        Http::assertNothingSent();
+
+        $this->artisan('fiis:import-exchange-history --force')->assertSuccessful();
+        Http::assertSentCount(2);
+    });
+
+    it('records the failure and still exits successfully', function () {
+        Http::fake(['*' => Http::response('', 500)]);
+
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        expect(SourceEventModel::where('source', 'b3')->where('kind', 'failure')->count())->toBe(2)
+            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->exists())->toBeFalse();
+    });
+});

@@ -297,6 +297,11 @@ it('keeps evaluating the others when one favorite blows up, and logs it', functi
 
         public function saveCloses(string $ticker, array $closes): void {}
 
+        public function hasClosesOnOrBefore(string $day): bool
+        {
+            return false;
+        }
+
         public function closesBefore(string $ticker, string $day, string $fromDay): array
         {
             return [];

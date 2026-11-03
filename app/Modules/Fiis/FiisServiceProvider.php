@@ -22,6 +22,7 @@ use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotes;
 use App\Modules\Fiis\Infrastructure\Console\BacktestCommand;
 use App\Modules\Fiis\Infrastructure\Console\CatchUpCommand;
 use App\Modules\Fiis\Infrastructure\Console\ImportExchangeClosesCommand;
+use App\Modules\Fiis\Infrastructure\Console\ImportExchangeHistoryCommand;
 use App\Modules\Fiis\Infrastructure\Console\ImportReportsCommand;
 use App\Modules\Fiis\Infrastructure\Console\RecordClosesCommand;
 use App\Modules\Fiis\Infrastructure\Console\RefreshQuotesCommand;
@@ -63,6 +64,7 @@ final class FiisServiceProvider extends ServiceProvider
                 BacktestCommand::class,
                 CatchUpCommand::class,
                 ImportExchangeClosesCommand::class,
+                ImportExchangeHistoryCommand::class,
                 ImportReportsCommand::class,
                 RecordClosesCommand::class,
                 RefreshQuotesCommand::class,

@@ -43,3 +43,8 @@ Schedule::command('fiis:import-exchange-closes')
     ->timezone(MarketTime::ZONE)
     ->weekdays()
     ->dailyAt('08:00');
+
+// Primeira carga dos 12 meses: depois de gravada, a rodada sai na primeira conferência.
+Schedule::command('fiis:import-exchange-history')
+    ->timezone(MarketTime::ZONE)
+    ->dailyAt('21:00');

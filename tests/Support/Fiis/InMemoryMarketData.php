@@ -33,11 +33,26 @@ final class InMemoryMarketData implements MarketData
         unset($this->quotes[$ticker]);
     }
 
+    /** Quantas vezes saveCloses foi chamado: mostra se a gravação foi em lotes. */
+    public int $closeWrites = 0;
+
     public function saveCloses(string $ticker, array $closes): void
     {
+        $this->closeWrites++;
         foreach ($closes as $close) {
             $this->closes[$ticker][$close->date] = $close;
         }
+    }
+
+    public function hasClosesOnOrBefore(string $day): bool
+    {
+        foreach ($this->closes as $byDay) {
+            if ($byDay !== [] && min(array_keys($byDay)) <= $day) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function closesBefore(string $ticker, string $day, string $fromDay): array

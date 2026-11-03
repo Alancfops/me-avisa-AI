@@ -71,6 +71,7 @@ it('runs the daily jobs once a day, outside the session', function (string $comm
     ['fiis:record-closes', '19:00'],
     ['fiis:sync-catalog', '07:00'],
     ['fiis:import-reports', '20:00'],
+    ['fiis:import-exchange-history', '21:00'],
 ]);
 
 it('catches up before refreshing, on every half hour of any day', function () {
