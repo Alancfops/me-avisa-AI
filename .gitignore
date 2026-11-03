@@ -4,8 +4,7 @@
 __pycache__/
 *.pyc
 .DS_Store
-.claude/settings.local.json
-.claude/agent-memory-local/
+.claude/
 .scaffold/
 
 # Laravel e front (do starter kit)
