@@ -76,12 +76,4 @@ final class EloquentMarketData implements MarketData
             ->map(fn (DailyPriceModel $row): DailyClose => new DailyClose($row->day, Money::fromString($row->close)))
             ->all());
     }
-
-    public function hasClosesOnOrBefore(string $day): bool
-    {
-        return DailyPriceModel::query()
-            ->where('day', '<=', $day)
-            ->whereIn('ticker', FundModel::query()->select('ticker'))
-            ->exists();
-    }
 }

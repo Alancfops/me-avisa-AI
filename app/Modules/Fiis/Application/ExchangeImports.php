@@ -11,4 +11,9 @@ interface ExchangeImports
     public function has(string $day): bool;
 
     public function mark(string $day): void;
+
+    /** Arquivo anual lido por inteiro (a primeira carga de 12 meses). */
+    public function hasYear(int $year): bool;
+
+    public function markYear(int $year): void;
 }

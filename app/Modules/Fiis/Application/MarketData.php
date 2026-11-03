@@ -16,9 +16,6 @@ interface MarketData
     /** @param list<DailyClose> $closes */
     public function saveCloses(string $ticker, array $closes): void;
 
-    /** Há fechamento gravado em `$day` ou antes, de algum fundo do catálogo? */
-    public function hasClosesOnOrBefore(string $day): bool;
-
     /**
      * Fechamentos em `$fromDay ≤ dia < $day`, do mais antigo ao mais novo.
      *

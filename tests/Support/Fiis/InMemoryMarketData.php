@@ -44,17 +44,6 @@ final class InMemoryMarketData implements MarketData
         }
     }
 
-    public function hasClosesOnOrBefore(string $day): bool
-    {
-        foreach ($this->closes as $byDay) {
-            if ($byDay !== [] && min(array_keys($byDay)) <= $day) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public function closesBefore(string $ticker, string $day, string $fromDay): array
     {
         $closes = array_filter(

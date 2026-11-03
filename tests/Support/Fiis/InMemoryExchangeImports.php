@@ -18,4 +18,17 @@ final class InMemoryExchangeImports implements ExchangeImports
     {
         $this->days[$day] = true;
     }
+
+    /** @var array<int, true> */
+    private array $years = [];
+
+    public function hasYear(int $year): bool
+    {
+        return isset($this->years[$year]);
+    }
+
+    public function markYear(int $year): void
+    {
+        $this->years[$year] = true;
+    }
 }

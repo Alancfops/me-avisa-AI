@@ -7,9 +7,9 @@ use Illuminate\Console\Command;
 
 final class ImportExchangeHistoryCommand extends Command
 {
-    protected $signature = 'fiis:import-exchange-history {--force : Recarrega mesmo com histórico já gravado}';
+    protected $signature = 'fiis:import-exchange-history {--force : Recarrega os dois anos mesmo já carregados}';
 
-    protected $description = 'Carrega 12 meses de fechamentos dos FIIs do catálogo pelos arquivos anuais da B3 (só se ainda não houver)';
+    protected $description = 'Carrega 12 meses de fechamentos dos FIIs do catálogo pelos arquivos anuais da B3 (cada ano é carregado uma vez; o que falhou é tentado de novo)';
 
     public function handle(ImportExchangeHistory $import): int
     {

@@ -5,6 +5,7 @@ use App\Modules\Fiis\Application\ExchangeCloses;
 use App\Modules\Fiis\Application\SourceUnavailable;
 use App\Modules\Fiis\Infrastructure\Persistence\DailyPriceModel;
 use App\Modules\Fiis\Infrastructure\Persistence\ExchangeImportModel;
+use App\Modules\Fiis\Infrastructure\Persistence\ExchangeYearImportModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundModel;
 use App\Modules\Fiis\Infrastructure\Persistence\SourceEventModel;
 use Illuminate\Http\Client\Request;
@@ -221,9 +222,7 @@ describe('history command', function () {
             ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
         Http::assertSentCount(2);
 
-        // O fechamento do fixture é de 2026-10-30: ainda sem 300 dias, carregaria de novo.
-        // Com um fechamento de mais de 300 dias, a segunda rodada sai sem pedir nada.
-        DailyPriceModel::query()->update(['day' => '2025-12-01']);
+        // Anos marcados: a segunda rodada sai sem pedir nada.
         Http::fake(['*' => fn () => Http::response(b3Zip('COTAHIST_A.TXT'))]);
         $this->artisan('fiis:import-exchange-history')->assertSuccessful();
         Http::assertNothingSent();
@@ -239,5 +238,24 @@ describe('history command', function () {
 
         expect(SourceEventModel::where('source', 'b3')->where('kind', 'failure')->count())->toBe(2)
             ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->exists())->toBeFalse();
+    });
+
+    it('retries only the year that failed, even though the other one is loaded', function () {
+        $b3Down = true;
+        Http::fake([
+            '*COTAHIST_A2025.ZIP' => function () use (&$b3Down) {
+                return $b3Down ? Http::response('', 500) : Http::response(b3Zip('COTAHIST_A2025.TXT'));
+            },
+            '*COTAHIST_A2026.ZIP' => fn () => Http::response(b3Zip('COTAHIST_A2026.TXT')),
+        ]);
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        $b3Down = false;
+        $this->artisan('fiis:import-exchange-history')->assertSuccessful();
+
+        // Pedidos: 2025 (falhou), 2026, e só 2025 de novo.
+        Http::assertSentCount(3);
+        expect(ExchangeYearImportModel::pluck('year')->sort()->values()->all())->toBe([2025, 2026])
+            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
     });
 });

@@ -44,7 +44,7 @@ Schedule::command('fiis:import-exchange-closes')
     ->weekdays()
     ->dailyAt('08:00');
 
-// Primeira carga dos 12 meses: depois de gravada, a rodada sai na primeira conferência.
+// Primeira carga dos 12 meses: ano já carregado não é pedido de novo, o que falhou é tentado na rodada seguinte.
 Schedule::command('fiis:import-exchange-history')
     ->timezone(MarketTime::ZONE)
     ->dailyAt('21:00');

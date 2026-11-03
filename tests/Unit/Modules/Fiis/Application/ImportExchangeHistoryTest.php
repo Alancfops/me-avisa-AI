@@ -9,6 +9,7 @@ use App\Modules\Fiis\Domain\Money;
 use Psr\Log\NullLogger;
 use Tests\Support\Fiis\FixedClock;
 use Tests\Support\Fiis\InMemoryCatalog;
+use Tests\Support\Fiis\InMemoryExchangeImports;
 use Tests\Support\Fiis\InMemoryMarketData;
 use Tests\Support\Fiis\InMemorySourceLog;
 
@@ -43,10 +44,9 @@ function yearSource(array $years): ExchangeCloses
     };
 }
 
-function historyImport(ExchangeCloses $source, InMemoryMarketData $market, ?InMemorySourceLog $log = null, bool $force = false): void
+function historyImport(ExchangeCloses $source, InMemoryMarketData $market, ?InMemorySourceLog $log = null, bool $force = false, ?InMemoryExchangeImports $imports = null, array $catalog = ['MXRF11' => 'x', 'KNRI11' => 'y']): void
 {
-    // 2026-11-03: 300 dias antes é 2026-01-07.
-    (new ImportExchangeHistory($source, $market, new InMemoryCatalog(['MXRF11' => 'x', 'KNRI11' => 'y']), new FixedClock('2026-11-03 21:00:00-03:00'), new NullLogger, $log ?? new InMemorySourceLog))->handle($force);
+    (new ImportExchangeHistory($source, $market, $imports ?? new InMemoryExchangeImports, new InMemoryCatalog($catalog), new FixedClock('2026-11-03 21:00:00-03:00'), new NullLogger, $log ?? new InMemorySourceLog))->handle($force);
 }
 
 it('loads the previous and the current year for catalog funds only', function () {
@@ -63,35 +63,83 @@ it('loads the previous and the current year for catalog funds only', function ()
         ->and(array_keys($market->closes['MXRF11']))->toBe(['2025-11-04', '2026-03-02']);
 });
 
-it('skips when there is already a close older than 300 days', function () {
-    $market = new InMemoryMarketData;
-    $market->saveCloses('MXRF11', [new DailyClose('2026-01-07', Money::fromString('9'))]);
+it('downloads nothing when both years are already marked', function () {
+    $imports = new InMemoryExchangeImports;
+    $imports->markYear(2025);
+    $imports->markYear(2026);
+    $log = new InMemorySourceLog;
     $source = yearSource([]);
 
-    historyImport($source, $market);
+    historyImport($source, new InMemoryMarketData, $log, imports: $imports);
 
-    expect($source->requested)->toBe([]);
+    expect($source->requested)->toBe([])
+        ->and($log->successes)->toBe([]);
 });
 
-it('loads when the oldest close is only 299 days old', function () {
-    $market = new InMemoryMarketData;
-    $market->saveCloses('MXRF11', [new DailyClose('2026-01-08', Money::fromString('9'))]);
-    $source = yearSource([]);
+it('loads two years once', function () {
+    $imports = new InMemoryExchangeImports;
+    historyImport(yearSource([]), new InMemoryMarketData, imports: $imports);
 
-    historyImport($source, $market);
+    $second = yearSource([]);
+    historyImport($second, new InMemoryMarketData, imports: $imports);
 
-    expect($source->requested)->toBe([2025, 2026]);
+    expect($second->requested)->toBe([]);
 });
 
-it('reloads with force even when history exists', function () {
-    $market = new InMemoryMarketData;
-    $market->saveCloses('MXRF11', [new DailyClose('2025-12-01', Money::fromString('9'))]);
+it('reloads both years with force even when marked', function () {
+    $imports = new InMemoryExchangeImports;
+    $imports->markYear(2025);
+    $imports->markYear(2026);
     $source = yearSource([2026 => [['MXRF11', '2026-03-02']]]);
+    $market = new InMemoryMarketData;
 
-    historyImport($source, $market, force: true);
+    historyImport($source, $market, force: true, imports: $imports);
 
     expect($source->requested)->toBe([2025, 2026])
-        ->and($market->closes['MXRF11'])->toHaveKeys(['2025-12-01', '2026-03-02']);
+        ->and($market->closes['MXRF11'])->toHaveKey('2026-03-02');
+});
+
+it('retries only the year that failed on the next run', function (int $failingYear, int $okYear) {
+    $imports = new InMemoryExchangeImports;
+    $market = new InMemoryMarketData;
+    $log = new InMemorySourceLog;
+    $first = yearSource([
+        $failingYear => new SourceUnavailable("A B3 não entregou o arquivo de {$failingYear} (500)."),
+        $okYear => [['MXRF11', "{$okYear}-03-02"]],
+    ]);
+
+    historyImport($first, $market, $log, imports: $imports);
+
+    expect($first->requested)->toBe([2025, 2026])
+        ->and(array_keys($market->closes['MXRF11']))->toBe(["{$okYear}-03-02"])
+        ->and($log->failures)->toBe([['b3', "A B3 não entregou o arquivo de {$failingYear} (500)."]])
+        ->and($log->successes)->toBe([]);
+
+    $second = yearSource([$failingYear => [['MXRF11', "{$failingYear}-04-01"]]]);
+    historyImport($second, $market, $log, imports: $imports);
+
+    expect($second->requested)->toBe([$failingYear])
+        ->and($log->successes)->toBe(['b3']);
+
+    $third = yearSource([]);
+    historyImport($third, $market, $log, imports: $imports);
+
+    expect($third->requested)->toBe([]);
+})->with([
+    'falha o anterior' => [2025, 2026],
+    'falha o corrente' => [2026, 2025],
+]);
+
+it('does nothing when the catalog is empty', function () {
+    $imports = new InMemoryExchangeImports;
+    $log = new InMemorySourceLog;
+    $source = yearSource([]);
+
+    historyImport($source, new InMemoryMarketData, $log, imports: $imports, catalog: []);
+
+    expect($source->requested)->toBe([])
+        ->and($log->successes)->toBe([])
+        ->and($imports->hasYear(2026))->toBeFalse();
 });
 
 it('writes in batches instead of holding the whole year', function () {
@@ -104,21 +152,6 @@ it('writes in batches instead of holding the whole year', function () {
     historyImport(yearSource([2026 => $rows]), $market);
 
     expect($market->closeWrites)->toBe(3);
-});
-
-it('logs the failure, keeps the other year and does not log a success', function () {
-    $market = new InMemoryMarketData;
-    $log = new InMemorySourceLog;
-    $source = yearSource([
-        2025 => new SourceUnavailable('A B3 não entregou o arquivo de 2025 (500).'),
-        2026 => [['MXRF11', '2026-03-02']],
-    ]);
-
-    historyImport($source, $market, $log);
-
-    expect(array_keys($market->closes['MXRF11']))->toBe(['2026-03-02'])
-        ->and($log->failures)->toBe([['b3', 'A B3 não entregou o arquivo de 2025 (500).']])
-        ->and($log->successes)->toBe([]);
 });
 
 it('logs a success when both years load', function () {
