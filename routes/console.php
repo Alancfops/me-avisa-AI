@@ -30,3 +30,16 @@ Schedule::command('fiis:sync-catalog')
 Schedule::command('fiis:import-reports')
     ->timezone(MarketTime::ZONE)
     ->dailyAt('20:00');
+
+// Os arquivos diários saem depois do fechamento; a rodada da manhã pega o atraso. Dia sem
+// arquivo (feriado) não é erro: é tentado de novo, e a janela de 10 dias úteis recupera
+// a máquina desligada.
+Schedule::command('fiis:import-exchange-closes')
+    ->timezone(MarketTime::ZONE)
+    ->weekdays()
+    ->dailyAt('20:30');
+
+Schedule::command('fiis:import-exchange-closes')
+    ->timezone(MarketTime::ZONE)
+    ->weekdays()
+    ->dailyAt('08:00');

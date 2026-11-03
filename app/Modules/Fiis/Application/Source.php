@@ -6,4 +6,5 @@ enum Source: string
 {
     case Brapi = 'brapi';
     case Cvm = 'cvm';
+    case B3 = 'b3';
 }

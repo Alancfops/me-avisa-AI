@@ -81,3 +81,31 @@ it('catches up before refreshing, on every half hour of any day', function () {
         ->and(runsAt('fiis:catch-up', '2026-10-31 21:30:00-03:00'))->toBeTrue()
         ->and(runsAt('fiis:catch-up', '2026-10-31 21:15:00-03:00'))->toBeFalse();
 });
+
+it('imports the B3 closes after the close and again next morning, on weekdays', function () {
+    $dueAt = function (string $day): array {
+        $due = [];
+
+        foreach (range(0, 23) as $hour) {
+            foreach ([0, 30] as $minute) {
+                Carbon::setTestNow(sprintf('%s %02d:%02d:00-03:00', $day, $hour, $minute));
+                app()->forgetInstance(Schedule::class);
+                Facade::clearResolvedInstance(Schedule::class);
+                require base_path('routes/console.php');
+
+                $runs = collect(app(Schedule::class)->events())
+                    ->filter(fn (Event $event) => str_contains((string) $event->command, 'fiis:import-exchange-closes'))
+                    ->filter(fn (Event $event) => $event->isDue(app()) && $event->filtersPass(app()));
+
+                if ($runs->isNotEmpty()) {
+                    $due[] = sprintf('%02d:%02d', $hour, $minute);
+                }
+            }
+        }
+
+        return $due;
+    };
+
+    expect($dueAt('2026-10-30'))->toBe(['08:00', '20:30'])
+        ->and($dueAt('2026-10-31'))->toBe([]);
+});
