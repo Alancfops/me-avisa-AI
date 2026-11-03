@@ -23,6 +23,12 @@ interface ReportRepository
     public function monthlyYields(string $ticker): array;
 
     /**
+     * Informe de competência mais recente com algum campo de perfil. `null` na mesma
+     * situação de `bookValues`, ou sem informe.
+     */
+    public function profile(string $ticker): ?FundProfile;
+
+    /**
      * Não troca um informe por uma versão anterior.
      *
      * @param  list<StoredReport>  $reports

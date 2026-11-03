@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Fiis\Application\FundProfile;
 use App\Modules\Fiis\Application\FundReportRecord;
 use App\Modules\Fiis\Application\FundReports;
 use App\Modules\Fiis\Application\ImportReports;
@@ -37,6 +38,11 @@ function failingStore(int $failuresWanted): ReportRepository
         public function monthlyYields(string $ticker): array
         {
             return [];
+        }
+
+        public function profile(string $ticker): ?FundProfile
+        {
+            return null;
         }
 
         public function save(array $reports): void

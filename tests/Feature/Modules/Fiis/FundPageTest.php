@@ -2,8 +2,10 @@
 
 use App\Modules\Fiis\Application\EvaluateFavorites;
 use App\Modules\Fiis\Infrastructure\Persistence\AlertModel;
+use App\Modules\Fiis\Infrastructure\Persistence\DailyPriceModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FavoriteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\FundModel;
+use App\Modules\Fiis\Infrastructure\Persistence\FundReportModel;
 use App\Modules\Fiis\Infrastructure\Persistence\QuoteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\RuleStateModel;
 use Illuminate\Support\Carbon;
@@ -152,4 +154,92 @@ it('survives a leap day: the year before is a real date', function () {
     $this->get('/fundos/MXRF11')->assertOk();
     app(EvaluateFavorites::class)->handle();
     expect(FavoriteModel::find(FavoriteModel::first()->id)->last_evaluated_quote_at)->not->toBeNull();
+});
+
+function storeReport(array $attributes = []): void
+{
+    FundReportModel::create([
+        'cnpj' => '11111111000111', 'ticker' => 'MXRF11', 'month' => '2026-09', 'version' => 1,
+        'delivered_on' => '2026-10-10', 'book_value' => '10.00', 'dividend_yield' => '0.008',
+        ...$attributes,
+    ]);
+}
+
+function storeClose(string $day, string $close): void
+{
+    DailyPriceModel::create(['ticker' => 'MXRF11', 'day' => $day, 'close' => $close]);
+}
+
+it('sends the fund profile from the latest report', function () {
+    storeReport(['month' => '2026-08', 'segment' => 'Papel', 'holders' => 100]);
+    storeReport(['month' => '2026-09', 'segment' => 'Híbrido', 'administrator' => 'BTG', 'started_on' => '2019-03-04', 'net_assets' => '2500000000.50', 'holders' => 900000]);
+    storeReport(['month' => '2026-10', 'segment' => null, 'delivered_on' => '2026-10-29']);
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page->where('fund.profile', [
+        'month' => '2026-09', 'segment' => 'Híbrido', 'administrator' => 'BTG',
+        'startedOn' => '2019-03-04', 'netAssets' => '2500000000.50', 'holders' => 900000,
+    ]));
+});
+
+it('sends a year of closes with the daily P/VP', function () {
+    storeQuote();
+    storeReport();
+    storeClose('2026-10-05', '9.00');
+    storeClose('2026-10-15', '9.50');
+    storeClose('2026-10-20', '10.00');
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page
+        ->has('fund.history', 3)
+        ->where('fund.history.0', ['date' => '2026-10-05', 'close' => '9', 'priceToBook' => null])
+        ->where('fund.history.1', ['date' => '2026-10-15', 'close' => '9.5', 'priceToBook' => '0.95'])
+        ->where('fund.history.2', ['date' => '2026-10-20', 'close' => '10', 'priceToBook' => '1']));
+});
+
+it('says the 12 month average is still being collected', function () {
+    storeQuote();
+    storeClose('2026-07-30', '9.00');
+    storeClose('2026-09-01', '9.50');
+    storeClose('2026-10-20', '10.00');
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page
+        ->where('fund.average12m', ['months' => 12, 'monthsStored' => 3, 'value' => null])
+        ->where('fund.average6m', ['months' => 6, 'monthsStored' => 3, 'value' => null]));
+});
+
+it('sends estimated dividends per share', function () {
+    storeReport();
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page
+        ->has('fund.dividends', 1)
+        ->where('fund.dividends.0', ['month' => '2026-09', 'perShare' => '0.08']));
+});
+
+it('opens without quote, reports or history', function () {
+    $this->get('/fundos/MXRF11')->assertOk()->assertInertia(fn ($page) => $page
+        ->where('fund.price', null)
+        ->where('fund.profile', null)
+        ->where('fund.history', [])
+        ->where('fund.dividends', [])
+        ->where('fund.average12m.value', null));
+});
+
+it('sends no profile or dividends when the ticker is ambiguous', function () {
+    storeReport(['segment' => 'Papel']);
+    storeReport(['cnpj' => '22222222000122', 'segment' => 'Tijolo']);
+
+    $this->get('/fundos/MXRF11')->assertOk()->assertInertia(fn ($page) => $page
+        ->where('fund.profile', null)
+        ->where('fund.dividends', []));
+});
+
+it('keeps the dashboard light', function () {
+    storeQuote();
+    storeReport(['segment' => 'Papel']);
+    storeClose('2026-10-20', '10.00');
+
+    $this->get('/')->assertInertia(fn ($page) => $page
+        ->missing('favorites.0.history')
+        ->missing('favorites.0.dividends')
+        ->missing('favorites.0.profile')
+        ->missing('favorites.0.average12m'));
 });
