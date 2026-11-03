@@ -2,7 +2,7 @@
 
 namespace App\Modules\Fiis\Application;
 
-use DateTimeImmutable;
+use App\Modules\Fiis\Domain\TradingDays;
 use Psr\Log\LoggerInterface;
 
 final readonly class ImportExchangeCloses
@@ -23,18 +23,28 @@ final readonly class ImportExchangeCloses
     /** O dia que falha fica para a próxima rodada, e os outros seguem. */
     public function handle(): void
     {
+        $tickers = array_flip($this->catalog->tickers());
+        $failed = false;
+
         foreach ($this->pendingDays() as $day) {
             try {
-                $this->importDay($day);
-                $this->sourceLog->success(Source::B3);
+                $this->importDay($day, $tickers);
             } catch (SourceUnavailable $failure) {
+                $failed = true;
                 $this->logger->warning("Fechamentos da B3 de {$day} não importados: {$failure->getMessage()}");
                 $this->sourceLog->failure(Source::B3, $failure->getMessage());
             }
         }
+
+        // Só no fim e sem falha: um sucesso depois da falha esconderia o erro na Saúde,
+        // e o dia falho continua pendente. Arquivo ainda inexistente (404) não é falha.
+        if (! $failed) {
+            $this->sourceLog->success(Source::B3);
+        }
     }
 
-    private function importDay(string $day): void
+    /** @param array<string, int> $catalogTickers tickers do catálogo como chaves */
+    private function importDay(string $day, array $catalogTickers): void
     {
         $byTicker = [];
         $fileHadData = false;
@@ -42,7 +52,7 @@ final readonly class ImportExchangeCloses
         foreach ($this->source->forDay($day) as $exchangeClose) {
             $fileHadData = true;
 
-            if ($this->catalog->exists($exchangeClose->ticker)) {
+            if (isset($catalogTickers[$exchangeClose->ticker])) {
                 $byTicker[$exchangeClose->ticker][] = $exchangeClose->close;
             }
         }
@@ -65,22 +75,19 @@ final readonly class ImportExchangeCloses
 
         // A janela são os últimos dias úteis, importados ou não: ela não anda para trás.
         for ($counted = 0; $counted < self::BUSINESS_DAYS_BACK; $day = $day->modify('-1 day')) {
-            if (! $this->isWeekday($day)) {
+            $formatted = $day->format('Y-m-d');
+
+            if (! TradingDays::isBusinessDay($formatted)) {
                 continue;
             }
 
             $counted++;
 
-            if (! $this->imports->has($day->format('Y-m-d'))) {
-                $pending[] = $day->format('Y-m-d');
+            if (! $this->imports->has($formatted)) {
+                $pending[] = $formatted;
             }
         }
 
         return array_reverse($pending);
-    }
-
-    private function isWeekday(DateTimeImmutable $day): bool
-    {
-        return (int) $day->format('N') < 6;
     }
 }

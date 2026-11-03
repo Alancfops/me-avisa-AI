@@ -35,6 +35,11 @@ final class EloquentCatalogRepository implements CatalogRepository
             ->all());
     }
 
+    public function tickers(): array
+    {
+        return array_values(FundModel::query()->pluck('ticker')->map(fn ($ticker): string => (string) $ticker)->all());
+    }
+
     public function exists(string $ticker): bool
     {
         return FundModel::query()->where('ticker', $ticker)->exists();

@@ -20,7 +20,7 @@ return [
     ],
 
     'b3' => [
-        'url' => env('B3_COTAHIST_URL', 'https://bvmf.bmfbovespa.com.br/InstDados/SerHist'),
+        'history_url' => env('B3_COTAHIST_URL', 'https://bvmf.bmfbovespa.com.br/InstDados/SerHist'),
     ],
 
     'cvm' => [

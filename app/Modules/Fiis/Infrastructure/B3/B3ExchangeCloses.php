@@ -84,7 +84,7 @@ final class B3ExchangeCloses implements ExchangeCloses
 
     private function download(string $file, string $label, bool $missingIsEmpty): ?string
     {
-        $url = rtrim((string) config('services.b3.url'), '/')."/{$file}";
+        $url = rtrim((string) config('services.b3.history_url'), '/')."/{$file}";
         $path = (string) tempnam(sys_get_temp_dir(), 'b3');
 
         try {

@@ -11,12 +11,12 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 
-function b3Zip(string $name = 'COTAHIST_D30102026.TXT'): string
+function b3Zip(string $name = 'COTAHIST_D30102026.TXT', ?string $content = null): string
 {
     $path = tempnam(sys_get_temp_dir(), 'b3');
     $zip = new ZipArchive;
     $zip->open($path, ZipArchive::OVERWRITE);
-    $zip->addFromString($name, (string) file_get_contents(__DIR__.'/../../../../Fixtures/b3/COTAHIST_D30102026.TXT'));
+    $zip->addFromString($name, $content ?? (string) file_get_contents(__DIR__.'/../../../../Fixtures/b3/COTAHIST_D30102026.TXT'));
     $zip->close();
     $content = (string) file_get_contents($path);
     unlink($path);
@@ -49,6 +49,14 @@ it('reads FII closes from the daily file', function () {
         'BTRU11' => ['2026-10-30', '85'],
     ]);
 });
+
+it('reads lines ending in CRLF, LF or nothing at all', function (string $ending) {
+    $lines = array_filter(explode("\n", str_replace("\r", '', (string) file_get_contents(__DIR__.'/../../../../Fixtures/b3/COTAHIST_D30102026.TXT'))));
+    $knri = array_values(array_filter($lines, fn ($line) => str_starts_with($line, '012026103012KNRI11') && substr($line, 24, 3) === '010'));
+    Http::fake(['*' => Http::response(b3Zip(content: $knri[0].$ending))]);
+
+    expect(closesByTicker(app(ExchangeCloses::class)->forDay('2026-10-30')))->toBe(['KNRI11' => ['2026-10-30', '150.5']]);
+})->with(['CRLF' => ["\r\n"], 'LF' => ["\n"], 'sem quebra' => ['']]);
 
 it('returns nothing when the file does not exist yet', function () {
     Http::fake(['*' => Http::response('', 404)]);
@@ -117,5 +125,27 @@ describe('importing', function () {
         $events = SourceEventModel::where('source', 'b3')->get();
         expect($events->where('kind', 'failure'))->toHaveCount(1)
             ->and($events->first(fn ($e) => $e->kind === 'failure')->message)->toBe('A B3 não entregou o arquivo de 2026-10-30 (500).');
+    });
+
+    it('keeps a failed day visible when a later day succeeds or is missing', function () {
+        Carbon::setTestNow('2026-10-30 21:00:00-03:00');
+        Http::fake([
+            '*COTAHIST_D29102026.ZIP' => Http::response('', 500),
+            '*COTAHIST_D30102026.ZIP' => Http::response(b3Zip()),
+            '*' => Http::response('', 404),
+        ]);
+
+        $this->artisan('fiis:import-exchange-closes')->assertSuccessful();
+
+        expect(SourceEventModel::where('source', 'b3')->where('kind', 'success')->exists())->toBeFalse()
+            ->and(SourceEventModel::where('source', 'b3')->where('kind', 'failure')->count())->toBe(1);
+    });
+
+    it('records a success only when no day failed', function () {
+        Http::fake(['*COTAHIST_D30102026.ZIP' => Http::response(b3Zip()), '*' => Http::response('', 404)]);
+
+        $this->artisan('fiis:import-exchange-closes')->assertSuccessful();
+
+        expect(SourceEventModel::where('source', 'b3')->where('kind', 'success')->count())->toBe(1);
     });
 });

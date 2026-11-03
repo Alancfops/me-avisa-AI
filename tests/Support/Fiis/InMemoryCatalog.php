@@ -16,6 +16,11 @@ final class InMemoryCatalog implements CatalogRepository
         return [];
     }
 
+    public function tickers(): array
+    {
+        return array_map(strval(...), array_keys($this->names));
+    }
+
     public function exists(string $ticker): bool
     {
         return isset($this->names[$ticker]);

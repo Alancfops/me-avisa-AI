@@ -96,3 +96,12 @@ it('does not mark a missing file as imported, so the next run tries again', func
 
     expect($next->requested)->toHaveCount(10);
 });
+
+it('does not log a success when a day failed, even if a later one worked', function () {
+    $log = new InMemorySourceLog;
+    $source = exchangeSource(['2026-11-02' => new SourceUnavailable('falhou'), '2026-11-03' => ['MXRF11']]);
+
+    exchangeImport($source, new InMemoryMarketData, new InMemoryExchangeImports, $log);
+
+    expect($log->successes)->toBe([]);
+});
