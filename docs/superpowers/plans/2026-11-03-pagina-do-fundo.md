@@ -145,4 +145,4 @@
 ### Task 5: Revisão
 
 - [ ] `code-review` na branch inteira; corrigir o que for confirmado, com commits `fix(fiis): …`.
-- [ ] Rodar `fiis:import-reports` (ou o comando de reimportação existente) no app real para preencher o perfil dos favoritos e conferir a página com dados reais.
+- [ ] Rodar `make migrate` e `php artisan fiis:import-reports` no contêiner do app (`docker compose exec web`, não `run`) no app real para preencher o perfil dos favoritos e conferir a página com dados reais.
