@@ -178,14 +178,14 @@ Every alert on the website also reaches Telegram, and the bot answers quick comm
    TELEGRAM_BOT_TOKEN=your_token
    ```
 
-3. Restart the app with `make restart`.
+3. Start the app again with `make start` (it creates the `bot` service).
 4. Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>) and tap
    **Abrir no Telegram**. The bot gets the code and confirms the connection.
 
 | Command | Answer |
 |---|---|
 | `/alertas` | Favorites that met a rule today |
-| `/ver KNRI11` | Price, P/B, DY and distribution of a fund |
+| `/ver CÓDIGO` | Price, P/B, DY and distribution of a fund |
 | `/favoritos` | Your favorites with prices |
 | `/carteira` | Portfolio value and estimated income |
 | `/ajuda` | The command list |

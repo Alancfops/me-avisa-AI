@@ -56,7 +56,7 @@ comandos rápidos, como "algum favorito bateu alerta hoje?", sem abrir o site.
 ## Conectar o bot
 
 1. A pessoa cria o bot no @BotFather (`/newbot`) e põe o token no `.env`.
-2. Reinicia o app (`make restart`).
+2. Sobe o app de novo (`make start`, que cria o serviço `bot`).
 3. A aba Telegram mostra o nome do bot (`getMe`), um **código de 6 caracteres** válido
    por 15 minutos e o botão **Abrir no Telegram**
    (`https://t.me/<username>?start=<código>`), que já manda `/start <código>`.
@@ -185,7 +185,7 @@ computador. WCAG 2.2 AA como as outras telas (skill `ui-ux`).
 
 Seção nova **Bot do Telegram**:
 
-- criar o bot no @BotFather, pôr `TELEGRAM_BOT_TOKEN` no `.env`, `make restart`, abrir a
+- criar o bot no @BotFather, pôr `TELEGRAM_BOT_TOKEN` no `.env`, `make start`, abrir a
   aba Telegram e conectar;
 - os comandos, com um exemplo cada;
 - os links só abrem no computador do app;

@@ -13,8 +13,8 @@ final class SendTelegramMessageJob implements ShouldQueue
 
     public int $tries = 3;
 
-    /** @var list<int> */
-    public array $backoff = [10, 60];
+    /** @var list<int> Segundos entre as tentativas: aguenta alguns minutos sem internet. */
+    public array $backoff = [60, 300];
 
     public function __construct(public string $html) {}
 

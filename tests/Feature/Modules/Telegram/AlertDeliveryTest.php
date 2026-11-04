@@ -8,6 +8,7 @@ use App\Modules\Fiis\Infrastructure\Persistence\QuoteModel;
 use App\Modules\Fiis\Infrastructure\Persistence\SourceEventModel;
 use App\Modules\Telegram\Application\TelegramApi;
 use App\Modules\Telegram\Application\TelegramState;
+use App\Modules\Telegram\Infrastructure\SendTelegramMessageJob;
 use Illuminate\Support\Carbon;
 use Tests\Support\Telegram\FakeTelegramApi;
 
@@ -49,4 +50,10 @@ it('keeps the alert and shows the failure in Health when Telegram is down', func
 
     expect(AlertModel::query()->count())->toBe(1)
         ->and(SourceEventModel::query()->where('source', 'telegram')->where('kind', 'failure')->exists())->toBeTrue();
+});
+
+it('keeps retrying the delivery for a few minutes, so a short outage does not lose it', function () {
+    $job = new SendTelegramMessageJob('oi');
+
+    expect($job->tries)->toBe(3)->and(array_sum($job->backoff))->toBeGreaterThanOrEqual(300);
 });

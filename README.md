@@ -178,14 +178,14 @@ Todo aviso do site também chega no Telegram, e o bot responde a comandos rápid
    TELEGRAM_BOT_TOKEN=seu_token
    ```
 
-3. Reinicie o app com `make restart`.
+3. Suba o app de novo com `make start` (cria o serviço `bot`).
 4. Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>) e toque em
    **Abrir no Telegram**. O bot recebe o código e confirma a conexão.
 
 | Comando | O que responde |
 |---|---|
 | `/alertas` | Favoritos que bateram regra hoje |
-| `/ver KNRI11` | Preço, P/VP, DY e rendimento de um fundo |
+| `/ver CÓDIGO` | Preço, P/VP, DY e rendimento de um fundo |
 | `/favoritos` | Seus favoritos com o preço |
 | `/carteira` | Valor e rendimento estimado da carteira |
 | `/ajuda` | A lista de comandos |

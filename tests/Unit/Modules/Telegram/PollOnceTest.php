@@ -80,3 +80,20 @@ it('records a failure in Health when Telegram is down', function () {
         ->toThrow(TelegramUnavailable::class);
     expect($log->failures[0][0])->toBe(Source::Telegram->value);
 });
+
+it('records a success in Health on the first good read and after a failure, not on every read', function () {
+    $log = new InMemorySourceLog;
+    $api = new FakeTelegramApi;
+    $poll = pollWith($api, new InMemoryTelegramState, fn () => null, $log);
+
+    $poll->handle();
+    $poll->handle();
+    expect($log->successes)->toBe([Source::Telegram->value]);
+
+    $api->down = true;
+    expect(fn () => $poll->handle())->toThrow(TelegramUnavailable::class);
+    $api->down = false;
+    $poll->handle();
+
+    expect($log->successes)->toBe([Source::Telegram->value, Source::Telegram->value]);
+});

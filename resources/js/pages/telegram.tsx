@@ -61,8 +61,8 @@ function CreateBot() {
                     </pre>
                 </Step>
                 <Step n={3}>
-                    Reinicie o app com <code>make restart</code> e volte a esta
-                    página.
+                    Suba o app de novo com <code>make start</code> e volte a
+                    esta página.
                 </Step>
             </ol>
             <p className="text-sm text-muted-foreground">

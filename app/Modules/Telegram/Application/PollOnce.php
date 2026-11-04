@@ -8,14 +8,17 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /** Uma rodada de long polling: lê, responde e guarda o último update tratado. */
-final readonly class PollOnce
+final class PollOnce
 {
+    /** Começa como true para a primeira leitura boa aparecer na Saúde. */
+    private bool $lastReadFailed = true;
+
     public function __construct(
-        private TelegramApi $api,
-        private TelegramState $state,
-        private MessageHandler $handler,
-        private SourceLog $log,
-        private LoggerInterface $logger,
+        private readonly TelegramApi $api,
+        private readonly TelegramState $state,
+        private readonly MessageHandler $handler,
+        private readonly SourceLog $log,
+        private readonly LoggerInterface $logger,
     ) {}
 
     /**
@@ -35,8 +38,15 @@ final readonly class PollOnce
             $messages = $this->api->updates($last === null ? null : $last + 1);
         } catch (TelegramUnavailable $failure) {
             $this->log->failure(Source::Telegram, $failure->getMessage());
+            $this->lastReadFailed = true;
 
             throw $failure;
+        }
+
+        // Grava o sucesso só quando muda de estado, para não criar uma linha a cada 30 s.
+        if ($this->lastReadFailed) {
+            $this->log->success(Source::Telegram);
+            $this->lastReadFailed = false;
         }
 
         $handled = 0;

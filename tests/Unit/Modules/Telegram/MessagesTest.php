@@ -115,7 +115,7 @@ it('escapes names that come from outside', function () {
 
 it('answers unknown tickers and a missing ticker', function () {
     expect(tgMessages()->notFound('XPTO11'))->toBe('⚠️ Não achei <b>XPTO11</b>. Confira o código na B3.')
-        ->and(tgMessages()->verUsage())->toBe('Use assim: <code>/ver KNRI11</code>');
+        ->and(tgMessages()->verUsage())->toBe('💡 Use assim: <code>/ver CÓDIGO</code>, com o código do fundo na B3 (termina em 11).');
 });
 
 it('lists favorites marking the ones alerted today', function () {
@@ -150,6 +150,18 @@ it('summarizes the portfolio with at most five funds and the estimate note', fun
         ->toBe('💼 Sua carteira está vazia. Adicione FIIs em Minha carteira, no app.');
 });
 
+it('shows the commands menu with an emoji per command', function () {
+    expect(tgMessages()->help())->toBe(implode("\n", [
+        '📋 <b>Comandos</b>',
+        '',
+        '🔔 /alertas · avisos de hoje',
+        '🏢 /ver CÓDIGO · dados de um fundo',
+        '⭐ /favoritos · seus favoritos',
+        '💼 /carteira · sua carteira',
+        '❓ /ajuda · esta lista',
+    ]))->and(tgMessages()->welcome('Me Avisa'))->toStartWith("🎉 ✅ Conectado ao <b>Me Avisa</b>!\n🔔 Os avisos do Me Avisa Aí vão chegar aqui.\n\n📋");
+});
+
 it('never sounds like advice', function () {
     $all = implode("\n", [
         tgMessages()->alert(alertOf(RuleKind::BuyRange), fundView()),
@@ -158,5 +170,5 @@ it('never sounds like advice', function () {
     ]);
 
     expect(mb_strtolower($all))->not->toContain('oportunidade')->not->toContain('compre')->not->toContain('barato')
-        ->and(tgMessages()->help())->toContain('/alertas')->toContain('/ver KNRI11')->toContain('/favoritos')->toContain('/carteira')->toContain('/ajuda');
+        ->and(tgMessages()->help())->toContain('/alertas')->toContain('/ver CÓDIGO')->not->toContain('KNRI11')->toContain('/favoritos')->toContain('/carteira')->toContain('/ajuda');
 });

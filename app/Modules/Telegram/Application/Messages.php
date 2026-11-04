@@ -83,7 +83,7 @@ final readonly class Messages
 
     public function verUsage(): string
     {
-        return 'Use assim: <code>/ver KNRI11</code>';
+        return '💡 Use assim: <code>/ver CÓDIGO</code>, com o código do fundo na B3 (termina em 11).';
     }
 
     /**
@@ -144,18 +144,19 @@ final readonly class Messages
     public function help(): string
     {
         return implode("\n", [
-            '<b>Comandos</b>',
-            '/alertas · avisos de hoje',
-            '/ver KNRI11 · dados de um fundo',
-            '/favoritos · seus favoritos',
-            '/carteira · sua carteira',
-            '/ajuda · esta lista',
+            '📋 <b>Comandos</b>',
+            '',
+            '🔔 /alertas · avisos de hoje',
+            '🏢 /ver CÓDIGO · dados de um fundo',
+            '⭐ /favoritos · seus favoritos',
+            '💼 /carteira · sua carteira',
+            '❓ /ajuda · esta lista',
         ]);
     }
 
     public function welcome(string $botName): string
     {
-        return '✅ Conectado ao <b>'.self::e($botName)."</b>! Os avisos do Me Avisa Aí vão chegar aqui.\n\n".$this->help();
+        return '🎉 ✅ Conectado ao <b>'.self::e($botName)."</b>!\n🔔 Os avisos do Me Avisa Aí vão chegar aqui.\n\n".$this->help();
     }
 
     public function howToConnect(): string

@@ -21,7 +21,7 @@ final class TelegramController
 {
     private const COMMANDS = [
         ['command' => '/alertas', 'example' => '/alertas', 'description' => 'Favoritos que bateram regra hoje'],
-        ['command' => '/ver', 'example' => '/ver KNRI11', 'description' => 'Preço, P/VP e rendimento de um fundo'],
+        ['command' => '/ver', 'example' => '/ver CÓDIGO', 'description' => 'Preço, P/VP e rendimento de um fundo'],
         ['command' => '/favoritos', 'example' => '/favoritos', 'description' => 'Seus favoritos com o preço'],
         ['command' => '/carteira', 'example' => '/carteira', 'description' => 'Valor e rendimento estimado da carteira'],
         ['command' => '/ajuda', 'example' => '/ajuda', 'description' => 'A lista de comandos'],
