@@ -98,13 +98,12 @@ Para conferir, rode `docker compose version`. Deve aparecer uma versão.
 ### 2. Baixe e instale o app
 
 ```bash
-git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
+git clone https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
 make install
 ```
 
-O `-b develop` pega a versão em uso: a `main` só recebe o app na primeira versão
-oficial. O `make install` cria o arquivo de configuração `.env`, monta as imagens e
+O `make install` cria o arquivo de configuração `.env`, monta as imagens e
 prepara o banco. Na primeira vez, leva alguns minutos.
 
 ### 3. Suba o app
@@ -207,7 +206,7 @@ createdb me_avisa_ai
 Instale e suba o app:
 
 ```bash
-git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
+git clone https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
 make native-install   # cria o .env, instala as dependências e prepara o banco
 make native-start     # sobe o site, o agendador e a fila juntos
@@ -397,6 +396,7 @@ fechamentos diários e históricos da
 ## Documentação
 
 - [Design do módulo de FIIs](docs/superpowers/specs/2026-10-29-modulo-fiis-design.md)
+- [Design do bot do Telegram](docs/superpowers/specs/2026-11-04-bot-telegram-design.md)
 - Regras de produto: [FIIs](docs/fiis/), [ações](docs/acoes/), [ETFs](docs/etfs/) e [bot](docs/bot/)
 - [Protótipo visual](docs/prototipo-lovable/)
 - [O que veio da versão anterior](docs/legado.md)

@@ -98,13 +98,12 @@ To check, run `docker compose version`. It should print a version.
 ### 2. Download and install the app
 
 ```bash
-git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
+git clone https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
 make install
 ```
 
-`-b develop` gets the version in use: `main` only gets the app with the first official
-release. `make install` creates the `.env` settings file, builds the images and prepares
+`make install` creates the `.env` settings file, builds the images and prepares
 the database. The first time takes a few minutes.
 
 ### 3. Start the app
@@ -207,7 +206,7 @@ createdb me_avisa_ai
 Install and start the app:
 
 ```bash
-git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
+git clone https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
 make native-install   # creates .env, installs the dependencies and prepares the database
 make native-start     # starts the website, the scheduler and the queue together
@@ -398,6 +397,7 @@ historical closing prices from
 Most project documents are in Portuguese.
 
 - [FII module design](docs/superpowers/specs/2026-10-29-modulo-fiis-design.md)
+- [Telegram bot design](docs/superpowers/specs/2026-11-04-bot-telegram-design.md)
 - Product rules: [FIIs](docs/fiis/), [stocks](docs/acoes/), [ETFs](docs/etfs/) and [bot](docs/bot/)
 - [Visual prototype](docs/prototipo-lovable/)
 - [What came from the previous version](docs/legado.md)
