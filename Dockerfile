@@ -5,7 +5,7 @@ COPY package.json package-lock.json .npmrc vite.config.ts tsconfig.json ./
 RUN npm ci --no-audit --no-fund
 COPY resources ./resources
 COPY public ./public
-RUN VITE_APP_NAME="Me Avisa Aí" npm run build
+RUN VITE_APP_NAME="meavisaAi" npm run build
 
 FROM php:8.4-cli
 RUN apt-get update \

@@ -48,7 +48,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_APP_NAME: Me Avisa Aí
+          VITE_APP_NAME: meavisaAi
 
   security:
     name: Segurança
