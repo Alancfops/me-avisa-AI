@@ -9,7 +9,8 @@ agentes, plugins e MCP.
 
 Módulo de FIIs funcional na `develop`: favoritos, as quatro regras de alerta, antispam,
 brapi, CVM, fechamentos da B3 (COTAHIST), avisos no site, Saúde, página do fundo, lista
-"Todos os FIIs" com tipo e preço teto. A `main` ainda está no commit inicial de docs.
+"Todos os FIIs" com tipo e preço teto, carteira. Módulo 2, bot do Telegram
+(`app/Modules/Telegram/`): avisos, comandos e aba de configuração. A `main` ainda está no commit inicial de docs.
 Specs e planos em `docs/superpowers/` (design do módulo:
 `docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`).
 **Só comece a implementar quando o usuário disser "pode começar".**

@@ -7,7 +7,7 @@ the price you set or drops more than usual. Instead of opening your brokerage ap
 check prices, you look at one screen and see whether there's anything to analyze today.
 
 > **Under construction.** The FII module already works with Docker: favorites, quotes,
-> rules, on-site alerts and the Health page. The interface is still minimal, without the
+> rules, alerts on the website and on Telegram, the portfolio and the Health page. The interface is still minimal, without the
 > visual polish, and the demo mode does not exist yet. Funds whose ISIN is declared by more
 > than one CVM record have no book value, so the automatic rule does not fire for them.
 >
@@ -31,6 +31,7 @@ The FII module offers:
   12-month averages, price and P/B charts, and the latest estimated distribution.
 - **All FIIs:** a list of the funds traded on B3, with type (brick, paper etc.), segment,
   price, P/B and 12-month DY, filters and a favorite button.
+- **Telegram bot:** gets the alerts and answers commands such as `/alertas` and `/ver KNRI11`.
 - **Ceiling price:** the highest price at which the fund yields the annual rate you pick,
   with a button to use it as the target price.
 
@@ -166,6 +167,52 @@ make native-start     # starts the website, scheduler and queue together
 Set `BRAPI_TOKEN` and the database credentials in `.env`. With this option, the app
 doesn't start with the computer by default.
 
+## Telegram bot
+
+Every alert on the website also reaches Telegram, and the bot answers quick commands.
+
+1. In Telegram, open [@BotFather](https://t.me/BotFather), send `/newbot` and pick a name.
+2. Copy the token into `.env`:
+
+   ```dotenv
+   TELEGRAM_BOT_TOKEN=your_token
+   ```
+
+3. Restart the app with `make restart`.
+4. Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>) and tap
+   **Abrir no Telegram**. The bot gets the code and confirms the connection.
+
+| Command | Answer |
+|---|---|
+| `/alertas` | Favorites that met a rule today |
+| `/ver KNRI11` | Price, P/B, DY and distribution of a fund |
+| `/favoritos` | Your favorites with prices |
+| `/carteira` | Portfolio value and estimated income |
+| `/ajuda` | The command list |
+
+The app fetches messages from Telegram, so nothing has to be exposed to the internet.
+Links in the messages only open on the computer running the app. The bot only answers
+the connected chat. Bot messages are in Portuguese.
+
+Don't share the token: it gives full control of the bot. If it leaks, send `/revoke` to
+@BotFather and replace it in `.env`.
+
+## Starting with the computer
+
+With Docker, OrbStack or Podman, the app's services come back on their own when Docker
+starts, unless you stopped them.
+
+| I want to | How |
+|---|---|
+| Stop the app, even after rebooting | `make stop` |
+| Start the app again | `make start` |
+| Not start Docker with Linux | `sudo systemctl disable docker` (to undo: `sudo systemctl enable docker`) |
+| Not start Docker Desktop or OrbStack at login | Turn off the start-at-login option in the app's settings |
+| Not start with Podman (Mac) | Don't run `podman machine start`; to undo, run it and then `make start COMPOSE="podman compose"` |
+
+While the app is stopped, no alerts go out, neither on the website nor on Telegram. When
+it starts again, it catches up on missed closing prices and reports.
+
 ## Commands
 
 | Command | What it does |
@@ -192,6 +239,8 @@ app/Modules/Fiis/
 ├── Application/     use cases and interfaces
 ├── Infrastructure/  PostgreSQL, brapi, CVM, B3
 └── Http/            controllers and Inertia responses
+
+app/Modules/Telegram/  bot: messages, commands and alert delivery
 ```
 
 Architecture tests keep these layers from mixing.
@@ -208,7 +257,7 @@ historical closing prices from
 ## Upcoming modules
 
 1. **FIIs:** favorites, market data, rules and on-site alerts *(working, with a minimal interface)*
-2. Telegram bot
+2. **Telegram bot:** alerts and commands *(working)*
 3. MCP server, to manage favorites by chatting with Claude
 4. Stocks and ETFs
 

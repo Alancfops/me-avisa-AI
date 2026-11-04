@@ -1,5 +1,9 @@
 # Comportamento do Bot (Telegram)
 
+> O design implementado está em `docs/superpowers/specs/2026-11-04-bot-telegram-design.md`
+> e prevalece onde divergir deste documento (por exemplo, `/ver` vale para qualquer FII do
+> catálogo, e não só favoritos).
+
 ## Objetivo
 
 O bot é a ponta de entrega imediata: o usuário não precisa abrir o site para saber que um favorito atingiu regra de alerta; o bot avisa. Resumos sob demanda (`/ver`) complementam as notificações push.
