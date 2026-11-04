@@ -11,12 +11,13 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $link_code
  * @property CarbonImmutable|null $link_code_expires_at
  * @property int|null $last_update_id
+ * @property string|null $token
  */
 final class TelegramStateModel extends Model
 {
     protected $table = 'telegram_state';
 
-    protected $fillable = ['chat_id', 'connected_at', 'link_code', 'link_code_expires_at', 'last_update_id'];
+    protected $fillable = ['chat_id', 'connected_at', 'link_code', 'link_code_expires_at', 'last_update_id', 'token'];
 
     public function getDateFormat(): string
     {
@@ -30,6 +31,8 @@ final class TelegramStateModel extends Model
             'connected_at' => 'immutable_datetime',
             'link_code_expires_at' => 'immutable_datetime',
             'last_update_id' => 'integer',
+            // Criptografado com a APP_KEY: o banco nunca guarda o token em texto puro.
+            'token' => 'encrypted',
         ];
     }
 }

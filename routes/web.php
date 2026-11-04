@@ -26,6 +26,9 @@ Route::delete('carteira/{ticker}', [PortfolioController::class, 'remove'])->name
 Route::get('avisos', AlertController::class)->name('alerts');
 
 Route::get('telegram', [TelegramController::class, 'show'])->name('telegram');
+Route::get('telegram/estado', [TelegramController::class, 'connection'])->name('telegram.connection');
+Route::post('telegram/token', [TelegramController::class, 'saveToken'])->name('telegram.token');
+Route::delete('telegram/token', [TelegramController::class, 'forgetToken'])->name('telegram.token.forget');
 Route::post('telegram/codigo', [TelegramController::class, 'newCode'])->name('telegram.code');
 Route::post('telegram/teste', [TelegramController::class, 'test'])->name('telegram.test');
 Route::delete('telegram', [TelegramController::class, 'disconnect'])->name('telegram.disconnect');

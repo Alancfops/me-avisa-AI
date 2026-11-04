@@ -169,49 +169,125 @@ doesn't start with the computer by default.
 
 ## Telegram bot
 
-Every alert on the website also reaches Telegram, and the bot answers quick commands.
+With the bot, every alert on the website also reaches your Telegram, and you can check
+favorites, portfolio and funds with commands, without opening the app.
 
-1. In Telegram, open [@BotFather](https://t.me/BotFather), send `/newbot` and pick a name.
-2. Copy the token into `.env`:
+**Why does each person create their own bot?** The app installed on your computer is
+what reads and answers the messages. One bot for everyone would need a server on the
+internet holding everyone's data, and Me Avisa Aí runs only on your machine. Creating a
+bot is free and takes about 2 minutes.
 
-   ```dotenv
-   TELEGRAM_BOT_TOKEN=your_token
-   ```
+### 1. Create the bot
 
-3. Start the app again with `make start` (it creates the `bot` service).
-4. Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>) and tap
-   **Abrir no Telegram**. The bot gets the code and confirms the connection.
+1. In Telegram, open [@BotFather](https://t.me/BotFather) and send `/newbot`.
+2. When it asks for the **name**, send `Me Avisa Aí`.
+3. When it asks for the **username**, make one up ending in `bot`. It must be unique in
+   all of Telegram, so put something of yours in the middle, like `meavisaai_maria_bot`.
+4. @BotFather answers with the **token**, a line like `123456789:AAH...`. Copy it.
+
+### 2. Give the token to the app
+
+Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>), paste the token and
+tap **Salvar token**. The app checks the token with Telegram and stores it encrypted in
+the database. In a few seconds the bot starts working, with no restart.
+
+The app also gives the bot the standard name, description and command menu (what shows
+up when you type `/` in the chat).
+
+> Rather use a file? Put `TELEGRAM_BOT_TOKEN=your_token` in `.env` and run `make start`.
+> The `.env` token takes precedence over the one from the tab.
+
+### 3. Connect your chat
+
+The same tab shows a **QR code** and the **Abrir no Telegram** button:
+
+- **on the phone:** point the camera at the QR code and tap **Start** in Telegram;
+- **on the computer:** tap **Abrir no Telegram** and then **Start**.
+
+The bot answers "✅ Conectado" and the tab switches to **Conectado** by itself. Use
+**Enviar mensagem de teste** to check.
+
+The code inside the link proves that whoever sent `/start` is the person with the app
+open. It lasts 15 minutes and works once. Once connected, the bot ignores every other
+chat.
+
+### Commands
 
 | Command | Answer |
 |---|---|
 | `/alertas` | Favorites that met a rule today |
-| `/ver CÓDIGO` | Price, P/B, DY and distribution of a fund |
-| `/favoritos` | Your favorites with prices |
+| `/ver CÓDIGO` | Price, P/B, DY and distribution of a fund (the B3 ticker, ending in 11) |
+| `/favoritos` | Your favorites with their price |
 | `/carteira` | Portfolio value and estimated income |
 | `/ajuda` | The command list |
 
-The app fetches messages from Telegram, so nothing has to be exposed to the internet.
-Links in the messages only open on the computer running the app. The bot only answers
-the connected chat. Bot messages are in Portuguese.
+The "Ver no app" links in the messages open only on the computer running the app. On
+the phone, use the commands.
 
-Don't share the token: it gives full control of the bot. If it leaks, send `/revoke` to
-@BotFather and replace it in `.env`.
+### Disconnect, switch bots and security
+
+- **Disconnect:** **Desconectar** button on the tab. Alerts stay on the website. To come
+  back, connect again with the QR code.
+- **Switch bots:** **Usar outro bot** on the tab, then paste the new token.
+- **Leaked token:** send `/revoke` to @BotFather, pick the bot and paste the new token on
+  the tab (or in `.env`). Whoever has the token controls the bot, so don't share it.
+- The app fetches messages from Telegram; nothing on your computer is exposed to the
+  internet.
+
+### If the bot doesn't answer
+
+| What you see | What to do |
+|---|---|
+| No answer at all | Check the app is running (`make start`). Without the app, the bot is silent. |
+| "O Telegram recusou o token" | The token was revoked or mistyped. Copy it again from @BotFather. |
+| "O Telegram não respondeu agora" | No internet or Telegram is down. The bot recovers by itself. |
+| "Este bot ainda não está conectado" | Create the code on the tab and connect with the QR code. |
+
+The **Saúde** tab shows the bot's last successful send or read and its last error.
 
 ## Starting with the computer
 
-With Docker, OrbStack or Podman, the app's services come back on their own when Docker
-starts, unless you stopped them.
+With Docker (Linux), Docker Desktop or OrbStack, the app comes back when the computer
+starts: Docker starts with the system and brings the app's services back, unless you
+stopped them with `make stop`. Podman is different (see below).
 
-| I want to | How |
+While the app is stopped, no alerts go out, neither on the website nor on Telegram.
+When it starts again, it catches up on the closing prices and reports it missed.
+
+### Turn only the app off and on
+
+| I want to | Command |
 |---|---|
-| Stop the app, even after rebooting | `make stop` |
-| Start the app again | `make start` |
-| Not start Docker with Linux | `sudo systemctl disable docker` (to undo: `sudo systemctl enable docker`) |
-| Not start Docker Desktop or OrbStack at login | Turn off the start-at-login option in the app's settings |
-| Not start with Podman (Mac) | Don't run `podman machine start`; to undo, run it and then `make start COMPOSE="podman compose"` |
+| Stop the app now and keep it from coming back when the computer starts | `make stop` |
+| Turn it on again (and start with the computer again) | `make start` |
 
-While the app is stopped, no alerts go out, neither on the website nor on Telegram. When
-it starts again, it catches up on missed closing prices and reports.
+This is the simplest way: Docker still starts with the system, but the app stays off
+until you run `make start`.
+
+### Keep Docker from starting with the computer
+
+So that nothing from Docker opens by itself:
+
+| Where | Turn off | Turn back on |
+|---|---|---|
+| Linux (Docker Engine) | `sudo systemctl disable docker.service docker.socket` | `sudo systemctl enable --now docker.service docker.socket` |
+| Docker Desktop (Windows, Mac, Linux) | **Settings → General**, uncheck **Start Docker Desktop when you sign in** | Check the same option |
+| OrbStack (Mac) | **Settings → General**, uncheck **Start at login** | Check the same option |
+
+With Docker off at boot, open Docker (or run `sudo systemctl start docker`) and then
+`make start` when you want to use the app.
+
+### Podman
+
+Podman has no service that brings containers back by itself, so the app does **not**
+start with the computer. After turning the machine on:
+
+```bash
+podman machine start              # Mac only
+make start COMPOSE="podman compose"
+```
+
+To stop: `make stop COMPOSE="podman compose"`.
 
 ## Commands
 

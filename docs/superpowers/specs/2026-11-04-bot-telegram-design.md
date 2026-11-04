@@ -35,15 +35,17 @@ comandos rápidos, como "algum favorito bateu alerta hoje?", sem abrir o site.
 - Recomendar investimento: as mensagens dizem que uma regra foi atendida, nunca
   "oportunidade" ou "compre".
 - Responder a quem não é o chat conectado.
-- Token do bot no repositório, no banco ou na conversa com o Claude.
+- Token do bot no repositório, em texto puro no banco ou na conversa com o Claude.
 - Expor o app na internet: o app busca as mensagens; o Telegram nunca chama o app.
 
 ## Restrições
 
 - **Sem webhook:** o app roda só em `127.0.0.1`. O bot usa *long polling*
   (`getUpdates` com `timeout` de 30 s) da Bot API.
-- **Token:** `TELEGRAM_BOT_TOKEN` no `.env`, lido por `config/services.php`, como o
-  `BRAPI_TOKEN`. Sem token, o bot fica parado e a aba Telegram explica o que falta.
+- **Token:** colado na aba Telegram e guardado criptografado (APP_KEY) no banco, ou
+  `TELEGRAM_BOT_TOKEN` no `.env`, que tem prioridade. Sem token, o bot fica parado e a
+  aba Telegram explica o que falta. (Mudou em 2026-11-04, a pedido da pessoa: editar o
+  `.env` e reiniciar era trabalhoso para quem instala.)
 - **Uma pessoa por instalação:** um chat conectado. Depois de conectado, mensagens de
   outros chats são ignoradas em silêncio (sem resposta) e só ficam no log. Antes de
   conectar, qualquer chat que mande `/start` recebe só a explicação de como conectar,
@@ -55,14 +57,19 @@ comandos rápidos, como "algum favorito bateu alerta hoje?", sem abrir o site.
 
 ## Conectar o bot
 
-1. A pessoa cria o bot no @BotFather (`/newbot`) e põe o token no `.env`.
-2. Sobe o app de novo (`make start`, que cria o serviço `bot`).
-3. A aba Telegram mostra o nome do bot (`getMe`), um **código de 6 caracteres** válido
-   por 15 minutos e o botão **Abrir no Telegram**
-   (`https://t.me/<username>?start=<código>`), que já manda `/start <código>`.
-4. O bot recebe `/start <código>`, confere, grava o chat e responde com a mensagem de
-   boas-vindas. A aba passa a mostrar "Conectado" e o botão **Desconectar**.
-5. `/start` sem código, ou com código errado ou vencido: o bot responde só ao chat que
+1. A pessoa cria o bot no @BotFather (`/newbot`), com o nome sugerido "Me Avisa Aí" e
+   um nome de usuário próprio (sugestão `meavisaai_<nome>_bot`; o @ é único no
+   Telegram, então não dá para todos terem o mesmo).
+2. Cola o token na aba Telegram. O app confere com `getMe`, guarda e, em até 5 s, o
+   serviço `bot` começa a ler. Trocar o token apaga o chat, o código e o último update.
+3. O app padroniza o bot (`setMyCommands`, `setMyShortDescription`, `setMyDescription`
+   e `setMyName` só se o nome for outro) ao salvar o token e sempre que o `bot` inicia.
+4. A aba mostra o nome do bot, um **código de 6 caracteres** válido por 15 minutos, um
+   **QR code** e o botão **Abrir no Telegram** (`https://t.me/<username>?start=<código>`).
+5. O bot recebe `/start <código>`, confere, grava o chat e responde com a mensagem de
+   boas-vindas. A aba pergunta a cada 3 s (`GET /telegram/estado`) e muda sozinha para
+   "Conectado", com **Desconectar** e **Usar outro bot** (este só com token da aba).
+6. `/start` sem código, ou com código errado ou vencido: o bot responde só ao chat que
    mandou, explicando que é preciso gerar o código na aba Telegram do app. Não revela
    dados.
 
@@ -151,7 +158,9 @@ Rota `/telegram`, item **Telegram** no menu lateral, fora do grupo FIIs (antes d
 Saúde). Mostra, conforme o estado:
 
 1. **Sem token:** passo a passo do @BotFather, a linha do `.env` e "reinicie o app".
-2. **Token inválido** (`getMe` falha): diz isso e manda conferir o token.
+2. **Token inválido** (`getMe` responde 401): diz isso e pede outro token.
+2b. **Telegram fora do ar** (`getMe` sem resposta): diz isso, sem culpar o token, com
+   "Tentar de novo".
 3. **Pronto para conectar:** nome do bot, código, botão "Abrir no Telegram", tempo de
    validade e "Gerar outro código".
 4. **Conectado:** nome do bot, desde quando, botão "Enviar mensagem de teste" e
@@ -225,7 +234,8 @@ Não confirmadas pela pessoa; estão aqui para conferir:
 - Conexão por código de 6 caracteres, válido por 15 minutos, com link `t.me/...?start=`.
 - Serviço `bot` separado no Compose, em vez de rodar pelo agendador a cada minuto (o
   agendador deixaria a resposta aos comandos com até 1 minuto de atraso).
-- Token só no `.env`, não em formulário do site.
+- Token pela aba (criptografado no banco) ou pelo `.env`, que tem prioridade.
+- QR code, aba que se atualiza sozinha e perfil padrão do bot.
 - Botão "Enviar mensagem de teste" na aba.
 - Mensagem de quem não é o chat conectado: ignorada sem resposta.
 - `/carteira` mostra as 5 maiores posições.

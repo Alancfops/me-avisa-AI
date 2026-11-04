@@ -4,7 +4,7 @@ namespace App\Modules\Telegram\Application;
 
 use DateTimeImmutable;
 
-/** Chat conectado, código de conexão pendente e a última mensagem lida. */
+/** Token salvo pela aba, chat conectado, código de conexão pendente e a última mensagem lida. */
 interface TelegramState
 {
     public function chatId(): ?int;
@@ -26,4 +26,11 @@ interface TelegramState
     public function lastUpdateId(): ?int;
 
     public function saveLastUpdateId(int $id): void;
+
+    public function token(): ?string;
+
+    /** Bot novo, conversa nova: apaga chat, código e último update. */
+    public function saveToken(string $token): void;
+
+    public function forgetToken(): void;
 }

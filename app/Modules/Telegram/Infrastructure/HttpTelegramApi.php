@@ -5,7 +5,9 @@ namespace App\Modules\Telegram\Infrastructure;
 use App\Modules\Telegram\Application\BotProfile;
 use App\Modules\Telegram\Application\IncomingMessage;
 use App\Modules\Telegram\Application\TelegramApi;
+use App\Modules\Telegram\Application\TelegramState;
 use App\Modules\Telegram\Application\TelegramUnavailable;
+use App\Modules\Telegram\Application\TokenRefused;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
@@ -14,16 +16,48 @@ final class HttpTelegramApi implements TelegramApi
 {
     private const POLL_SECONDS = 30;
 
+    public function __construct(private TelegramState $state) {}
+
     public function isConfigured(): bool
     {
         return $this->token() !== '';
     }
 
+    public function tokenSource(): ?string
+    {
+        if ($this->envToken() !== '') {
+            return 'env';
+        }
+
+        return $this->token() === '' ? null : 'app';
+    }
+
     public function me(): BotProfile
     {
-        $result = $this->call('getMe', [], 10);
+        return $this->profile($this->call('getMe', [], 10));
+    }
 
-        return new BotProfile((string) ($result['username'] ?? ''), (string) ($result['first_name'] ?? ''));
+    public function meWith(string $token): BotProfile
+    {
+        return $this->profile($this->call('getMe', [], 10, $token));
+    }
+
+    public function brand(string $name, string $shortDescription, string $description, array $commands): void
+    {
+        $menu = [];
+
+        foreach ($commands as $command => $text) {
+            $menu[] = ['command' => $command, 'description' => $text];
+        }
+
+        $this->call('setMyCommands', ['commands' => $menu], 10);
+        $this->call('setMyShortDescription', ['short_description' => $shortDescription], 10);
+        $this->call('setMyDescription', ['description' => $description], 10);
+
+        // O Telegram limita trocas de nome; só pede quando muda.
+        if ($this->me()->name !== $name) {
+            $this->call('setMyName', ['name' => $name], 10);
+        }
     }
 
     public function updates(?int $offset): array
@@ -36,7 +70,9 @@ final class HttpTelegramApi implements TelegramApi
 
         $messages = [];
 
-        foreach ($this->call('getUpdates', $params, self::POLL_SECONDS + 5) as $update) {
+        $result = $this->call('getUpdates', $params, self::POLL_SECONDS + 5);
+
+        foreach (is_array($result) ? $result : [] as $update) {
             if (! is_array($update) || ! is_int($update['update_id'] ?? null)) {
                 continue;
             }
@@ -60,17 +96,23 @@ final class HttpTelegramApi implements TelegramApi
         ], 10);
     }
 
-    /**
-     * @param  array<string, mixed>  $params
-     * @return array<mixed>
-     */
-    private function call(string $method, array $params, int $timeout): array
+    private function profile(mixed $result): BotProfile
     {
-        if (! $this->isConfigured()) {
-            throw new TelegramUnavailable('Falta o TELEGRAM_BOT_TOKEN no .env.');
+        $result = is_array($result) ? $result : [];
+
+        return new BotProfile((string) ($result['username'] ?? ''), (string) ($result['first_name'] ?? ''));
+    }
+
+    /** @param  array<string, mixed>  $params */
+    private function call(string $method, array $params, int $timeout, ?string $token = null): mixed
+    {
+        $token ??= $this->token();
+
+        if ($token === '') {
+            throw new TelegramUnavailable('Falta o token do bot.');
         }
 
-        $url = rtrim((string) config('services.telegram.url'), '/').'/bot'.$this->token().'/'.$method;
+        $url = rtrim((string) config('services.telegram.url'), '/').'/bot'.$token.'/'.$method;
 
         try {
             $response = Http::timeout($timeout)->asJson()->post($url, $params);
@@ -81,23 +123,28 @@ final class HttpTelegramApi implements TelegramApi
         return $this->result($response);
     }
 
-    /** @return array<mixed> */
-    private function result(Response $response): array
+    private function result(Response $response): mixed
     {
         $body = $response->json();
 
         if ($response->status() === 401) {
-            throw new TelegramUnavailable('O Telegram recusou o token. Confira o TELEGRAM_BOT_TOKEN no .env.');
+            throw new TokenRefused('O Telegram recusou o token do bot.');
         }
 
-        if (! is_array($body) || ($body['ok'] ?? false) !== true || ! is_array($body['result'] ?? null)) {
+        if (! is_array($body) || ($body['ok'] ?? false) !== true || ! array_key_exists('result', $body)) {
             throw new TelegramUnavailable("O Telegram respondeu com erro (HTTP {$response->status()}).");
         }
 
         return $body['result'];
     }
 
+    /** O do `.env` tem prioridade sobre o salvo pela aba. */
     private function token(): string
+    {
+        return $this->envToken() !== '' ? $this->envToken() : trim((string) $this->state->token());
+    }
+
+    private function envToken(): string
     {
         return trim((string) config('services.telegram.token'));
     }

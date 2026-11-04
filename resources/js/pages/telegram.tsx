@@ -1,6 +1,7 @@
-import { Head, router } from '@inertiajs/react';
-import { CircleAlert, CircleCheck, Copy, Send } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { CircleAlert, CircleCheck, Copy, RefreshCw, Send } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { ModalContent } from '@/components/modal';
 import { PageHeader } from '@/components/page-header';
@@ -12,13 +13,46 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { quoteMoment } from '@/lib/market';
 
-type State = 'no_token' | 'invalid_token' | 'ready' | 'connected';
+type State = 'no_token' | 'invalid_token' | 'offline' | 'ready' | 'connected';
+
+type TokenSource = 'env' | 'app' | null;
+
+const BOT_NAME = 'Me Avisa Aí';
+
+/** Quanto a aba espera entre as perguntas "já conectou?". */
+const CONNECTION_CHECK_MS = 3000;
 
 type Command = { command: string; example: string; description: string };
 
 const UNAVAILABLE = 'Não conseguimos falar com o app agora. Tente de novo.';
+
+function copy(text: string, done: string) {
+    navigator.clipboard
+        ?.writeText(text)
+        .then(() => toast.success(done))
+        .catch(() => toast.error('Não deu para copiar.'));
+}
+
+function CopyValue({ value, label }: { value: string; label: string }) {
+    return (
+        <span className="mt-1 flex flex-wrap items-center gap-2">
+            <code className="rounded-md bg-muted px-2 py-1">{value}</code>
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copy(value, `${label} copiado.`)}
+            >
+                <Copy aria-hidden="true" />
+                Copiar {label.toLowerCase()}
+            </Button>
+        </span>
+    );
+}
 
 function Step({ n, children }: { n: number; children: React.ReactNode }) {
     return (
@@ -34,13 +68,67 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
     );
 }
 
-function CreateBot() {
+function TokenForm() {
+    const form = useForm({ token: '' });
+
+    return (
+        <form
+            className="mt-2 space-y-2"
+            onSubmit={(event) => {
+                event.preventDefault();
+                form.post('/telegram/token', {
+                    preserveScroll: true,
+                    onSuccess: () => {
+                        form.reset();
+                        toast.success('Bot salvo. Falta só conectar.');
+                    },
+                });
+            }}
+        >
+            <Label htmlFor="telegram-token">Token do bot</Label>
+            <Input
+                id="telegram-token"
+                value={form.data.token}
+                onChange={(event) => form.setData('token', event.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="123456789:AAH..."
+                aria-invalid={form.errors.token !== undefined}
+                aria-describedby={
+                    form.errors.token ? 'telegram-token-erro' : undefined
+                }
+                className="num"
+            />
+            {form.errors.token && (
+                <p
+                    id="telegram-token-erro"
+                    role="alert"
+                    className="text-sm text-destructive"
+                >
+                    {form.errors.token}
+                </p>
+            )}
+            <Button
+                type="submit"
+                disabled={form.processing || form.data.token.trim() === ''}
+            >
+                {form.processing ? 'Conferindo…' : 'Salvar token'}
+            </Button>
+        </form>
+    );
+}
+
+function CreateBot({ fromEnv }: { fromEnv: boolean }) {
     return (
         <section aria-labelledby="criar-bot" className="space-y-4 surface p-5">
             <h2 id="criar-bot" className="text-lg font-semibold">
                 Crie o seu bot
             </h2>
-            <ol className="space-y-4 text-sm">
+            <p className="text-sm text-muted-foreground">
+                Cada instalação tem o próprio bot, porque quem responde é o app
+                deste computador. Leva uns 2 minutos.
+            </p>
+            <ol className="space-y-5 text-sm">
                 <Step n={1}>
                     No Telegram, abra o{' '}
                     <a
@@ -50,25 +138,40 @@ function CreateBot() {
                         className="text-primary underline"
                     >
                         @BotFather
-                    </a>
-                    , mande <code>/newbot</code> e escolha um nome.
+                    </a>{' '}
+                    e mande <code>/newbot</code>.
                 </Step>
                 <Step n={2}>
-                    Copie o token que ele devolver e coloque no arquivo{' '}
-                    <code>.env</code> do app:
-                    <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs">
-                        TELEGRAM_BOT_TOKEN=seu_token
-                    </pre>
+                    Quando ele pedir o nome, mande:
+                    <CopyValue value={BOT_NAME} label="Nome" />
                 </Step>
                 <Step n={3}>
-                    Suba o app de novo com <code>make start</code> e volte a
-                    esta página.
+                    Quando ele pedir o nome de usuário, invente um que termine
+                    em <code>bot</code>. Precisa ser único no Telegram, então
+                    ponha algo seu no meio, como{' '}
+                    <code>meavisaai_maria_bot</code>.
+                </Step>
+                <Step n={4}>
+                    {fromEnv ? (
+                        <>
+                            Ponha o token que ele devolver no arquivo{' '}
+                            <code>.env</code>, na linha{' '}
+                            <code>TELEGRAM_BOT_TOKEN=</code>, e rode{' '}
+                            <code>make start</code>.
+                        </>
+                    ) : (
+                        <>
+                            Ele responde com um token, uma linha como{' '}
+                            <code>123456789:AAH...</code>. Copie e cole aqui:
+                            <TokenForm />
+                        </>
+                    )}
                 </Step>
             </ol>
             <p className="text-sm text-muted-foreground">
+                O app ajusta sozinho a descrição do bot e o menu de comandos.
                 Não compartilhe o token: ele dá controle do bot. Se vazar, mande{' '}
-                <code>/revoke</code> ao @BotFather e troque no <code>.env</code>
-                .
+                <code>/revoke</code> ao @BotFather e cole o novo aqui.
             </p>
         </section>
     );
@@ -83,32 +186,68 @@ function Connect({
     link: string;
     expiresAt: string | null;
 }) {
+    useEffect(() => {
+        const timer = window.setInterval(() => {
+            fetch('/telegram/estado', {
+                headers: { Accept: 'application/json' },
+            })
+                .then((response) => response.json())
+                .then((body: { connected?: boolean }) => {
+                    if (body.connected) {
+                        window.clearInterval(timer);
+                        toast.success('Bot conectado.');
+                        router.reload();
+                    }
+                })
+                .catch(() => undefined);
+        }, CONNECTION_CHECK_MS);
+
+        return () => window.clearInterval(timer);
+    }, []);
+
     return (
         <section aria-labelledby="conectar" className="space-y-4 surface p-5">
             <h2 id="conectar" className="text-lg font-semibold">
                 Conecte o bot ao app
             </h2>
+            <div className="flex flex-wrap items-start gap-5">
+                <div className="rounded-lg bg-white p-3">
+                    <QRCodeSVG
+                        value={link}
+                        size={152}
+                        role="img"
+                        aria-label="QR code que abre o bot no Telegram já com o código"
+                    />
+                </div>
+                <div className="min-w-0 flex-1 basis-56 space-y-2 text-sm">
+                    <p>
+                        <strong>No celular:</strong> aponte a câmera para o QR
+                        code e toque em Começar no Telegram.
+                    </p>
+                    <p>
+                        <strong>Neste computador:</strong> toque em “Abrir no
+                        Telegram” e depois em Começar.
+                    </p>
+                    <p className="text-muted-foreground" role="status">
+                        Esta página muda sozinha quando o bot conectar.
+                    </p>
+                </div>
+            </div>
             <p className="text-sm text-muted-foreground">
-                Toque em “Abrir no Telegram” e depois em Começar. Se preferir,
-                mande ao bot <code>/start {code}</code>.
+                Se preferir, mande ao bot <code>/start {code}</code>.
             </p>
             <div className="flex flex-wrap items-center gap-3">
-                <p
-                    className="rounded-lg border px-4 py-2 num font-display text-2xl font-semibold tracking-[0.3em]"
-                    aria-label={`Código ${code.split('').join(' ')}`}
-                >
-                    {code}
+                <p className="rounded-lg border px-4 py-2 num font-display text-2xl font-semibold tracking-[0.3em]">
+                    <span aria-hidden="true">{code}</span>
+                    <span className="sr-only">
+                        Código {code.split('').join(' ')}
+                    </span>
                 </p>
                 <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                        navigator.clipboard
-                            ?.writeText(`/start ${code}`)
-                            .then(() => toast.success('Comando copiado.'))
-                            .catch(() => toast.error('Não deu para copiar.'));
-                    }}
+                    onClick={() => copy(`/start ${code}`, 'Comando copiado.')}
                 >
                     <Copy aria-hidden="true" />
                     Copiar comando
@@ -144,7 +283,25 @@ function Connect({
     );
 }
 
-function Connected({ since }: { since: string | null }) {
+function ChangeBot() {
+    return (
+        <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.delete('/telegram/token')}
+        >
+            Usar outro bot
+        </Button>
+    );
+}
+
+function Connected({
+    since,
+    canChangeBot,
+}: {
+    since: string | null;
+    canChangeBot: boolean;
+}) {
     const [sending, setSending] = useState(false);
     const cancel = useRef<HTMLButtonElement>(null);
 
@@ -233,6 +390,7 @@ function Connected({ since }: { since: string | null }) {
                         </div>
                     </ModalContent>
                 </Dialog>
+                {canChangeBot && <ChangeBot />}
             </div>
         </section>
     );
@@ -245,9 +403,11 @@ export default function Telegram({
     codeExpiresAt,
     connectedAt,
     link,
+    tokenSource,
     commands,
 }: {
     state: State;
+    tokenSource: TokenSource;
     bot: { username: string; name: string } | null;
     code: string | null;
     codeExpiresAt: string | null;
@@ -278,14 +438,50 @@ export default function Telegram({
                             className="mt-0.5 size-4 shrink-0 text-destructive"
                             aria-hidden="true"
                         />
-                        O Telegram recusou o token, ou não respondeu. Confira o{' '}
-                        <code>TELEGRAM_BOT_TOKEN</code> no <code>.env</code> e
-                        reinicie o app.
+                        {tokenSource === 'env' ? (
+                            <span>
+                                O Telegram recusou o token. Confira a linha{' '}
+                                <code>TELEGRAM_BOT_TOKEN</code> do{' '}
+                                <code>.env</code> e rode <code>make start</code>
+                                .
+                            </span>
+                        ) : (
+                            <span>
+                                O Telegram recusou o token salvo. Talvez ele
+                                tenha sido trocado no @BotFather: cole o novo
+                                abaixo.
+                            </span>
+                        )}
                     </p>
                 )}
 
+                {state === 'offline' && (
+                    <div
+                        role="alert"
+                        className="flex flex-wrap items-center justify-between gap-3 surface p-4 text-sm"
+                    >
+                        <span className="flex items-start gap-2">
+                            <CircleAlert
+                                className="mt-0.5 size-4 shrink-0 text-destructive"
+                                aria-hidden="true"
+                            />
+                            O Telegram não respondeu agora. Confira a internet;
+                            o bot continua configurado.
+                        </span>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.reload()}
+                        >
+                            <RefreshCw aria-hidden="true" />
+                            Tentar de novo
+                        </Button>
+                    </div>
+                )}
+
                 {(state === 'no_token' || state === 'invalid_token') && (
-                    <CreateBot />
+                    <CreateBot fromEnv={tokenSource === 'env'} />
                 )}
                 {state === 'ready' && code && link && (
                     <Connect
@@ -294,7 +490,17 @@ export default function Telegram({
                         expiresAt={codeExpiresAt}
                     />
                 )}
-                {state === 'connected' && <Connected since={connectedAt} />}
+                {state === 'ready' && tokenSource === 'app' && (
+                    <div className="-mt-3 flex justify-end">
+                        <ChangeBot />
+                    </div>
+                )}
+                {state === 'connected' && (
+                    <Connected
+                        since={connectedAt}
+                        canChangeBot={tokenSource === 'app'}
+                    />
+                )}
 
                 <section
                     aria-labelledby="comandos"

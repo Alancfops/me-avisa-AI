@@ -169,49 +169,126 @@ não inicia sozinho com o computador por padrão.
 
 ## Bot do Telegram
 
-Todo aviso do site também chega no Telegram, e o bot responde a comandos rápidos.
+Com o bot, todo aviso do site também chega no seu Telegram, e você consulta favoritos,
+carteira e fundos por comandos, sem abrir o app.
 
-1. No Telegram, abra o [@BotFather](https://t.me/BotFather), mande `/newbot` e escolha um nome.
-2. Copie o token e coloque no `.env`:
+**Por que cada pessoa cria o próprio bot?** Quem lê e responde as mensagens é o app
+instalado no seu computador. Um bot só para todo mundo exigiria um servidor na internet
+guardando os dados de cada pessoa, e o Me Avisa Aí roda só na sua máquina. Criar o bot
+é de graça e leva uns 2 minutos.
 
-   ```dotenv
-   TELEGRAM_BOT_TOKEN=seu_token
-   ```
+### 1. Criar o bot
 
-3. Suba o app de novo com `make start` (cria o serviço `bot`).
-4. Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>) e toque em
-   **Abrir no Telegram**. O bot recebe o código e confirma a conexão.
+1. No Telegram, abra o [@BotFather](https://t.me/BotFather) e mande `/newbot`.
+2. Quando ele pedir o **nome**, mande `Me Avisa Aí`.
+3. Quando ele pedir o **nome de usuário**, invente um que termine em `bot`. Ele precisa
+   ser único no Telegram inteiro, então ponha algo seu no meio, como
+   `meavisaai_maria_bot`.
+4. O @BotFather responde com o **token**, uma linha como `123456789:AAH...`. Copie.
+
+### 2. Colocar o token no app
+
+Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>), cole o token e toque
+em **Salvar token**. O app confere o token com o Telegram e guarda criptografado no
+banco. Em alguns segundos o bot começa a funcionar, sem reiniciar nada.
+
+O app também deixa o bot com o nome, a descrição e o menu de comandos padrão (o que
+aparece ao digitar `/` na conversa).
+
+> Prefere arquivo? Ponha `TELEGRAM_BOT_TOKEN=seu_token` no `.env` e rode `make start`.
+> O token do `.env` tem prioridade sobre o da aba.
+
+### 3. Conectar a sua conversa
+
+Na mesma aba aparecem um **QR code** e o botão **Abrir no Telegram**:
+
+- **no celular:** aponte a câmera para o QR code e toque em **Começar** no Telegram;
+- **no computador:** toque em **Abrir no Telegram** e depois em **Começar**.
+
+O bot responde "✅ Conectado" e a aba muda sozinha para **Conectado**. Use **Enviar
+mensagem de teste** para conferir.
+
+O código dentro do link prova que quem mandou `/start` é quem está com o app aberto. Ele
+vale 15 minutos e é usado uma vez só. Depois de conectado, o bot ignora qualquer outra
+conversa.
+
+### Comandos
 
 | Comando | O que responde |
 |---|---|
 | `/alertas` | Favoritos que bateram regra hoje |
-| `/ver CÓDIGO` | Preço, P/VP, DY e rendimento de um fundo |
+| `/ver CÓDIGO` | Preço, P/VP, DY e rendimento de um fundo (ex.: o código da B3, que termina em 11) |
 | `/favoritos` | Seus favoritos com o preço |
 | `/carteira` | Valor e rendimento estimado da carteira |
 | `/ajuda` | A lista de comandos |
 
-O app busca as mensagens no Telegram, então nada precisa ficar exposto na internet. Os
-links das mensagens só abrem no computador onde o app roda. O bot só responde ao chat
-conectado.
+Os links "Ver no app" das mensagens só abrem no computador onde o app roda. No celular,
+use os comandos.
 
-Não compartilhe o token: ele dá controle do bot. Se vazar, mande `/revoke` ao @BotFather
-e troque o valor no `.env`.
+### Desconectar, trocar de bot e segurança
+
+- **Desconectar:** botão **Desconectar** na aba. Os avisos continuam no site. Para
+  voltar, conecte de novo pelo QR code.
+- **Trocar de bot:** **Usar outro bot** na aba, e cole o token novo.
+- **Token vazou:** mande `/revoke` ao @BotFather, escolha o bot e cole o token novo na
+  aba (ou no `.env`). Quem tem o token controla o bot, então não compartilhe.
+- O app busca as mensagens no Telegram; nada do seu computador fica exposto na
+  internet.
+
+### Se o bot não responder
+
+| O que aparece | O que fazer |
+|---|---|
+| Nenhuma resposta | Confira se o app está ligado (`make start`). Sem o app rodando, o bot fica mudo. |
+| "O Telegram recusou o token" | O token foi trocado ou digitado errado. Copie de novo do @BotFather. |
+| "O Telegram não respondeu agora" | Falta de internet ou Telegram fora do ar. O bot volta sozinho. |
+| "Este bot ainda não está conectado" | Gere o código na aba e conecte pelo QR code. |
+
+A aba **Saúde** mostra o último envio ou leitura com sucesso e o último erro do bot.
 
 ## Iniciar com o computador
 
-Com Docker, OrbStack ou Podman, os serviços do app voltam sozinhos quando o Docker
-inicia, a menos que você os tenha parado.
-
-| Quero | Como |
-|---|---|
-| Parar o app, mesmo depois de religar o computador | `make stop` |
-| Religar o app | `make start` |
-| Não iniciar o Docker com o Linux | `sudo systemctl disable docker` (para voltar: `sudo systemctl enable docker`) |
-| Não iniciar o Docker Desktop ou o OrbStack ao entrar no sistema | Desmarque a opção de iniciar ao entrar, nas configurações do programa |
-| Não iniciar no Podman (Mac) | Não rode `podman machine start`; para voltar, rode e depois `make start COMPOSE="podman compose"` |
+Com Docker (Linux), Docker Desktop ou OrbStack, o app volta sozinho quando o computador
+liga: o Docker inicia junto com o sistema e religa os serviços do app, a menos que você
+os tenha parado com `make stop`. No Podman é diferente (veja abaixo).
 
 Com o app parado, os avisos não saem nem no site nem no Telegram. Ao religar, ele
 recupera os fechamentos e os informes que perdeu.
+
+### Desligar e religar só o app
+
+| Quero | Comando |
+|---|---|
+| Parar o app agora e não deixar voltar quando o computador ligar | `make stop` |
+| Ligar de novo (e voltar a iniciar com o computador) | `make start` |
+
+É o jeito mais simples: o Docker continua iniciando com o sistema, mas o app fica parado
+até você rodar `make start`.
+
+### Não iniciar o Docker com o computador
+
+Para nada do Docker abrir sozinho:
+
+| Onde | Desligar | Religar |
+|---|---|---|
+| Linux (Docker Engine) | `sudo systemctl disable docker.service docker.socket` | `sudo systemctl enable --now docker.service docker.socket` |
+| Docker Desktop (Windows, Mac, Linux) | **Settings → General**, desmarque **Start Docker Desktop when you sign in** | Marque a mesma opção |
+| OrbStack (Mac) | **Settings → General**, desmarque **Start at login** | Marque a mesma opção |
+
+Com o Docker desligado no boot, abra o Docker (ou rode `sudo systemctl start docker`) e
+depois `make start` quando quiser usar o app.
+
+### Podman
+
+O Podman não tem um serviço que religue os contêineres sozinho, então o app **não**
+inicia com o computador. Depois de ligar a máquina:
+
+```bash
+podman machine start              # só no Mac
+make start COMPOSE="podman compose"
+```
+
+Para parar: `make stop COMPOSE="podman compose"`.
 
 ## Comandos
 

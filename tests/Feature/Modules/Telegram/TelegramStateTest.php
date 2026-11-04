@@ -2,6 +2,7 @@
 
 use App\Modules\Telegram\Infrastructure\EloquentTelegramState;
 use App\Modules\Telegram\Infrastructure\TelegramStateModel;
+use Illuminate\Support\Facades\DB;
 
 it('keeps chat, link code and last update in one row', function () {
     $state = new EloquentTelegramState;
@@ -25,4 +26,21 @@ it('keeps chat, link code and last update in one row', function () {
     $fresh->disconnect();
     expect($fresh->linkCode())->toBeNull()->and($fresh->chatId())->toBeNull()->and($fresh->connectedAt())->toBeNull()
         ->and($fresh->lastUpdateId())->toBe(99);
+});
+
+it('keeps the bot token encrypted and starts over when it changes', function () {
+    $state = new EloquentTelegramState;
+    $state->connect(42, new DateTimeImmutable);
+    $state->saveLinkCode('ABC234', new DateTimeImmutable('+15 minutes'));
+    $state->saveLastUpdateId(99);
+
+    $state->saveToken('123:NEW');
+
+    $fresh = new EloquentTelegramState;
+    expect($fresh->token())->toBe('123:NEW')
+        ->and(DB::table('telegram_state')->value('token'))->not->toContain('123:NEW')
+        ->and($fresh->chatId())->toBeNull()->and($fresh->linkCode())->toBeNull()->and($fresh->lastUpdateId())->toBeNull();
+
+    $fresh->forgetToken();
+    expect((new EloquentTelegramState)->token())->toBeNull();
 });

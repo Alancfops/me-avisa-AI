@@ -27,9 +27,63 @@ it('explains how to create the bot without a token', function () {
 });
 
 it('says the token is invalid when Telegram refuses it', function () {
-    useBot(new FakeTelegramApi(down: true));
+    useBot(new FakeTelegramApi(refused: true));
 
     $this->get('/telegram')->assertInertia(fn ($page) => $page->where('state', 'invalid_token'));
+});
+
+it('says Telegram is offline instead of blaming the token', function () {
+    useBot(new FakeTelegramApi(down: true));
+
+    $this->get('/telegram')->assertInertia(fn ($page) => $page->where('state', 'offline'));
+});
+
+it('tells where the token comes from', function (?string $source) {
+    useBot(new FakeTelegramApi(configured: $source !== null, source: $source));
+
+    $this->get('/telegram')->assertInertia(fn ($page) => $page->where('tokenSource', $source));
+})->with([null, 'env', 'app']);
+
+it('saves a pasted token, checks it with Telegram and sets up the bot', function () {
+    $api = useBot(new FakeTelegramApi(configured: false));
+
+    $this->post('/telegram/token', ['token' => '  123456:AAH-abc_defghijklmnopqrstuvwxyz0123  '])
+        ->assertRedirect('/telegram')->assertSessionHasNoErrors();
+
+    expect(app(TelegramState::class)->token())->toBe('123456:AAH-abc_defghijklmnopqrstuvwxyz0123')
+        ->and($api->checked)->toBe(['123456:AAH-abc_defghijklmnopqrstuvwxyz0123'])
+        ->and($api->branded)->toHaveCount(1);
+});
+
+it('refuses a token that is not one', function (array $body, FakeTelegramApi $api) {
+    useBot($api);
+
+    $this->post('/telegram/token', $body)->assertSessionHasErrors('token');
+
+    expect(app(TelegramState::class)->token())->toBeNull();
+})->with([
+    'vazio' => [[], fn () => new FakeTelegramApi(configured: false)],
+    'formato errado' => [['token' => 'meu token'], fn () => new FakeTelegramApi(configured: false)],
+    'recusado pelo Telegram' => [['token' => '123456:AAH-abc_defghijklmnopqrstuvwxyz0123'], fn () => new FakeTelegramApi(configured: false, refused: true)],
+    'Telegram fora do ar' => [['token' => '123456:AAH-abc_defghijklmnopqrstuvwxyz0123'], fn () => new FakeTelegramApi(configured: false, down: true)],
+    'token já no .env' => [['token' => '123456:AAH-abc_defghijklmnopqrstuvwxyz0123'], fn () => new FakeTelegramApi(source: 'env')],
+]);
+
+it('forgets the token saved in the app', function () {
+    useBot(new FakeTelegramApi(source: 'app'));
+    app(TelegramState::class)->saveToken('123:X');
+
+    $this->delete('/telegram/token')->assertRedirect('/telegram');
+
+    expect(app(TelegramState::class)->token())->toBeNull();
+});
+
+it('answers whether the chat is connected, for the page to refresh itself', function () {
+    $this->getJson('/telegram/estado')->assertExactJson(['connected' => false]);
+
+    app(TelegramState::class)->connect(42, new DateTimeImmutable);
+
+    $this->getJson('/telegram/estado')->assertExactJson(['connected' => true]);
 });
 
 it('shows a fresh code and the link while not connected', function () {

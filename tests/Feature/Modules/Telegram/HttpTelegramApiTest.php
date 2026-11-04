@@ -1,6 +1,8 @@
 <?php
 
+use App\Modules\Telegram\Application\TelegramState;
 use App\Modules\Telegram\Application\TelegramUnavailable;
+use App\Modules\Telegram\Application\TokenRefused;
 use App\Modules\Telegram\Infrastructure\HttpTelegramApi;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -57,4 +59,55 @@ it('does nothing without a token', function () {
 
     expect(app(HttpTelegramApi::class)->isConfigured())->toBeFalse();
     Http::assertNothingSent();
+});
+
+it('uses the token saved in the app when the .env has none, and the .env one first', function () {
+    Http::fake(['tg.test/*' => Http::response(['ok' => true, 'result' => ['username' => 'b', 'first_name' => 'B']])]);
+    app(TelegramState::class)->saveToken('777:APP');
+
+    config(['services.telegram.token' => '']);
+    app(HttpTelegramApi::class)->me();
+    expect(app(HttpTelegramApi::class)->tokenSource())->toBe('app');
+
+    config(['services.telegram.token' => 'SECRET123']);
+    app(HttpTelegramApi::class)->me();
+    expect(app(HttpTelegramApi::class)->tokenSource())->toBe('env');
+
+    $urls = collect(Http::recorded())->map(fn ($pair) => $pair[0]->url())->all();
+    expect($urls)->toBe(['https://tg.test/bot777:APP/getMe', 'https://tg.test/botSECRET123/getMe']);
+});
+
+it('checks a candidate token and tells a refused one apart', function () {
+    Http::fake([
+        'tg.test/bot555:GOOD/getMe' => Http::response(['ok' => true, 'result' => ['username' => 'novo_bot', 'first_name' => 'Novo']]),
+        'tg.test/bot555:BAD/getMe' => Http::response(['ok' => false], 401),
+    ]);
+
+    expect(app(HttpTelegramApi::class)->meWith('555:GOOD')->username)->toBe('novo_bot')
+        ->and(fn () => app(HttpTelegramApi::class)->meWith('555:BAD'))->toThrow(TokenRefused::class);
+});
+
+it('sets the commands menu, descriptions and name of the bot', function () {
+    Http::fake([
+        'tg.test/botSECRET123/getMe' => Http::response(['ok' => true, 'result' => ['username' => 'b', 'first_name' => 'Antigo']]),
+        'tg.test/*' => Http::response(['ok' => true, 'result' => true]),
+    ]);
+
+    app(HttpTelegramApi::class)->brand('Me Avisa Aí', 'curta', 'longa', ['ajuda' => 'A lista']);
+
+    Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/setMyCommands') && $r['commands'] === [['command' => 'ajuda', 'description' => 'A lista']]);
+    Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/setMyShortDescription') && $r['short_description'] === 'curta');
+    Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/setMyDescription') && $r['description'] === 'longa');
+    Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/setMyName') && $r['name'] === 'Me Avisa Aí');
+});
+
+it('does not rename the bot when the name is already right', function () {
+    Http::fake([
+        'tg.test/botSECRET123/getMe' => Http::response(['ok' => true, 'result' => ['username' => 'b', 'first_name' => 'Me Avisa Aí']]),
+        'tg.test/*' => Http::response(['ok' => true, 'result' => true]),
+    ]);
+
+    app(HttpTelegramApi::class)->brand('Me Avisa Aí', 'curta', 'longa', []);
+
+    Http::assertNotSent(fn (Request $r) => str_ends_with($r->url(), '/setMyName'));
 });

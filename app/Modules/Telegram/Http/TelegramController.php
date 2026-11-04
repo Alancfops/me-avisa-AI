@@ -4,29 +4,27 @@ namespace App\Modules\Telegram\Http;
 
 use App\Modules\Fiis\Application\Clock;
 use App\Modules\Fiis\Application\MarketTime;
+use App\Modules\Telegram\Application\BotCommands;
 use App\Modules\Telegram\Application\BotProfile;
 use App\Modules\Telegram\Application\CreateLinkCode;
 use App\Modules\Telegram\Application\Disconnect;
+use App\Modules\Telegram\Application\InvalidTokenInput;
 use App\Modules\Telegram\Application\Messages;
+use App\Modules\Telegram\Application\SaveToken;
 use App\Modules\Telegram\Application\SendToConnectedChat;
 use App\Modules\Telegram\Application\TelegramApi;
 use App\Modules\Telegram\Application\TelegramState;
 use App\Modules\Telegram\Application\TelegramUnavailable;
+use App\Modules\Telegram\Application\TokenRefused;
 use DateTimeImmutable;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 final class TelegramController
 {
-    private const COMMANDS = [
-        ['command' => '/alertas', 'example' => '/alertas', 'description' => 'Favoritos que bateram regra hoje'],
-        ['command' => '/ver', 'example' => '/ver CÓDIGO', 'description' => 'Preço, P/VP e rendimento de um fundo'],
-        ['command' => '/favoritos', 'example' => '/favoritos', 'description' => 'Seus favoritos com o preço'],
-        ['command' => '/carteira', 'example' => '/carteira', 'description' => 'Valor e rendimento estimado da carteira'],
-        ['command' => '/ajuda', 'example' => '/ajuda', 'description' => 'A lista de comandos'],
-    ];
-
     public function show(TelegramApi $api, TelegramState $state, CreateLinkCode $createCode, Clock $clock): Response
     {
         [$status, $bot] = $this->status($api, $state);
@@ -50,8 +48,37 @@ final class TelegramController
             'codeExpiresAt' => self::atom($expiresAt),
             'connectedAt' => $status === 'connected' ? self::atom($state->connectedAt()) : null,
             'link' => $bot !== null && $code !== null ? "https://t.me/{$bot->username}?start={$code}" : null,
-            'commands' => self::COMMANDS,
+            'tokenSource' => $api->tokenSource(),
+            'commands' => BotCommands::LIST,
         ]);
+    }
+
+    public function saveToken(Request $request, SaveToken $save): RedirectResponse
+    {
+        try {
+            $save->handle((string) $request->string('token'));
+        } catch (InvalidTokenInput $failure) {
+            return back()->withErrors(['token' => $failure->getMessage()]);
+        } catch (TokenRefused) {
+            return back()->withErrors(['token' => 'O Telegram recusou esse token. Copie de novo a mensagem do @BotFather.']);
+        } catch (TelegramUnavailable) {
+            return back()->withErrors(['token' => 'Não conseguimos falar com o Telegram para conferir o token. Confira a internet e tente de novo.']);
+        }
+
+        return redirect()->route('telegram');
+    }
+
+    public function forgetToken(TelegramState $state): RedirectResponse
+    {
+        $state->forgetToken();
+
+        return redirect()->route('telegram');
+    }
+
+    /** A aba pergunta de tempos em tempos para mudar para "Conectado" sozinha. */
+    public function connection(TelegramState $state): JsonResponse
+    {
+        return response()->json(['connected' => $state->chatId() !== null]);
     }
 
     public function newCode(CreateLinkCode $createCode): RedirectResponse
@@ -90,8 +117,10 @@ final class TelegramController
 
         try {
             $bot = $api->me();
-        } catch (TelegramUnavailable) {
+        } catch (TokenRefused) {
             return ['invalid_token', null];
+        } catch (TelegramUnavailable) {
+            return ['offline', null];
         }
 
         return [$state->chatId() === null ? 'ready' : 'connected', $bot];

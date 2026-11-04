@@ -58,8 +58,26 @@ final class EloquentTelegramState implements TelegramState
         $this->row()->update(['last_update_id' => $id]);
     }
 
+    public function token(): ?string
+    {
+        return $this->row()->token;
+    }
+
+    public function saveToken(string $token): void
+    {
+        $this->row()->update([
+            'token' => $token, 'chat_id' => null, 'connected_at' => null,
+            'link_code' => null, 'link_code_expires_at' => null, 'last_update_id' => null,
+        ]);
+    }
+
+    public function forgetToken(): void
+    {
+        $this->row()->update(['token' => null]);
+    }
+
     private function row(): TelegramStateModel
     {
-        return TelegramStateModel::query()->firstOrCreate([]);
+        return TelegramStateModel::query()->orderBy('id')->firstOrCreate([]);
     }
 }

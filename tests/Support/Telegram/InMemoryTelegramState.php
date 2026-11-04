@@ -17,6 +17,26 @@ final class InMemoryTelegramState implements TelegramState
 
     public ?int $lastUpdate = null;
 
+    public ?string $savedToken = null;
+
+    public function token(): ?string
+    {
+        return $this->savedToken;
+    }
+
+    public function saveToken(string $token): void
+    {
+        $this->savedToken = $token;
+        $this->disconnect();
+        $this->clearLinkCode();
+        $this->lastUpdate = null;
+    }
+
+    public function forgetToken(): void
+    {
+        $this->savedToken = null;
+    }
+
     public function chatId(): ?int
     {
         return $this->chat;
