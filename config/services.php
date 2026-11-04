@@ -19,6 +19,11 @@ return [
         'token' => env('BRAPI_TOKEN'),
     ],
 
+    'telegram' => [
+        'url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+    ],
+
     'b3' => [
         'history_url' => env('B3_COTAHIST_URL', 'https://bvmf.bmfbovespa.com.br/InstDados/SerHist'),
     ],
