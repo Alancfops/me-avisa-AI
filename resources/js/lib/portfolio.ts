@@ -7,11 +7,20 @@ export const ESTIMATE_NOTE =
 
 const UNAVAILABLE = 'Não conseguimos salvar agora. Tente de novo em instantes.';
 
-/** Só inteiros positivos: cota não se divide. "1.000" vale 1000. */
+/**
+ * Só inteiros positivos: cota não se divide. Ponto só vale como milhar ("1.000" é
+ * 1000); "10.5" e "1.0" são recusados, para não virarem 105 e 10.
+ */
 export function parseShares(text: string): number | null {
-    const clean = text.trim().replace(/\./g, '');
+    const trimmed = text.trim();
 
-    return /^\d+$/.test(clean) && Number(clean) > 0 ? Number(clean) : null;
+    if (!/^(\d+|\d{1,3}(\.\d{3})+)$/.test(trimmed)) {
+        return null;
+    }
+
+    const shares = Number(trimmed.replace(/\./g, ''));
+
+    return shares > 0 ? shares : null;
 }
 
 /** "cotação de 14:30" ou "fechamento de 30/10 (B3)", como na página do fundo. */
