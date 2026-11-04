@@ -58,22 +58,9 @@ export function quoteFreshness(iso: string, now = new Date()): QuoteFreshness {
     return minutes > LATE_AFTER_MINUTES ? 'late' : 'fresh';
 }
 
-/** "14:15", "sexta, 17:55" ou "27/10, 17:55". */
-export function quoteMoment(iso: string, now = new Date()): string {
+/** "30/10, 14:15": a data vai sempre junto, para não confundir cotação velha com a de hoje. */
+export function quoteMoment(iso: string): string {
     const date = new Date(iso);
-
-    if (isToday(iso, now)) {
-        return clock(date);
-    }
-
-    if (now.getTime() - date.getTime() < 6 * DAY_IN_MS) {
-        const weekday = date
-            .toLocaleDateString('pt-BR', { weekday: 'long', timeZone: ZONE })
-            .replace('-feira', '');
-
-        return `${weekday}, ${clock(date)}`;
-    }
-
     const day = date.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',

@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { toast } from 'sonner';
-import { clockTime, dayMonth } from '@/lib/format';
+import { dayMonth } from '@/lib/format';
+import { quoteMoment } from '@/lib/market';
 
 export const ESTIMATE_NOTE =
     'Estimativa pelo DY e pelo VP informados à CVM. O fundo pode pagar outro valor.';
@@ -23,13 +24,13 @@ export function parseShares(text: string): number | null {
     return shares > 0 ? shares : null;
 }
 
-/** "cotação de 14:30" ou "fechamento de 30/10 (B3)", como na página do fundo. */
+/** "cotação de 30/10, 14:30" ou "fechamento de 30/10 (B3)", como na página do fundo. */
 export function priceNote(
     quotedAt: string | null,
     closeDay: string | null,
 ): string {
     if (quotedAt !== null) {
-        return `cotação de ${clockTime(quotedAt)}`;
+        return `cotação de ${quoteMoment(quotedAt)}`;
     }
 
     return closeDay === null
