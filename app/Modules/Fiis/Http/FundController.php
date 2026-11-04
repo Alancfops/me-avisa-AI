@@ -5,6 +5,7 @@ namespace App\Modules\Fiis\Http;
 use App\Modules\Fiis\Application\DescribeFund;
 use App\Modules\Fiis\Application\FavoriteRepository;
 use App\Modules\Fiis\Application\FavoriteView;
+use App\Modules\Fiis\Application\HoldingRepository;
 use App\Modules\Fiis\Application\MarketTime;
 use App\Modules\Fiis\Application\RuleStatus;
 use App\Modules\Fiis\Application\UpdateFavoriteSettings;
@@ -18,13 +19,14 @@ use Inertia\Response;
 
 final class FundController
 {
-    public function show(string $ticker, DescribeFund $describe): Response
+    public function show(string $ticker, DescribeFund $describe, HoldingRepository $holdings): Response
     {
         $view = $describe->handle(strtoupper($ticker), detailed: true);
         abort_if($view === null, 404);
 
         return Inertia::render('funds/show', [
             'fund' => self::fundProps($view, detailed: true),
+            'holding' => $holdings->shares($view->ticker),
             'settings' => $view->settings === null ? null : [
                 'mode' => $view->settings->mode->value,
                 'target' => $view->settings->target?->toDecimal(),

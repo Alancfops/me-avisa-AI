@@ -1,5 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { Activity, Bell, Building2, List, Settings, Star } from 'lucide-react';
+import {
+    Activity,
+    Bell,
+    Building2,
+    List,
+    Settings,
+    Star,
+    Wallet,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -19,6 +27,7 @@ const mainNavItems: (NavItem | NavGroup)[] = [
         items: [
             { title: 'Favoritos', href: '/', icon: Star },
             { title: 'Todos os FIIs', href: '/fundos', icon: List },
+            { title: 'Minha carteira', href: '/carteira', icon: Wallet },
         ],
     },
     {

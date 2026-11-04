@@ -6,6 +6,7 @@ use App\Modules\Fiis\Http\FavoriteController;
 use App\Modules\Fiis\Http\FundController;
 use App\Modules\Fiis\Http\FundListController;
 use App\Modules\Fiis\Http\HealthController;
+use App\Modules\Fiis\Http\PortfolioController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', DashboardController::class)->name('home');
@@ -16,6 +17,10 @@ Route::delete('favoritos/{ticker}', [FavoriteController::class, 'destroy'])->nam
 Route::get('fundos', FundListController::class)->name('funds.index');
 Route::get('fundos/{ticker}', [FundController::class, 'show'])->name('funds.show');
 Route::put('fundos/{ticker}/regras', [FundController::class, 'update'])->name('funds.settings');
+
+Route::get('carteira', [PortfolioController::class, 'index'])->name('portfolio');
+Route::put('carteira/{ticker}', [PortfolioController::class, 'save'])->name('portfolio.save');
+Route::delete('carteira/{ticker}', [PortfolioController::class, 'remove'])->name('portfolio.remove');
 
 Route::get('avisos', AlertController::class)->name('alerts');
 

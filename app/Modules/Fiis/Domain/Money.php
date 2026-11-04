@@ -55,6 +55,11 @@ final readonly class Money
         return new self($sum->dividedBy(count($values)));
     }
 
+    public function plus(self $other): self
+    {
+        return new self($this->amount->plus($other->amount));
+    }
+
     public function times(string $factor): self
     {
         return new self($this->amount->multipliedBy($factor));

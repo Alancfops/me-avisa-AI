@@ -17,7 +17,8 @@ import { RemoveFavorite } from '@/components/remove-favorite';
 import { SignalBadges } from '@/components/signal-badges';
 import { WhenToAlert } from '@/components/when-to-alert';
 import type { SuggestedTarget } from '@/components/when-to-alert';
-import { brl, clockTime, dayMonth } from '@/lib/format';
+import { brl, dayMonth } from '@/lib/format';
+import { quoteMoment } from '@/lib/market';
 import type { Period } from '@/lib/history';
 import { hasSharpDrop, ruleName } from '@/lib/rules';
 import type { Fund, RuleStatus, Settings } from '@/types/fiis';
@@ -60,10 +61,13 @@ export default function FundShow({
     fund,
     settings,
     rules,
+    holding,
 }: {
     fund: Fund;
     settings: Settings | null;
     rules: RuleStatus[];
+    /** Cotas salvas na carteira, ou null. */
+    holding: number | null;
 }) {
     const shortHistory = fund.priceToBookDays < MIN_DAYS_FOR_MEDIAN;
     const [period, setPeriod] = useState<Period>(6);
@@ -193,7 +197,7 @@ export default function FundShow({
                             priceNote={
                                 closeOnly || fund.quotedAt === null
                                     ? closeNote
-                                    : `cotação de ${clockTime(fund.quotedAt)}`
+                                    : `cotação de ${quoteMoment(fund.quotedAt)}`
                             }
                             onUseAsTarget={
                                 settings
@@ -206,7 +210,11 @@ export default function FundShow({
                             }
                         />
 
-                        <IncomeCalculator dividends={fund.dividends ?? []} />
+                        <IncomeCalculator
+                            ticker={fund.ticker}
+                            holding={holding}
+                            dividends={fund.dividends ?? []}
+                        />
                     </div>
 
                     <div className="min-w-0 space-y-6 lg:col-span-2 lg:col-start-1 lg:row-span-3 lg:row-start-1">

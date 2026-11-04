@@ -55,10 +55,7 @@ function AlertItem({ alert }: { alert: Alert }) {
                     {brl(alert.price)} · Sua referência: {alert.reference} ·
                     Cotação de{' '}
                     <time dateTime={alert.quotedAt}>
-                        {quoteMoment(
-                            alert.quotedAt,
-                            new Date(alert.occurredAt),
-                        )}
+                        {quoteMoment(alert.quotedAt)}
                     </time>
                 </p>
             </div>

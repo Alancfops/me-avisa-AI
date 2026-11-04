@@ -289,3 +289,11 @@ it('keeps the dashboard light', function () {
         ->missing('favorites.0.profile')
         ->missing('favorites.0.average12m'));
 });
+
+it('tells the fund page how many shares are in the portfolio', function () {
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page->where('holding', null));
+
+    $this->put('/carteira/MXRF11', ['shares' => 100]);
+
+    $this->get('/fundos/MXRF11')->assertInertia(fn ($page) => $page->where('holding', 100));
+});

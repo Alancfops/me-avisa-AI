@@ -43,3 +43,7 @@ it('multiplies by a decimal factor', function () {
     expect(Money::fromString('10')->times('0.95')->isAtMost(Money::fromString('9.50')))->toBeTrue()
         ->and(Money::fromString('9.50')->isAtMost(Money::fromString('10')->times('0.95')))->toBeTrue();
 });
+
+it('adds two amounts exactly', function () {
+    expect(Money::fromString('0.10')->plus(Money::fromString('0.20'))->toDecimal())->toBe('0.3');
+});

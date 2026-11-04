@@ -10,6 +10,7 @@ use App\Modules\Fiis\Application\ExchangeImports;
 use App\Modules\Fiis\Application\FavoriteRepository;
 use App\Modules\Fiis\Application\FundCatalog;
 use App\Modules\Fiis\Application\FundReports;
+use App\Modules\Fiis\Application\HoldingRepository;
 use App\Modules\Fiis\Application\MarketData;
 use App\Modules\Fiis\Application\QuotaReader;
 use App\Modules\Fiis\Application\Quotes;
@@ -32,6 +33,7 @@ use App\Modules\Fiis\Infrastructure\Persistence\EloquentAlertRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentCatalogRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentExchangeImports;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentFavoriteRepository;
+use App\Modules\Fiis\Infrastructure\Persistence\EloquentHoldingRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentMarketData;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentReportRepository;
 use App\Modules\Fiis\Infrastructure\Persistence\EloquentSourceLog;
@@ -50,6 +52,7 @@ final class FiisServiceProvider extends ServiceProvider
         FavoriteRepository::class => EloquentFavoriteRepository::class,
         FundCatalog::class => BrapiFundCatalog::class,
         FundReports::class => CvmFundReports::class,
+        HoldingRepository::class => EloquentHoldingRepository::class,
         MarketData::class => EloquentMarketData::class,
         QuotaReader::class => BrapiQuotaReader::class,
         Quotes::class => BrapiQuotes::class,
