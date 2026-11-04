@@ -58,7 +58,7 @@ export default function Dashboard({
 
     return (
         <>
-            <Head title="Painel" />
+            <Head title="Favoritos" />
 
             <div className="mx-auto w-full max-w-6xl space-y-6 md:space-y-8">
                 <div className="flex flex-wrap items-end justify-between gap-4">

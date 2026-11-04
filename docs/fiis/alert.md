@@ -115,8 +115,12 @@ Ver mais: `[link-do-sistema]`
 
 ## Integração com calculadora
 
-Quando o produto incluir estimativa de renda:
+A página do fundo tem a calculadora "Quanto rende": a pessoa informa quantas cotas tem e vê
+quanto recebe por mês pelo último rendimento e pela média dos últimos 12 meses. O
+rendimento é estimado (DY × VP do informe da CVM), e a quantidade não é guardada.
 
-> Se investir R$ 1.000 hoje, estimativa de renda mensal: R$ X
+**Ideia futura (carteira):** guardar as cotas de cada fundo e mostrar o total estimado por
+mês somando todos. Também possível: "se investir R$ 1.000 hoje, estimativa de renda
+mensal: R$ X".
 
 Usar a mesma convenção de DY (mensal vs. anual) do restante do sistema para evitar números incompreensíveis.

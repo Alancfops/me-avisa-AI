@@ -56,7 +56,7 @@ export function RemoveFavorite({ ticker }: { ticker: string }) {
                         Remover {ticker} dos favoritos?
                     </DialogTitle>
                     <DialogDescription>
-                        O fundo sai do painel e deixa de gerar avisos.
+                        O fundo sai dos favoritos e deixa de gerar avisos.
                     </DialogDescription>
                 </div>
                 <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

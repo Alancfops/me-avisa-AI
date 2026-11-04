@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Activity, Bell, LayoutGrid, List, Settings } from 'lucide-react';
+import { Activity, Bell, Building2, List, Settings, Star } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import {
@@ -10,18 +10,16 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import type { NavItem } from '@/types';
+import type { NavGroup, NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const mainNavItems: (NavItem | NavGroup)[] = [
     {
-        title: 'Painel',
-        href: '/',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Todos os FIIs',
-        href: '/fundos',
-        icon: List,
+        title: 'FIIs',
+        icon: Building2,
+        items: [
+            { title: 'Favoritos', href: '/', icon: Star },
+            { title: 'Todos os FIIs', href: '/fundos', icon: List },
+        ],
     },
     {
         title: 'Avisos',
@@ -51,7 +49,7 @@ export function AppSidebar() {
                                 <Link
                                     href="/"
                                     prefetch
-                                    aria-label="Me Avisa Aí, ir para o painel"
+                                    aria-label="Me Avisa Aí, ir para os favoritos"
                                 >
                                     <AppLogo />
                                 </Link>

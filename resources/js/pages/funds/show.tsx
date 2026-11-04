@@ -6,6 +6,7 @@ import {
     MIN_DAYS_FOR_MEDIAN,
 } from '@/components/fund/decision-summary';
 import { CeilingPrice } from '@/components/fund/ceiling-price';
+import { IncomeCalculator } from '@/components/fund/income-calculator';
 import { DividendsChart } from '@/components/fund/dividends-chart';
 import { FavoriteButton } from '@/components/fund/favorite-button';
 import { FundProfile } from '@/components/fund/fund-profile';
@@ -87,7 +88,7 @@ export default function FundShow({
                 >
                     <ArrowLeft className="size-4" aria-hidden="true" />
                     {fund.favorite
-                        ? 'Voltar para o painel'
+                        ? 'Voltar para os favoritos'
                         : 'Voltar para todos os FIIs'}
                 </Link>
 
@@ -204,6 +205,8 @@ export default function FundShow({
                                     : undefined
                             }
                         />
+
+                        <IncomeCalculator dividends={fund.dividends ?? []} />
                     </div>
 
                     <div className="min-w-0 space-y-6 lg:col-span-2 lg:col-start-1 lg:row-span-3 lg:row-start-1">
