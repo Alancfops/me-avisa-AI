@@ -230,16 +230,22 @@ bot is free and takes about 2 minutes.
 
 ### 1. Create the bot
 
-1. In Telegram, open [@BotFather](https://t.me/BotFather) and send `/newbot`.
-2. When it asks for the **name**, send `Me Avisa Aí`.
-3. When it asks for the **username**, make one up ending in `bot`. It must be unique in
-   all of Telegram, so put something of yours in the middle, like `meavisaai_maria_bot`.
-4. @BotFather answers with the **token**, a line like `123456789:AAH...`. Copy it.
+Do it in Telegram **on the computer** (the app or <https://web.telegram.org>): that way
+the token is already on the computer, ready to paste into the app.
+
+| Step | You do | @BotFather answers |
+|---|---|---|
+| 1 | Open [@BotFather](https://t.me/BotFather) (the official one, with the blue check), tap **Start** and send `/newbot` | *Alright, a new bot. How are we going to call it?* |
+| 2 | Send the name: `Me Avisa Aí` | *Now let's choose a username for your bot. It must end in `bot`.* |
+| 3 | Send a username ending in `bot`, with something of yours in the middle, like `meavisaai_maria_bot` | If taken: *Sorry, this username is already taken.* Try another |
+| 4 | — | *Done! Congratulations on your new bot.* and, below *Use this token to access the HTTP API:*, the **token**, a line like `123456789:AAH...` |
+
+Tap the token to copy it.
 
 ### 2. Give the token to the app
 
 Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>), paste the token and
-tap **Salvar token**. The app checks the token with Telegram and stores it encrypted in
+tap **Salvar token**. No file to open and no terminal needed: the app checks the token with Telegram and stores it encrypted in
 the database. In a few seconds the bot starts working, with no restart.
 
 The app also gives the bot the standard name, description and command menu (what shows

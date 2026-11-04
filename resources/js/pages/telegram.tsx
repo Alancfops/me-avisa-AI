@@ -118,6 +118,15 @@ function TokenForm() {
     );
 }
 
+/** Texto que o @BotFather manda, para a pessoa reconhecer o passo. */
+function BotSays({ children }: { children: React.ReactNode }) {
+    return (
+        <q className="text-muted-foreground italic" lang="en">
+            {children}
+        </q>
+    );
+}
+
 function CreateBot({ fromEnv }: { fromEnv: boolean }) {
     return (
         <section aria-labelledby="criar-bot" className="space-y-4 surface p-5">
@@ -126,11 +135,26 @@ function CreateBot({ fromEnv }: { fromEnv: boolean }) {
             </h2>
             <p className="text-sm text-muted-foreground">
                 Cada instalação tem o próprio bot, porque quem responde é o app
-                deste computador. Leva uns 2 minutos.
+                deste computador. Leva uns 2 minutos, e as respostas do
+                @BotFather vêm em inglês.
+            </p>
+            <p className="rounded-lg bg-muted p-3 text-sm">
+                <strong>Dica:</strong> faça pelo Telegram no computador (o
+                aplicativo ou o{' '}
+                <a
+                    href="https://web.telegram.org"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                >
+                    web.telegram.org
+                </a>
+                ). Assim o token já está aqui para copiar e colar. No celular,
+                você teria que mandar o token para o computador de algum jeito.
             </p>
             <ol className="space-y-5 text-sm">
                 <Step n={1}>
-                    No Telegram, abra o{' '}
+                    Abra o{' '}
                     <a
                         href="https://t.me/BotFather"
                         target="_blank"
@@ -138,39 +162,58 @@ function CreateBot({ fromEnv }: { fromEnv: boolean }) {
                         className="text-primary underline"
                     >
                         @BotFather
-                    </a>{' '}
-                    e mande <code>/newbot</code>.
+                    </a>
+                    , o bot oficial do Telegram que cria bots (tem o selo azul
+                    de verificado). Toque em <strong>Start</strong> e mande{' '}
+                    <code>/newbot</code>.
                 </Step>
                 <Step n={2}>
-                    Quando ele pedir o nome, mande:
+                    Ele pergunta o nome (
+                    <BotSays>
+                        Alright, a new bot. How are we going to call it?
+                    </BotSays>
+                    ). Mande:
                     <CopyValue value={BOT_NAME} label="Nome" />
                 </Step>
                 <Step n={3}>
-                    Quando ele pedir o nome de usuário, invente um que termine
-                    em <code>bot</code>. Precisa ser único no Telegram, então
-                    ponha algo seu no meio, como{' '}
-                    <code>meavisaai_maria_bot</code>.
+                    Ele pede o nome de usuário, que precisa terminar em{' '}
+                    <code>bot</code> (
+                    <BotSays>
+                        Now let&apos;s choose a username for your bot.
+                    </BotSays>
+                    ). Ele é único no Telegram inteiro, então ponha algo seu no
+                    meio, como <code>meavisaai_maria_bot</code>. Se ele
+                    responder <BotSays>this username is already taken</BotSays>,
+                    tente outro.
                 </Step>
                 <Step n={4}>
+                    Ele responde{' '}
+                    <BotSays>Done! Congratulations on your new bot.</BotSays>{' '}
+                    Logo abaixo de{' '}
+                    <BotSays>Use this token to access the HTTP API:</BotSays>{' '}
+                    vem o token, uma linha como <code>123456789:AAH...</code>.
+                    Toque nele para copiar.
+                </Step>
+                <Step n={5}>
                     {fromEnv ? (
                         <>
-                            Ponha o token que ele devolver no arquivo{' '}
-                            <code>.env</code>, na linha{' '}
+                            Ponha o token no arquivo <code>.env</code>, na linha{' '}
                             <code>TELEGRAM_BOT_TOKEN=</code>, e rode{' '}
                             <code>make start</code>.
                         </>
                     ) : (
                         <>
-                            Ele responde com um token, uma linha como{' '}
-                            <code>123456789:AAH...</code>. Copie e cole aqui:
+                            Cole o token aqui e salve. Não precisa mexer em
+                            nenhum arquivo nem reiniciar o app:
                             <TokenForm />
                         </>
                     )}
                 </Step>
             </ol>
             <p className="text-sm text-muted-foreground">
-                O app ajusta sozinho a descrição do bot e o menu de comandos.
-                Não compartilhe o token: ele dá controle do bot. Se vazar, mande{' '}
+                Depois de salvar, o app dá ao bot a descrição e o menu de
+                comandos, e aparece o QR code para conectar. Não compartilhe o
+                token: ele dá controle do bot. Se vazar, mande{' '}
                 <code>/revoke</code> ao @BotFather e cole o novo aqui.
             </p>
         </section>

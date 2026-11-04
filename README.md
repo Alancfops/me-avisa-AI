@@ -230,17 +230,23 @@ guardando os dados de cada pessoa, e o Me Avisa Aí roda só na sua máquina. Cr
 
 ### 1. Criar o bot
 
-1. No Telegram, abra o [@BotFather](https://t.me/BotFather) e mande `/newbot`.
-2. Quando ele pedir o **nome**, mande `Me Avisa Aí`.
-3. Quando ele pedir o **nome de usuário**, invente um que termine em `bot`. Ele precisa
-   ser único no Telegram inteiro, então ponha algo seu no meio, como
-   `meavisaai_maria_bot`.
-4. O @BotFather responde com o **token**, uma linha como `123456789:AAH...`. Copie.
+Faça pelo Telegram **no computador** (o aplicativo ou o <https://web.telegram.org>):
+assim o token já fica no computador, pronto para colar no app. As respostas do
+@BotFather vêm em inglês.
+
+| Passo | Você faz | O @BotFather responde |
+|---|---|---|
+| 1 | Abre o [@BotFather](https://t.me/BotFather) (o oficial, com selo azul), toca em **Start** e manda `/newbot` | *Alright, a new bot. How are we going to call it?* |
+| 2 | Manda o nome: `Me Avisa Aí` | *Now let's choose a username for your bot. It must end in `bot`.* |
+| 3 | Manda um nome de usuário que termine em `bot`, com algo seu no meio, como `meavisaai_maria_bot` | Se já existir: *Sorry, this username is already taken.* Tente outro |
+| 4 | — | *Done! Congratulations on your new bot.* e, abaixo de *Use this token to access the HTTP API:*, o **token**, uma linha como `123456789:AAH...` |
+
+Toque no token para copiar.
 
 ### 2. Colocar o token no app
 
 Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>), cole o token e toque
-em **Salvar token**. O app confere o token com o Telegram e guarda criptografado no
+em **Salvar token**. Não precisa abrir nenhum arquivo nem usar o terminal: o app confere o token com o Telegram e guarda criptografado no
 banco. Em alguns segundos o bot começa a funcionar, sem reiniciar nada.
 
 O app também deixa o bot com o nome, a descrição e o menu de comandos padrão (o que
