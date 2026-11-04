@@ -15,7 +15,7 @@ export type Fund = {
     // 'quote' é a cotação da brapi (favoritos); 'close' é o fechamento da B3, com o dia em closeDay.
     priceSource: 'quote' | 'close';
     closeDay: string | null;
-    // Só na página do fundo; a lista do painel não traz estes campos.
+    // Só na página do fundo; a lista dos favoritos não traz estes campos.
     average6m?: WindowAverage;
     average12m?: WindowAverage;
     history?: { date: string; close: string; priceToBook: string | null }[];
