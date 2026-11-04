@@ -33,7 +33,8 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        {{-- O ?v= força o navegador a trocar o ícone guardado em cache; mude ao trocar a logo. --}}
+        <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
 
         @fonts
 
