@@ -2,7 +2,7 @@ COMPOSE ?= docker compose
 export APP_UID := $(shell id -u)
 
 .DEFAULT_GOAL := help
-.PHONY: help install start stop restart logs test lint format migrate shell check backtest
+.PHONY: help install start load stop restart logs test lint format migrate shell check backtest
 
 help: ## Lista os comandos
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -15,6 +15,13 @@ install: ## Cria o .env sem sobrescrever um existente, constrói as imagens e pr
 
 start: ## Sobe o app
 	$(COMPOSE) up -d --build
+
+load: ## Primeira carga: catálogo, informes da CVM e fechamentos da B3 (o app precisa estar no ar)
+	$(COMPOSE) exec web php artisan fiis:sync-catalog
+	$(COMPOSE) exec web php artisan fiis:import-reports
+	$(COMPOSE) exec web php artisan fiis:import-exchange-closes
+	# Arquivos anuais de ~90 MB: pode levar alguns minutos.
+	$(COMPOSE) exec web php artisan fiis:import-exchange-history
 
 stop: ## Para o app
 	$(COMPOSE) stop

@@ -31,12 +31,12 @@ O módulo de FIIs oferece:
   médias de 6 e 12 meses, gráficos de preço e P/VP e o último rendimento estimado.
 - **Todos os FIIs:** lista dos fundos negociados na B3, com tipo (tijolo, papel etc.),
   segmento, preço, P/VP e DY 12m, filtros e botão de favoritar.
-- **Bot do Telegram:** recebe os avisos e responde a comandos como `/alertas` e `/ver KNRI11`.
+- **Bot do Telegram:** recebe os avisos e responde a comandos como `/alertas` e `/ver CÓDIGO`.
 - **Preço teto:** o preço máximo para o fundo render a taxa anual que você escolher,
   com um botão para usá-lo como preço alvo.
 
 As cotações são atualizadas a cada 30 minutos, das 10h às 18h, em dias úteis. Os
-avisos aparecem no site. As regras completas estão em
+avisos aparecem no site e, se você conectar o bot, no Telegram. As regras completas estão em
 [`docs/fiis/alert.md`](docs/fiis/alert.md).
 
 **Este app informa e não recomenda investimentos.** Um aviso diz que uma regra foi
@@ -47,79 +47,133 @@ atendida, não que o ativo está barato ou deve ser comprado.
 Cada instalação atende uma pessoa, com as próprias chaves, e fica acessível só no
 seu computador. Não há login, então não exponha o app na internet.
 
-**Antes de começar:** crie uma conta gratuita na [brapi](https://brapi.dev/dashboard)
-e copie seu token. O plano gratuito permite 15 mil requisições por mês, e cada fundo
-acompanhado consome cerca de 350.
+O caminho recomendado usa contêineres (Docker, OrbStack ou Podman): você não instala
+PHP, Node nem banco de dados, só o programa de contêineres.
 
-Escolha uma das formas abaixo:
+| Seu computador | Use | Situação |
+|---|---|---|
+| Mac (Intel ou Apple Silicon) | [OrbStack](https://orbstack.dev) (mais leve) ou [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) | Ainda não testado: conte se der problema |
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) | Testado |
+| Windows | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) com WSL 2 | Ainda não testado |
+| Qualquer um, sem Docker | [Podman](#podman) | Ainda não testado |
 
-| Forma | Indicada para |
-|---|---|
-| [Docker](#docker) | Linux e Windows, ou quem já usa Docker |
-| [OrbStack](#orbstack-mac) | Mac, com um consumo menor que o do Docker Desktop |
-| [Podman](#podman) | Quem prefere não usar o Docker |
-| [Sem contêineres](#sem-contêineres) | Quem quer instalar tudo direto na máquina (em breve) |
+### 1. Instale o que falta
 
-Todas usam PostgreSQL. Os comandos de `make` do dia a dia valem para as formas com contêiner.
+**Mac**
 
-### Docker
+1. Abra o **Terminal** (Aplicativos → Utilitários).
+2. Instale as ferramentas da Apple, que trazem o `git` e o `make`:
 
-Requer [Docker](https://docs.docker.com/get-docker/) com Compose e `make`.
+   ```bash
+   xcode-select --install
+   ```
+
+   Se aparecer "already installed", já está pronto.
+3. Instale um programa de contêineres. Com o [Homebrew](https://brew.sh):
+
+   ```bash
+   brew install orbstack     # ou: brew install --cask docker
+   open -a OrbStack          # ou: open -a Docker
+   ```
+
+   Sem Homebrew, baixe o instalador no site do [OrbStack](https://orbstack.dev) ou do
+   [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/). Abra o
+   programa uma vez e espere ele terminar de iniciar. O OrbStack é gratuito para uso
+   pessoal; confira a licença se for usar no trabalho.
+
+**Linux**
+
+Instale o [Docker Engine](https://docs.docker.com/engine/install/) com o plugin Compose,
+além de `git` e `make` (no Ubuntu: `sudo apt install git make`). Para rodar o Docker sem
+`sudo`, siga o [pós-instalação](https://docs.docker.com/engine/install/linux-postinstall/).
+
+**Windows**
+
+Instale o [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+com o WSL 2. Abra o terminal do Ubuntu (WSL), instale `git` e `make`
+(`sudo apt install git make`) e siga os próximos passos dentro dele.
+
+Para conferir, rode `docker compose version`. Deve aparecer uma versão.
+
+### 2. Baixe e instale o app
 
 ```bash
-git clone https://github.com/Alancfops/me-avisa-AI.git
+git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
-make install   # cria o .env, constrói as imagens e prepara o banco
+make install
 ```
 
-Coloque o token no `.env`:
+O `-b develop` pega a versão em uso: a `main` só recebe o app na primeira versão
+oficial. O `make install` cria o arquivo de configuração `.env`, monta as imagens e
+prepara o banco. Na primeira vez, leva alguns minutos.
+
+### 3. Coloque a chave da brapi
+
+A brapi fornece as cotações. Crie uma conta gratuita em
+<https://brapi.dev/dashboard> e copie o token. O plano gratuito dá 15 mil
+requisições por mês, e cada favorito consome cerca de 350.
+
+Abra o `.env` (no Mac: `open -e .env`; no Linux ou no WSL: `nano .env`) e preencha:
 
 ```dotenv
 BRAPI_TOKEN=seu_token
 ```
 
-Depois, suba o app e abra <http://127.0.0.1:8000>:
+O `.env` fica escondido no Finder porque o nome começa com ponto. Nunca compartilhe
+esse arquivo: ele guarda as suas chaves.
+
+### 4. Suba o app
 
 ```bash
 make start
 ```
 
-Na primeira vez, carregue o catálogo da busca, os informes da CVM e os fechamentos da
-B3. Depois disso, eles se atualizam sozinhos, uma vez por dia. O histórico anual da B3
-baixa arquivos de cerca de 90 MB e pode demorar alguns minutos:
+Abra <http://127.0.0.1:8000> no navegador.
+
+### 5. Faça a primeira carga
+
+Carrega a lista de fundos, os informes da CVM e os fechamentos da B3. O histórico anual
+da B3 baixa arquivos de cerca de 90 MB, então pode demorar alguns minutos:
 
 ```bash
-docker compose exec web php artisan fiis:sync-catalog
-docker compose exec web php artisan fiis:import-reports
-docker compose exec web php artisan fiis:import-exchange-closes
-docker compose exec web php artisan fiis:import-exchange-history
+make load
 ```
 
-Sem `make`, como costuma ser no Windows, use o Compose direto:
+Depois disso, tudo se atualiza sozinho: cotações a cada 30 minutos no pregão e o resto
+uma vez por dia.
 
-```bash
-cp .env.example .env
-docker compose up -d --build
-```
+### 6. Confira
 
-No Linux, se o seu usuário não tiver o UID 1000, defina `APP_UID=$(id -u)` antes desses
-comandos, ou o app não consegue gravar no `.env`.
+- Abra a aba **Saúde**: cada fonte deve mostrar o horário da última leitura.
+- Favorite um FII em **Todos os FIIs** e configure quando quer ser avisado.
+- Para receber os avisos no celular, siga a seção [Bot do Telegram](#bot-do-telegram).
 
-### OrbStack (Mac)
+### Atualizar, parar e desinstalar
 
-O [OrbStack](https://orbstack.dev) oferece os comandos `docker` e `docker compose`,
-então os passos são os mesmos da seção [Docker](#docker). Confira a licença na
-página do OrbStack se o uso for profissional.
+| Quero | Comando |
+|---|---|
+| Atualizar para a versão mais nova | `git pull` e depois `make start` (o banco é atualizado sozinho) |
+| Parar o app | `make stop` |
+| Ver o que está acontecendo | `make logs` (saia com Ctrl+C) |
+| Desinstalar e **apagar todos os dados** | `docker compose down -v` e apague a pasta `me-avisa-AI` |
 
-```bash
-brew install orbstack
-open -a OrbStack
-```
+### Se algo der errado
+
+| Problema | O que fazer |
+|---|---|
+| `make: command not found` | Mac: `xcode-select --install`. Linux/WSL: `sudo apt install make` |
+| `Cannot connect to the Docker daemon` | Abra o OrbStack ou o Docker Desktop e espere iniciar |
+| A porta 8000 já está em uso | Feche o outro programa que usa a porta 8000 |
+| No Linux, erro de permissão no `.env` | Rode `make install` de novo: ele usa o seu usuário (`APP_UID`) |
+| Uma fonte com erro na Saúde | Normal logo depois de ligar o computador ou sem internet; o app tenta de novo sozinho |
+
+Sem `make`, use o Compose direto: `cp .env.example .env`, `docker compose up -d --build`
+e, para a primeira carga, os comandos da regra `load` do `Makefile`, cada um com
+`docker compose exec web` na frente.
 
 ### Podman
 
-Requer [Podman](https://podman.io/docs/installation) com suporte a Compose. No Mac,
-inicie antes a máquina virtual:
+Requer [Podman](https://podman.io/docs/installation) com suporte a Compose. No Mac:
 
 ```bash
 brew install podman podman-compose
@@ -127,19 +181,16 @@ podman machine init
 podman machine start
 ```
 
-Instale e suba o app indicando o comando do Podman:
+Siga os passos 2 a 6 acima, acrescentando `COMPOSE="podman compose"` em todo `make`:
 
 ```bash
-git clone https://github.com/Alancfops/me-avisa-AI.git
-cd me-avisa-AI
 make install COMPOSE="podman compose"
 make start COMPOSE="podman compose"
+make load COMPOSE="podman compose"
 ```
 
-Nos comandos da primeira carga, troque `docker compose` por `podman compose`.
-
-No Podman, o app pode não voltar sozinho quando o computador liga. Depois de ligar a
-máquina, rode `podman machine start`, se estiver no Mac, e `make start COMPOSE="podman compose"`.
+No Podman, o app não volta sozinho quando o computador liga (veja
+[Iniciar com o computador](#iniciar-com-o-computador)).
 
 ### Sem contêineres
 
@@ -158,7 +209,7 @@ createdb me_avisa_ai
 Instale e suba o app:
 
 ```bash
-git clone https://github.com/Alancfops/me-avisa-AI.git
+git clone -b develop https://github.com/Alancfops/me-avisa-AI.git
 cd me-avisa-AI
 make native-install   # cria o .env, instala as dependências e prepara o banco
 make native-start     # sobe o site, o agendador e a fila juntos
@@ -297,6 +348,7 @@ Para parar: `make stop COMPOSE="podman compose"`.
 | `make` | Lista os comandos |
 | `make install` | Cria o `.env` sem sobrescrever um existente, constrói as imagens e prepara o banco |
 | `make start` / `make stop` | Sobe ou para o app |
+| `make load` | Primeira carga: fundos, informes da CVM e fechamentos da B3 |
 | `make restart` / `make logs` | Reinicia ou acompanha os logs |
 | `make test` | Roda os testes em um banco separado, sem tocar nos seus dados |
 | `make lint` / `make format` | Confere ou corrige a formatação |
