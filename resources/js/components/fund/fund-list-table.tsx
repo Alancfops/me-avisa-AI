@@ -66,7 +66,7 @@ export function FundListTable({
             role="region"
             aria-label="Tabela de fundos"
             tabIndex={0}
-            className="overflow-x-auto rounded-xl focus-visible:ring-2 focus-visible:ring-ring"
+            className="relative overflow-x-auto rounded-xl focus-visible:ring-2 focus-visible:ring-ring"
         >
             <table className="w-full border-collapse text-sm">
                 <caption className="sr-only">

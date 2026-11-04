@@ -189,26 +189,28 @@ function Body({
                 </p>
             )}
 
-            <table className="sr-only">
-                <caption>
-                    P/VP no último pregão de cada mês, nos últimos{' '}
-                    {periodWords(period)}
-                </caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Dia</th>
-                        <th scope="col">P/VP</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row) => (
-                        <tr key={row.date}>
-                            <th scope="row">{dayMonthYear(row.date)}</th>
-                            <td>{ratio(row.priceToBook)}</td>
+            <div className="sr-only">
+                <table>
+                    <caption>
+                        P/VP no último pregão de cada mês, nos últimos{' '}
+                        {periodWords(period)}
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Dia</th>
+                            <th scope="col">P/VP</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {rows.map((row) => (
+                            <tr key={row.date}>
+                                <th scope="row">{dayMonthYear(row.date)}</th>
+                                <td>{ratio(row.priceToBook)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </>
     );
 }

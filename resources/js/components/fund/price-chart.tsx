@@ -304,26 +304,28 @@ function Body({
                 </p>
             )}
 
-            <table className="sr-only">
-                <caption>
-                    Último fechamento de cada mês nos últimos{' '}
-                    {periodWords(period)}
-                </caption>
-                <thead>
-                    <tr>
-                        <th scope="col">Dia</th>
-                        <th scope="col">Fechamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {tableRows.map((row) => (
-                        <tr key={row.date}>
-                            <th scope="row">{dayMonthYear(row.date)}</th>
-                            <td>{brl(row.close)}</td>
+            <div className="sr-only">
+                <table>
+                    <caption>
+                        Último fechamento de cada mês nos últimos{' '}
+                        {periodWords(period)}
+                    </caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Dia</th>
+                            <th scope="col">Fechamento</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {tableRows.map((row) => (
+                            <tr key={row.date}>
+                                <th scope="row">{dayMonthYear(row.date)}</th>
+                                <td>{brl(row.close)}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </>
     );
 }
