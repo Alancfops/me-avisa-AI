@@ -34,3 +34,20 @@ it('domain does not use native date classes', function () {
 
     expect($found)->toBe([]);
 });
+
+arch('telegram domain has no framework')
+    ->expect('App\Modules\Telegram\Domain')
+    ->not->toUse(['Illuminate', 'Laravel', 'App\Modules\Telegram\Application', 'App\Modules\Telegram\Infrastructure', 'App\Modules\Telegram\Http']);
+
+arch('telegram application does not know outer layers')
+    ->expect('App\Modules\Telegram\Application')
+    ->not->toUse(['Illuminate', 'Laravel', 'App\Modules\Telegram\Infrastructure', 'App\Modules\Telegram\Http', 'App\Modules\Fiis\Infrastructure', 'App\Modules\Fiis\Http']);
+
+arch('telegram http does not know infrastructure')
+    ->expect('App\Modules\Telegram\Http')
+    ->not->toUse(['App\Modules\Telegram\Infrastructure', 'Illuminate\Database']);
+
+// O bot depende dos FIIs, nunca o contrário.
+arch('fiis does not know telegram')
+    ->expect('App\Modules\Fiis')
+    ->not->toUse('App\Modules\Telegram');

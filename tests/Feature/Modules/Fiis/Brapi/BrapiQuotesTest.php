@@ -82,7 +82,7 @@ it('explains each http failure', function (int $status, string $message) {
 
     expect(fn () => app(Quotes::class)->latest('KNRI11'))->toThrow(SourceUnavailable::class, $message);
 })->with([
-    [401, 'token'],
+    [401, 'recusou a chave'],
     [403, 'plano'],
     [404, 'não encontrou'],
     [429, 'Limite'],

@@ -1,0 +1,3 @@
+# Falsos positivos revisados: chaves inventadas nos testes da brapi, não são segredos.
+965e706802de09fbd307d37a27d367659a21a763:tests/Feature/Modules/Fiis/BrapiKeyTest.php:generic-api-key:10
+965e706802de09fbd307d37a27d367659a21a763:tests/Feature/Modules/Fiis/BrapiKeyTest.php:generic-api-key:75

@@ -46,9 +46,9 @@ for target in install migrate; do
 done
 echo "ok: só o web migra, e só make install e make migrate o usam para isso"
 
-[ "$(services_matching 'restart: unless-stopped')" = "postgres scheduler web worker" ] \
-    || fail "os quatro serviços precisam de restart: unless-stopped"
-echo "ok: quatro serviços com restart: unless-stopped"
+[ "$(services_matching 'restart: unless-stopped')" = "bot postgres scheduler web worker" ] \
+    || fail "os cinco serviços precisam de restart: unless-stopped"
+echo "ok: cinco serviços com restart: unless-stopped"
 
 $COMPOSE build --quiet web
 docker run --rm --entrypoint sh "$IMAGE" -c 'test ! -f /app/.env' \

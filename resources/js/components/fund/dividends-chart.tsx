@@ -131,27 +131,30 @@ export function DividendsChart({
                         diferir do valor oficial.
                     </p>
 
-                    <table className="sr-only">
-                        <caption>
-                            Rendimento estimado por cota, por mês de referência
-                        </caption>
-                        <thead>
-                            <tr>
-                                <th scope="col">Mês</th>
-                                <th scope="col">Rendimento estimado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {dividends.map((d) => (
-                                <tr key={d.month}>
-                                    <th scope="row">
-                                        {shortMonthLabel(d.month)}
-                                    </th>
-                                    <td>{brl(d.perShare)}</td>
+                    <div className="sr-only">
+                        <table>
+                            <caption>
+                                Rendimento estimado por cota, por mês de
+                                referência
+                            </caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Mês</th>
+                                    <th scope="col">Rendimento estimado</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {dividends.map((d) => (
+                                    <tr key={d.month}>
+                                        <th scope="row">
+                                            {shortMonthLabel(d.month)}
+                                        </th>
+                                        <td>{brl(d.perShare)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             )}
         </section>

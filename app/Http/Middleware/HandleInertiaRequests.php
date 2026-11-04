@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Modules\Fiis\Application\BrapiCredentials;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -38,6 +39,8 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            // Sem chave, não há cotação: o layout mostra onde colar.
+            'brapiConfigured' => fn (): bool => app(BrapiCredentials::class)->token() !== null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
