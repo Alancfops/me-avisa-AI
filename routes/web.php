@@ -7,6 +7,7 @@ use App\Modules\Fiis\Http\FundController;
 use App\Modules\Fiis\Http\FundListController;
 use App\Modules\Fiis\Http\HealthController;
 use App\Modules\Fiis\Http\PortfolioController;
+use App\Modules\Telegram\Http\TelegramController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', DashboardController::class)->name('home');
@@ -23,6 +24,11 @@ Route::put('carteira/{ticker}', [PortfolioController::class, 'save'])->name('por
 Route::delete('carteira/{ticker}', [PortfolioController::class, 'remove'])->name('portfolio.remove');
 
 Route::get('avisos', AlertController::class)->name('alerts');
+
+Route::get('telegram', [TelegramController::class, 'show'])->name('telegram');
+Route::post('telegram/codigo', [TelegramController::class, 'newCode'])->name('telegram.code');
+Route::post('telegram/teste', [TelegramController::class, 'test'])->name('telegram.test');
+Route::delete('telegram', [TelegramController::class, 'disconnect'])->name('telegram.disconnect');
 
 Route::get('saude', HealthController::class)->name('health');
 

@@ -4,6 +4,7 @@ import {
     Bell,
     Building2,
     List,
+    Send,
     Settings,
     Star,
     Wallet,
@@ -34,6 +35,11 @@ const mainNavItems: (NavItem | NavGroup)[] = [
         title: 'Avisos',
         href: '/avisos',
         icon: Bell,
+    },
+    {
+        title: 'Telegram',
+        href: '/telegram',
+        icon: Send,
     },
     {
         title: 'Saúde',

@@ -11,6 +11,7 @@ const names: Record<string, string> = {
     cvm: 'Informes (CVM)',
     b3: 'Fechamentos (B3)',
     b3_history: 'Histórico (B3)',
+    telegram: 'Bot do Telegram',
 };
 
 function hasNewerError(status: SourceStatus): boolean {
