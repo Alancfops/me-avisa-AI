@@ -27,6 +27,12 @@ O módulo de FIIs oferece:
   o P/VP está abaixo da mediana de 12 meses do próprio fundo.
 - **Queda forte:** avisa quando a cota cai mais de 3% no dia.
 - **Antispam:** evita repetir o mesmo aviso, sem esconder um aviso diferente.
+- **Página do fundo:** P/VP comparado com a mediana de 12 meses, preço comparado com as
+  médias de 6 e 12 meses, gráficos de preço e P/VP e o último rendimento estimado.
+- **Todos os FIIs:** lista dos fundos negociados na B3, com tipo (tijolo, papel etc.),
+  segmento, preço, P/VP e DY 12m, filtros e botão de favoritar.
+- **Preço teto:** o preço máximo para o fundo render a taxa anual que você escolher,
+  com um botão para usá-lo como preço alvo.
 
 As cotações são atualizadas a cada 30 minutos, das 10h às 18h, em dias úteis. Os
 avisos aparecem no site. As regras completas estão em
@@ -77,12 +83,15 @@ Depois, suba o app e abra <http://127.0.0.1:8000>:
 make start
 ```
 
-Na primeira vez, carregue o catálogo da busca e os informes da CVM. Depois disso, eles
-se atualizam sozinhos, uma vez por dia:
+Na primeira vez, carregue o catálogo da busca, os informes da CVM e os fechamentos da
+B3. Depois disso, eles se atualizam sozinhos, uma vez por dia. O histórico anual da B3
+baixa arquivos de cerca de 90 MB e pode demorar alguns minutos:
 
 ```bash
 docker compose exec web php artisan fiis:sync-catalog
 docker compose exec web php artisan fiis:import-reports
+docker compose exec web php artisan fiis:import-exchange-closes
+docker compose exec web php artisan fiis:import-exchange-history
 ```
 
 Sem `make`, como costuma ser no Windows, use o Compose direto:
@@ -125,6 +134,8 @@ cd me-avisa-AI
 make install COMPOSE="podman compose"
 make start COMPOSE="podman compose"
 ```
+
+Nos comandos da primeira carga, troque `docker compose` por `podman compose`.
 
 No Podman, o app pode não voltar sozinho quando o computador liga. Depois de ligar a
 máquina, rode `podman machine start`, se estiver no Mac, e `make start COMPOSE="podman compose"`.
@@ -179,7 +190,7 @@ não dependem do framework, do banco nem das APIs, então podem ser testadas soz
 app/Modules/Fiis/
 ├── Domain/          regras de alerta e antispam, só PHP
 ├── Application/     casos de uso e interfaces
-├── Infrastructure/  PostgreSQL, brapi, CVM
+├── Infrastructure/  PostgreSQL, brapi, CVM, B3
 └── Http/            controllers e respostas do Inertia
 ```
 
@@ -188,8 +199,11 @@ Testes de arquitetura garantem que essas camadas não se misturem.
 **Stack:** Laravel, React (Inertia), TypeScript, Tailwind v4, shadcn/ui, PostgreSQL e
 Docker Compose.
 
-**Dados:** cotações da [brapi](https://brapi.dev); valor patrimonial e dividend yield
-do [Informe Mensal de FII da CVM](https://dados.cvm.gov.br/dataset/fii-doc-inf_mensal).
+**Dados:** cotações dos favoritos da [brapi](https://brapi.dev); valor patrimonial,
+dividend yield e composição da carteira do
+[Informe Mensal de FII da CVM](https://dados.cvm.gov.br/dataset/fii-doc-inf_mensal);
+fechamentos diários e históricos da
+[B3 (COTAHIST)](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/cotacoes-historicas/).
 
 ## Próximos módulos
 
@@ -201,7 +215,7 @@ do [Informe Mensal de FII da CVM](https://dados.cvm.gov.br/dataset/fii-doc-inf_m
 ## Documentação
 
 - [Design do módulo de FIIs](docs/superpowers/specs/2026-10-29-modulo-fiis-design.md)
-- Regras de produto: [FIIs](docs/fiis/), [ações](docs/acoes/), [ETFs](docs/ets/) e [bot](docs/bot/)
+- Regras de produto: [FIIs](docs/fiis/), [ações](docs/acoes/), [ETFs](docs/etfs/) e [bot](docs/bot/)
 - [Protótipo visual](docs/prototipo-lovable/)
 - [O que veio da versão anterior](docs/legado.md)
 

@@ -37,4 +37,5 @@ prevalece, por exemplo nas rotas da brapi e no envio do token por header:
 - Não inventar regra, limite ou fórmula financeira que não esteja em `docs/`;
   se faltar, atualizar o doc primeiro.
 - Separar FII, ação e ETF em módulos próprios.
-- Interface pensada primeiro para o celular.
+- Layout que funciona em telas estreitas. O app continua só web, no computador do
+  usuário, sem app nativo.

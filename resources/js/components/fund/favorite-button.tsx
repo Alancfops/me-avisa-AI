@@ -78,7 +78,8 @@ export function FavoriteButton({
             type="button"
             variant={favorite ? 'secondary' : 'outline'}
             size="sm"
-            aria-pressed={favorite}
+            // Sem aria-pressed: não é um botão de alternar, porque remover fica na página do
+            // fundo. Já favorito, o nome "Favorito <ticker>" e o aria-disabled dizem o estado.
             aria-disabled={favorite || processing}
             aria-label={`${label.replace('…', '')} ${ticker}`}
             onClick={add}

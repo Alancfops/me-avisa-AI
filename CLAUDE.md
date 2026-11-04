@@ -7,10 +7,11 @@ agentes, plugins e MCP.
 
 ## Estado
 
-Base pronta: Docker, Makefile, camadas de `app/Modules/Fiis/`, regra de preço alvo e
-listagem de favoritos. Ainda faltam as demais regras, antispam, brapi, CVM e telas.
-Design em `docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`; plano da base em
-`docs/superpowers/plans/2026-10-30-arquitetura-base.md`.
+Módulo de FIIs funcional na `develop`: favoritos, as quatro regras de alerta, antispam,
+brapi, CVM, fechamentos da B3 (COTAHIST), avisos no site, Saúde, página do fundo, lista
+"Todos os FIIs" com tipo e preço teto. A `main` ainda está no commit inicial de docs.
+Specs e planos em `docs/superpowers/` (design do módulo:
+`docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`).
 **Só comece a implementar quando o usuário disser "pode começar".**
 Rode os comandos pelo `make` (`make test`, `make check`): `compose run web` migra o banco real.
 
@@ -33,16 +34,23 @@ Rode os comandos pelo `make` (`make test`, `make check`): `compose run web` migr
 - Toda mudança, inclusive de agentes, começa em uma branch própria criada a partir da
   `develop`: `feature/<assunto>`, `fix/<assunto>` ou `docs/<assunto>`. Não commite direto
   na `develop` nem na `main`.
-- Commit local não aciona nada. CI (GitHub Actions) roda em PR e merge; CD roda na tag
-  `vX.Y.Z` e publica imagem `amd64`/`arm64` no GHCR e a release. Ainda não implementados.
+- Commit local não aciona nada. CI (GitHub Actions, `.github/workflows/ci.yml`) roda em
+  PR e push para `develop` e `main`: backend e Docker, front e segurança. CD (tag `vX.Y.Z`,
+  imagem `amd64`/`arm64` no GHCR e release) ainda não foi implementado.
 - Push e PR só quando o usuário pedir. `docs/prompt` não entra no git.
 
 ## Onde está cada coisa
 
 | O quê | Onde |
 |---|---|
-| Regras de FII e alertas | `docs/fiis/` (ações, ETFs e bot em `docs/acoes`, `docs/ets`, `docs/bot`) |
+| Regras de FII e alertas | `docs/fiis/` (ações, ETFs e bot em `docs/acoes`, `docs/etfs`, `docs/bot`) |
 | Protótipo visual | `docs/prototipo-lovable/` |
+| Fontes de dados | brapi (cotação dos favoritos), CVM (VP, DY, tipo), B3 COTAHIST (fechamentos) |
+
+Skills e subagentes abaixo ficam em `.claude/`, que é local e não está no repositório.
+
+| O quê | Onde |
+|---|---|
 | UI/UX e WCAG | skill `ui-ux` (`.claude/skills/ui-ux/`) |
 | Front | subagente `frontend-senior` |
 | Backend, arquitetura e checklist de review | skill `backend` (`.claude/skills/backend/`) |

@@ -27,6 +27,12 @@ The FII module offers:
   the P/B ratio is below the fund's own 12-month median.
 - **Sharp drop:** alerts you when the share price falls more than 3% in a day.
 - **Anti-spam:** avoids repeating the same alert without hiding a different one.
+- **Fund page:** P/B compared with the 12-month median, price compared with the 6- and
+  12-month averages, price and P/B charts, and the latest estimated distribution.
+- **All FIIs:** a list of the funds traded on B3, with type (brick, paper etc.), segment,
+  price, P/B and 12-month DY, filters and a favorite button.
+- **Ceiling price:** the highest price at which the fund yields the annual rate you pick,
+  with a button to use it as the target price.
 
 Quotes update every 30 minutes, from 10:00 to 18:00 Brasília time, on weekdays. Alerts
 appear on the website. The full rules, in Portuguese, are in
@@ -77,12 +83,15 @@ Then start the app and open <http://127.0.0.1:8000>:
 make start
 ```
 
-The first time, load the search catalog and the CVM reports. After that, they update on
-their own once a day:
+The first time, load the search catalog, the CVM reports and the B3 closing prices. After
+that, they update on their own once a day. The yearly B3 history downloads files of about
+90 MB and can take a few minutes:
 
 ```bash
 docker compose exec web php artisan fiis:sync-catalog
 docker compose exec web php artisan fiis:import-reports
+docker compose exec web php artisan fiis:import-exchange-closes
+docker compose exec web php artisan fiis:import-exchange-history
 ```
 
 Without `make`, which is common on Windows, use Compose directly:
@@ -125,6 +134,8 @@ cd me-avisa-AI
 make install COMPOSE="podman compose"
 make start COMPOSE="podman compose"
 ```
+
+In the first-load commands, replace `docker compose` with `podman compose`.
 
 With Podman, the app may not come back on its own when the computer boots. After
 booting, run `podman machine start` if you're on a Mac, then `make start COMPOSE="podman compose"`.
@@ -179,7 +190,7 @@ depend on the framework, the database or the APIs, so they can be tested on thei
 app/Modules/Fiis/
 ├── Domain/          alert and anti-spam rules, plain PHP
 ├── Application/     use cases and interfaces
-├── Infrastructure/  PostgreSQL, brapi, CVM
+├── Infrastructure/  PostgreSQL, brapi, CVM, B3
 └── Http/            controllers and Inertia responses
 ```
 
@@ -188,8 +199,11 @@ Architecture tests keep these layers from mixing.
 **Stack:** Laravel, React (Inertia), TypeScript, Tailwind v4, shadcn/ui, PostgreSQL and
 Docker Compose.
 
-**Data:** quotes from [brapi](https://brapi.dev); net asset value and dividend yield
-from the [CVM monthly FII report](https://dados.cvm.gov.br/dataset/fii-doc-inf_mensal).
+**Data:** quotes for favorites from [brapi](https://brapi.dev); net asset value, dividend
+yield and portfolio composition from the
+[CVM monthly FII report](https://dados.cvm.gov.br/dataset/fii-doc-inf_mensal); daily and
+historical closing prices from
+[B3 (COTAHIST)](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/cotacoes-historicas/).
 
 ## Upcoming modules
 
@@ -203,7 +217,7 @@ from the [CVM monthly FII report](https://dados.cvm.gov.br/dataset/fii-doc-inf_m
 Most project documents are in Portuguese.
 
 - [FII module design](docs/superpowers/specs/2026-10-29-modulo-fiis-design.md)
-- Product rules: [FIIs](docs/fiis/), [stocks](docs/acoes/), [ETFs](docs/ets/) and [bot](docs/bot/)
+- Product rules: [FIIs](docs/fiis/), [stocks](docs/acoes/), [ETFs](docs/etfs/) and [bot](docs/bot/)
 - [Visual prototype](docs/prototipo-lovable/)
 - [What came from the previous version](docs/legado.md)
 
