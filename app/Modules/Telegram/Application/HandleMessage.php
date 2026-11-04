@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
  * Responde a uma mensagem recebida. Sem chat conectado, só `/start <código>` faz algo;
  * conectado, mensagens de outros chats são ignoradas sem resposta.
  */
-final readonly class HandleMessage
+final readonly class HandleMessage implements MessageHandler
 {
     public function __construct(
         private TelegramApi $api,
