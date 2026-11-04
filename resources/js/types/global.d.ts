@@ -13,6 +13,7 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             sidebarOpen: boolean;
+            brapiConfigured: boolean;
             [key: string]: unknown;
         };
     }

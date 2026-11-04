@@ -107,28 +107,26 @@ make install
 release. `make install` creates the `.env` settings file, builds the images and prepares
 the database. The first time takes a few minutes.
 
-### 3. Add the brapi key
-
-brapi provides the quotes. Create a free account at <https://brapi.dev/dashboard> and
-copy the token. The free plan gives 15,000 requests a month, and each favorite uses about
-350.
-
-Open `.env` (on Mac: `open -e .env`; on Linux or WSL: `nano .env`) and fill in:
-
-```dotenv
-BRAPI_TOKEN=your_token
-```
-
-`.env` is hidden in Finder because its name starts with a dot. Never share this file: it
-holds your keys.
-
-### 4. Start the app
+### 3. Start the app
 
 ```bash
 make start
 ```
 
 Open <http://127.0.0.1:8000> in the browser.
+
+### 4. Paste the brapi key
+
+brapi provides the quotes. Create a free account at <https://brapi.dev/dashboard> and
+copy the token from the dashboard. The free plan gives 15,000 requests a month, and each
+favorite uses about 350.
+
+In the app, open **Configurações**, paste the token in **Chave da brapi** and tap
+**Salvar chave**. The app checks the key with brapi and stores it encrypted; no file to
+open. While the key is missing, a notice at the top of the site links to that field.
+
+> Rather use a file? Put `BRAPI_TOKEN=your_token` in `.env` and run `make start`. The
+> `.env` key takes precedence over the one from the site.
 
 ### 5. Run the first load
 

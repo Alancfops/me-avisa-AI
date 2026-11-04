@@ -4,6 +4,8 @@ namespace App\Modules\Fiis;
 
 use App\Modules\Fiis\Application\AlertNotifier;
 use App\Modules\Fiis\Application\AlertRepository;
+use App\Modules\Fiis\Application\BrapiCredentials;
+use App\Modules\Fiis\Application\BrapiKeyChecker;
 use App\Modules\Fiis\Application\CatalogRepository;
 use App\Modules\Fiis\Application\Clock;
 use App\Modules\Fiis\Application\ExchangeCloses;
@@ -20,8 +22,10 @@ use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Application\SourceLog;
 use App\Modules\Fiis\Infrastructure\B3\B3ExchangeCloses;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiFundCatalog;
+use App\Modules\Fiis\Infrastructure\Brapi\BrapiKeyCheck;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotaReader;
 use App\Modules\Fiis\Infrastructure\Brapi\BrapiQuotes;
+use App\Modules\Fiis\Infrastructure\Brapi\EloquentBrapiCredentials;
 use App\Modules\Fiis\Infrastructure\Console\BacktestCommand;
 use App\Modules\Fiis\Infrastructure\Console\CatchUpCommand;
 use App\Modules\Fiis\Infrastructure\Console\ImportExchangeClosesCommand;
@@ -58,6 +62,8 @@ final class FiisServiceProvider extends ServiceProvider
         HoldingRepository::class => EloquentHoldingRepository::class,
         MarketData::class => EloquentMarketData::class,
         QuotaReader::class => BrapiQuotaReader::class,
+        BrapiCredentials::class => EloquentBrapiCredentials::class,
+        BrapiKeyChecker::class => BrapiKeyCheck::class,
         Quotes::class => BrapiQuotes::class,
         ReportRepository::class => EloquentReportRepository::class,
         SourceLog::class => EloquentSourceLog::class,

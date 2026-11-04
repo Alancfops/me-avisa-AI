@@ -1,3 +1,5 @@
+import { Link, usePage } from '@inertiajs/react';
+import { KeyRound } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { AppSidebar } from '@/components/app-sidebar';
@@ -7,6 +9,8 @@ import type { AppLayoutProps } from '@/types';
 
 export default function AppSidebarLayout({ children }: AppLayoutProps) {
     const { currentUrl } = useCurrentUrl();
+    const { brapiConfigured } = usePage().props;
+    const onSettings = currentUrl.startsWith('/settings');
     const main = useRef<HTMLElement>(null);
     const previousUrl = useRef(currentUrl);
 
@@ -41,6 +45,27 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                     tabIndex={-1}
                     className="flex-1 p-4 outline-none md:p-8"
                 >
+                    {!brapiConfigured && !onSettings && (
+                        <div
+                            role="status"
+                            className="mx-auto mb-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 surface p-4 text-sm"
+                        >
+                            <span className="flex items-start gap-2">
+                                <KeyRound
+                                    className="mt-0.5 size-4 shrink-0 text-primary"
+                                    aria-hidden="true"
+                                />
+                                Falta a chave da brapi: sem ela, as cotações dos
+                                favoritos não atualizam.
+                            </span>
+                            <Link
+                                href="/settings/appearance#brapi"
+                                className="font-semibold text-primary underline"
+                            >
+                                Colar a chave
+                            </Link>
+                        </div>
+                    )}
                     {children}
                 </main>
             </div>

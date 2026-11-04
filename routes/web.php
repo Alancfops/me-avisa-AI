@@ -7,6 +7,7 @@ use App\Modules\Fiis\Http\FundController;
 use App\Modules\Fiis\Http\FundListController;
 use App\Modules\Fiis\Http\HealthController;
 use App\Modules\Fiis\Http\PortfolioController;
+use App\Modules\Fiis\Http\SettingsController;
 use App\Modules\Telegram\Http\TelegramController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,4 +36,6 @@ Route::delete('telegram', [TelegramController::class, 'disconnect'])->name('tele
 
 Route::get('saude', HealthController::class)->name('health');
 
-Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+Route::get('settings/appearance', [SettingsController::class, 'show'])->name('appearance.edit');
+Route::post('settings/brapi', [SettingsController::class, 'saveBrapi'])->name('settings.brapi');
+Route::delete('settings/brapi', [SettingsController::class, 'forgetBrapi'])->name('settings.brapi.forget');

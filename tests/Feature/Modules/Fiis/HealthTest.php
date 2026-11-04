@@ -37,7 +37,7 @@ it('registers a source failure and shows it, in plain words', function () {
 
     $this->get('/saude')->assertInertia(fn ($page) => $page
         ->where('sources.0.lastSuccessAt', null)
-        ->where('sources.0.errors.0.message', 'KNRI11: A brapi recusou o token (401). Confira o BRAPI_TOKEN no .env.')
+        ->where('sources.0.errors.0.message', 'KNRI11: A brapi recusou a chave (401). Confira a chave em Configurações.')
         ->where('sources.0.errors.0.occurredAt', '2026-10-30T15:00:00-03:00'));
 });
 

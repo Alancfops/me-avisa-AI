@@ -107,28 +107,26 @@ O `-b develop` pega a versão em uso: a `main` só recebe o app na primeira vers
 oficial. O `make install` cria o arquivo de configuração `.env`, monta as imagens e
 prepara o banco. Na primeira vez, leva alguns minutos.
 
-### 3. Coloque a chave da brapi
-
-A brapi fornece as cotações. Crie uma conta gratuita em
-<https://brapi.dev/dashboard> e copie o token. O plano gratuito dá 15 mil
-requisições por mês, e cada favorito consome cerca de 350.
-
-Abra o `.env` (no Mac: `open -e .env`; no Linux ou no WSL: `nano .env`) e preencha:
-
-```dotenv
-BRAPI_TOKEN=seu_token
-```
-
-O `.env` fica escondido no Finder porque o nome começa com ponto. Nunca compartilhe
-esse arquivo: ele guarda as suas chaves.
-
-### 4. Suba o app
+### 3. Suba o app
 
 ```bash
 make start
 ```
 
 Abra <http://127.0.0.1:8000> no navegador.
+
+### 4. Cole a chave da brapi
+
+A brapi fornece as cotações. Crie uma conta gratuita em
+<https://brapi.dev/dashboard> e copie o token do painel. O plano gratuito dá 15 mil
+requisições por mês, e cada favorito consome cerca de 350.
+
+No app, abra **Configurações**, cole o token em **Chave da brapi** e toque em **Salvar
+chave**. O app confere a chave com a brapi e guarda criptografada; não precisa abrir
+nenhum arquivo. Enquanto faltar a chave, um aviso no topo do site leva até esse campo.
+
+> Prefere arquivo? Ponha `BRAPI_TOKEN=seu_token` no `.env` e rode `make start`. A chave
+> do `.env` tem prioridade sobre a do site.
 
 ### 5. Faça a primeira carga
 

@@ -2,6 +2,8 @@
 
 namespace App\Modules\Fiis\Infrastructure\Brapi;
 
+use App\Modules\Fiis\Application\BrapiCredentials;
+use App\Modules\Fiis\Application\BrapiKeyRefused;
 use App\Modules\Fiis\Application\SourceUnavailable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
@@ -16,23 +18,29 @@ use Throwable;
  */
 final class BrapiClient
 {
-    private const BLOCK_KEY = 'brapi.blocked_until';
+    public const BLOCK_KEY = 'brapi.blocked_until';
 
     private const TIMEOUT_SECONDS = 15;
 
+    public function __construct(private readonly BrapiCredentials $credentials) {}
+
     /**
      * @param  array<string, string|int>  $query
+     * @param  string|null  $token  outra chave, para conferir antes de salvar
      * @return array<mixed>
      *
      * @throws SourceUnavailable
      */
-    public function get(string $path, array $query = []): array
+    public function get(string $path, array $query = [], ?string $token = null): array
     {
-        $this->abortWhileRateLimited();
+        // Conferir uma chave nova não espera o bloqueio da chave antiga.
+        if ($token === null) {
+            $this->abortWhileRateLimited();
+        }
 
         try {
             $response = Http::baseUrl((string) config('services.brapi.url'))
-                ->withToken((string) config('services.brapi.token'))
+                ->withToken($token ?? (string) $this->credentials->token())
                 ->acceptJson()
                 ->timeout(self::TIMEOUT_SECONDS)
                 ->get($path, $query);
@@ -65,7 +73,7 @@ final class BrapiClient
         }
 
         match (true) {
-            $response->status() === 401 => throw new SourceUnavailable('A brapi recusou o token (401). Confira o BRAPI_TOKEN no .env.'),
+            $response->status() === 401 => throw new BrapiKeyRefused('A brapi recusou a chave (401). Confira a chave em Configurações.'),
             $response->status() === 403 => throw new SourceUnavailable('O plano da brapi não dá acesso a este dado (403).'),
             $response->status() === 404 => throw new SourceUnavailable('A brapi não encontrou este ativo (404).'),
             $response->status() === 429 => throw new SourceUnavailable('Limite de requisições da brapi atingido (429).'),
