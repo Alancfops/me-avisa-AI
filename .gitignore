@@ -34,3 +34,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Guia pessoal de arquitetura (não vai para o Git)
+/docs/arquitetura-explicada.md
