@@ -69,7 +69,7 @@ Diferença entre ETF e índice
 
 ### Queda relevante
 
-- queda diária ou semanal acima dos limiares definidos no produto (ex.: 3% / 5% — ver `docs/ets/alert.md`)
+- queda diária ou semanal acima dos limiares definidos no produto (ex.: 3% / 5% — ver `docs/etfs/alert.md`)
 
 ---
 

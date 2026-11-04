@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Detectar oportunidades de compra com base em preço, renda (dividendos) e desconto em relação ao valor patrimonial (P/VP), sempre respeitando as preferências do usuário.
+Avisar quando o preço de um FII favorito atende uma regra de preço, de queda ou de desconto em relação ao valor patrimonial (P/VP), sempre respeitando as preferências do usuário. O app informa e não recomenda investimentos: um aviso diz que uma regra foi atendida, não que o fundo está barato ou deve ser comprado.
 
 ---
 
@@ -41,12 +41,12 @@ Se o usuário **não** configurar alvo/faixa manualmente (favorito novo começa 
 
 **Regra:**
 
-- preço **abaixo de** média de **30 dias** × **0,95**
+- preço **abaixo de** média de **30 pregões** × **0,95**
 - **e** P/VP **abaixo da** mediana do P/VP **do próprio fundo** nos últimos **12 meses**
 
 **Definições:**
 
-- **Média de 30 dias:** fechamentos dos últimos 30 pregões, sem o preço ao vivo de hoje.
+- **Média de 30 pregões:** fechamentos dos últimos 30 pregões, sem o preço ao vivo de hoje.
 - **P/VP de cada dia:** fechamento ÷ VP do informe vigente naquele dia. O informe vale a partir da data de entrega à CVM.
 - **Histórico curto:** com menos de 60 pregões, comparar com **P/VP abaixo de 1,0** e dizer isso na tela.
 - **Sem VP:** a regra não dispara e a tela explica o motivo.
@@ -57,7 +57,7 @@ Se o usuário **não** configurar alvo/faixa manualmente (favorito novo começa 
 
 ---
 
-### 4. Queda brusca
+### 4. Queda forte
 
 **Regra:** queda **diária** superior a **3%** (variação do pregão inferior a −3%; exatamente −3% não dispara). Cada pregão é um evento novo.
 
@@ -67,7 +67,7 @@ Se o usuário **não** configurar alvo/faixa manualmente (favorito novo começa 
 
 ## Regras de controle (anti-spam)
 
-Valem **por regra de cada favorito**: uma queda brusca de manhã não impede o aviso de preço alvo à tarde.
+Valem **por regra de cada favorito**: uma queda forte de manhã não impede o aviso de preço alvo à tarde.
 
 - O alerta nasce quando a regra **passa a valer**. Se ela deixa de valer, um novo cruzamento gera novo alerta.
 - No máximo **1 alerta por regra de cada FII a cada 24 h**.
@@ -90,7 +90,7 @@ A agenda não refaz o que perdeu com a máquina desligada. A cada 30 minutos, em
 ## Dados necessários
 
 - Preço atual (e horário da cotação).
-- Histórico de preços (para média de 30 dias).
+- Histórico de preços (para a média de 30 pregões).
 - P/VP.
 - DY 12m: soma dos 12 últimos DY mensais do Informe da CVM (só exibição; nenhuma regra usa).
 
@@ -98,7 +98,7 @@ A agenda não refaz o que perdeu com a máquina desligada. A cada 30 minutos, em
 
 ## Formato do alerta
 
-🚨 **Oportunidade em FII**
+🔔 **Regra atendida em FII**
 
 **Ativo:** MXRF11  
 **Preço atual:** R$ 9,55  

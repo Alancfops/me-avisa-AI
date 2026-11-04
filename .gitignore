@@ -6,6 +6,8 @@ __pycache__/
 .DS_Store
 .claude/
 .scaffold/
+# Rascunhos de prompts, locais.
+/docs/prompt
 
 # Laravel e front (do starter kit)
 /.phpunit.cache

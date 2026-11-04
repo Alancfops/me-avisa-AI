@@ -26,6 +26,13 @@ O investidor compra cotas e recebe rendimentos periódicos (geralmente mensais).
 
 - Mistura dos dois
 
+### Fundo de fundos
+
+- Investem em cotas de outros FIIs
+
+No app, o tipo vem da composição da carteira no Informe Mensal da CVM (regra em
+`docs/superpowers/specs/2026-11-03-lista-de-fiis-design.md`, "Tipo do fundo").
+
 ---
 
 ## Indicadores principais
@@ -105,18 +112,11 @@ Se DY está acima da média histórica, pode indicar desconto
 
 ## Regras de alerta
 
-### Regra simples
+As regras que valem, com todos os detalhes, estão em [`alert.md`](alert.md). Em resumo:
 
-- preço abaixo de média 30 dias × 0,95
-
-### Regra combinada
-
-- preço abaixo da média de 30 dias
-- e P/VP abaixo de 0,95
-
-### Queda brusca
-
-- queda diária superior a 3%
+- **Regra automática:** preço abaixo da média de 30 pregões × 0,95 **e** P/VP abaixo da
+  mediana de 12 meses do próprio fundo (com menos de 60 pregões, P/VP abaixo de 1,0).
+- **Queda forte:** queda diária superior a 3%.
 
 ---
 
@@ -158,6 +158,7 @@ Cada FII deve conter:
 
 ## Objetivo no sistema
 
-- Identificar oportunidades (desconto)
-- Gerar alertas automáticos
-- Permitir análise rápida no mobile
+- Avisar quando uma regra definida pelo usuário ou a regra automática é atendida
+- Informar, sem recomendar compra: um aviso não diz que o ativo está barato
+- Permitir análise rápida numa tela só (web, no computador do usuário; o layout também
+  funciona em telas estreitas)

@@ -4,7 +4,7 @@ namespace App\Modules\Fiis\Domain;
 
 final readonly class FundSnapshot
 {
-    /** docs/fiis/alert.md, "Média de 30 dias". */
+    /** docs/fiis/alert.md, "Média de 30 pregões". */
     public const AVERAGE_WINDOW = 30;
 
     /**

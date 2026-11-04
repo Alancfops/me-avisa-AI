@@ -51,12 +51,13 @@ function PriceToBookCard({ fund }: { fund: Fund }) {
           ? null
           : Number(fund.medianPriceToBook);
     const current = Number(fund.priceToBook);
+    // Diz de que lado da referência o P/VP está, sem chamar o fundo de barato ou caro.
+    const referenceName = short ? 'de 1,0' : 'da mediana';
+    const below = reference !== null && current < reference;
     const verdict =
         reference === null || current === reference
             ? null
-            : current < reference
-              ? 'Mais barato'
-              : 'Mais caro';
+            : `${below ? 'Abaixo' : 'Acima'} ${referenceName}`;
 
     return (
         <Card
@@ -73,7 +74,7 @@ function PriceToBookCard({ fund }: { fund: Fund }) {
                             <span
                                 className={cn(
                                     'font-semibold',
-                                    verdict === 'Mais barato' && 'text-signal',
+                                    below && 'text-signal',
                                 )}
                             >
                                 {verdict}

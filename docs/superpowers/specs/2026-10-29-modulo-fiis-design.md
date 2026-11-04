@@ -64,7 +64,7 @@ testável a atalhos, sem cair em cerimônia que não se paga para um usuário s�
   CVM Dados Abertos. O plano grátis aceita **1 ativo por requisição**. Orçamento:
   6 favoritos × 2 checagens/h × 8 h × 22 dias ≈ 2,1 mil requisições/mês. O limite
   é contado em 30 dias corridos.
-- **Front:** seguir a skill `ui-ux` (`.claude/skills/ui-ux/`) e o protótipo em
+- **Front:** seguir a skill `ui-ux` (local, em `.claude/`, fora do repositório) e o protótipo em
   `docs/prototipo-lovable/` como referência visual.
 - **Regras de domínio** vêm de `docs/fiis/`; se o código precisar de algo que
   não está lá, atualizar o doc primeiro (`docs/legado.md`).
@@ -203,7 +203,7 @@ máximo 2 avisos por fundo em 24 h, fora a exceção dos 2%.
 
 ### Interface (escopo deste módulo)
 
-Seguir `.claude/skills/ui-ux/references/telas.md`, limitado a:
+Seguir as telas da skill `ui-ux` (local, fora do repositório), limitado a:
 
 - **Painel**, **Fundo** (com "Quando me avisar": alvo / faixa / automático +
   queda forte), **Favoritar** (diálogo de busca), **Avisos**.
