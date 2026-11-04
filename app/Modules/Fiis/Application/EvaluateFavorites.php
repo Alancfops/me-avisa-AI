@@ -17,6 +17,7 @@ final readonly class EvaluateFavorites
         private BuildFundSnapshot $snapshots,
         private Clock $clock,
         private LoggerInterface $logger,
+        private AlertNotifier $notifier = new NullAlertNotifier,
     ) {}
 
     public function handle(): void
@@ -91,5 +92,14 @@ final readonly class EvaluateFavorites
             : null;
 
         $this->alerts->apply($quote->ticker, $kind, $decision->state, $alert);
+
+        if ($alert !== null) {
+            try {
+                $this->notifier->notify($alert);
+            } catch (Throwable $failure) {
+                // O aviso já está gravado e aparece no site; a entrega fora dele não pode desfazê-lo.
+                $this->logger->error("Envio do aviso de {$quote->ticker} falhou: ".$failure::class);
+            }
+        }
     }
 }

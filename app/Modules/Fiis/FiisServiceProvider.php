@@ -2,6 +2,7 @@
 
 namespace App\Modules\Fiis;
 
+use App\Modules\Fiis\Application\AlertNotifier;
 use App\Modules\Fiis\Application\AlertRepository;
 use App\Modules\Fiis\Application\CatalogRepository;
 use App\Modules\Fiis\Application\Clock;
@@ -12,6 +13,7 @@ use App\Modules\Fiis\Application\FundCatalog;
 use App\Modules\Fiis\Application\FundReports;
 use App\Modules\Fiis\Application\HoldingRepository;
 use App\Modules\Fiis\Application\MarketData;
+use App\Modules\Fiis\Application\NullAlertNotifier;
 use App\Modules\Fiis\Application\QuotaReader;
 use App\Modules\Fiis\Application\Quotes;
 use App\Modules\Fiis\Application\ReportRepository;
@@ -44,6 +46,7 @@ final class FiisServiceProvider extends ServiceProvider
 {
     /** @var array<class-string, class-string> */
     public array $bindings = [
+        AlertNotifier::class => NullAlertNotifier::class,
         AlertRepository::class => EloquentAlertRepository::class,
         CatalogRepository::class => EloquentCatalogRepository::class,
         Clock::class => SystemClock::class,

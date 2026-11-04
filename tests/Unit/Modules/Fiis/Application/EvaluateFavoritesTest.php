@@ -11,12 +11,14 @@ use App\Modules\Fiis\Domain\Money;
 use App\Modules\Fiis\Domain\Percentage;
 use App\Modules\Fiis\Domain\RuleKind;
 use Psr\Log\AbstractLogger;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Tests\Support\Fiis\FixedClock;
 use Tests\Support\Fiis\InMemoryAlerts;
 use Tests\Support\Fiis\InMemoryFavorites;
 use Tests\Support\Fiis\InMemoryMarketData;
 use Tests\Support\Fiis\InMemoryReports;
+use Tests\Support\Fiis\RecordingNotifier;
 
 final class EvaluationWorld
 {
@@ -28,8 +30,14 @@ final class EvaluationWorld
 
     public FixedClock $clock;
 
+    public RecordingNotifier $notifier;
+
+    public LoggerInterface $logger;
+
     public function __construct()
     {
+        $this->notifier = new RecordingNotifier;
+        $this->logger = new NullLogger;
         $this->favorites = new InMemoryFavorites(['MXRF11']);
         $this->market = new InMemoryMarketData;
         $this->alerts = new InMemoryAlerts;
@@ -44,7 +52,8 @@ final class EvaluationWorld
             $this->alerts,
             new BuildFundSnapshot($this->market, new InMemoryReports),
             $this->clock,
-            new NullLogger,
+            $this->logger,
+            $this->notifier,
         );
     }
 
@@ -327,4 +336,42 @@ it('keeps evaluating the others when one favorite blows up, and logs it', functi
 
     expect($world->alertRules())->toBe(['price_target'])
         ->and($logger->messages[0])->toContain('AAAA11');
+});
+
+it('notifies every alert it records', function () {
+    $world = world();
+
+    $world->tick('2026-10-29 14:00:00-03:00', '9.42');
+
+    expect($world->notifier->notified)->toHaveCount(1)
+        ->and($world->notifier->notified[0])->toBe($world->alerts->alerts[0]);
+});
+
+it('does not notify when no alert is recorded', function () {
+    $world = world();
+
+    $world->tick('2026-10-29 14:00:00-03:00', '9.42');
+    $world->tick('2026-10-29 14:30:00-03:00', '9.41'); // continua valendo: sem aviso novo
+
+    expect($world->notifier->notified)->toHaveCount(1);
+});
+
+it('keeps the alert when the notifier throws', function () {
+    $world = world();
+    $world->notifier = new RecordingNotifier(fails: true);
+    $world->logger = new class extends AbstractLogger
+    {
+        /** @var list<string> */
+        public array $messages = [];
+
+        public function log($level, string|Stringable $message, array $context = []): void
+        {
+            $this->messages[] = (string) $message;
+        }
+    };
+
+    $world->tick('2026-10-29 14:00:00-03:00', '9.42');
+
+    expect($world->alertRules())->toBe(['price_target'])
+        ->and($world->logger->messages)->toBe(['Envio do aviso de MXRF11 falhou: RuntimeException']);
 });
