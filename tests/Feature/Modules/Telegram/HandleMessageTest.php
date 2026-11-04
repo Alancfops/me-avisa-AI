@@ -73,8 +73,8 @@ it('answers each command to the connected chat', function (string $text, string 
     expect($this->api->sent)->toHaveCount(1)->and($this->api->sent[0][1])->toContain($expected);
 })->with([
     'alertas vazio' => ['/alertas', '✅ Nenhum favorito bateu regra hoje (30/10).'],
-    'ver' => ['/ver knri11', '🏢 <b>KNRI11</b> · Kinea Renda Imobiliaria'],
-    'ver com @bot e maiúsculas' => ['/VER@meavisa_bot KNRI11', '🏢 <b>KNRI11</b>'],
+    'ver' => ['/ver knri11', '📈 <b>KNRI11</b> · Kinea Renda Imobiliaria'],
+    'ver com @bot e maiúsculas' => ['/VER@meavisa_bot KNRI11', '📈 <b>KNRI11</b>'],
     'ver sem ticker' => ['/ver', 'Use assim: <code>/ver CÓDIGO</code>'],
     'ver fora do catálogo' => ['/ver XPTO11', '⚠️ Não achei <b>XPTO11</b>'],
     'favoritos' => ['/favoritos', '⭐ <b>Seus favoritos (1)</b>'],

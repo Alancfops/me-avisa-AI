@@ -59,7 +59,7 @@ final readonly class Messages
 
     public function fund(FavoriteView $view): string
     {
-        $title = '🏢 <b>'.self::e($view->ticker).'</b>'.($view->name === null ? '' : ' · '.self::e($view->name));
+        $title = '📈 <b>'.self::e($view->ticker).'</b>'.($view->name === null ? '' : ' · '.self::e($view->name));
         $dividend = $view->dividends === [] ? null : $view->dividends[array_key_last($view->dividends)];
         $median = $view->snapshot?->medianPriceToBook;
         $lines = [
@@ -147,7 +147,7 @@ final readonly class Messages
             '📋 <b>Comandos</b>',
             '',
             '🔔 /alertas · avisos de hoje',
-            '🏢 /ver CÓDIGO · dados de um fundo',
+            '📈 /ver CÓDIGO · dados de um fundo',
             '⭐ /favoritos · seus favoritos',
             '💼 /carteira · sua carteira',
             '❓ /ajuda · esta lista',

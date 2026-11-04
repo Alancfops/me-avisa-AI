@@ -125,7 +125,7 @@ São Paulo, pela data do aviso (`occurredAt`).
 **`/ver KNRI11`:**
 
 ```text
-🏢 KNRI11 · Kinea Renda Imobiliária
+📈 KNRI11 · Kinea Renda Imobiliária
 💰 R$ 146,46 (−0,5%) · cotação de 30/10, 14:30
 📊 P/VP 0,95 · mediana 12m 0,98
 💸 DY 12m 9,8% · último rendimento ≈ R$ 1,10 por cota

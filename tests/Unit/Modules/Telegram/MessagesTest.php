@@ -93,7 +93,7 @@ it('lists today alerts and the empty day', function () {
 
 it('describes a favorite fund', function () {
     expect(tgMessages()->fund(fundView()))->toBe(implode("\n", [
-        '🏢 <b>KNRI11</b> · Kinea Renda Imobiliária',
+        '📈 <b>KNRI11</b> · Kinea Renda Imobiliária',
         '💰 R$ 146,46 (-0,50%) · cotação de 30/10, 14:30',
         '📊 P/VP 0,95 · mediana 12m 0,98',
         '💸 DY 12m 9,8% · último rendimento ≈ R$ 1,10 por cota',
@@ -155,7 +155,7 @@ it('shows the commands menu with an emoji per command', function () {
         '📋 <b>Comandos</b>',
         '',
         '🔔 /alertas · avisos de hoje',
-        '🏢 /ver CÓDIGO · dados de um fundo',
+        '📈 /ver CÓDIGO · dados de um fundo',
         '⭐ /favoritos · seus favoritos',
         '💼 /carteira · sua carteira',
         '❓ /ajuda · esta lista',
