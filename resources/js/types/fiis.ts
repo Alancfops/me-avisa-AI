@@ -100,3 +100,31 @@ export type FundListItem = {
     netAssets: string | null;
     favorite: boolean;
 };
+
+export type PortfolioRow = {
+    ticker: string;
+    name: string | null;
+    shares: number;
+    price: string | null;
+    /** Cotação da brapi (favorito); senão, `closeDay` diz o fechamento da B3. */
+    quotedAt: string | null;
+    closeDay: string | null;
+    positionValue: string | null;
+    lastIncome: string | null;
+    averageIncome: string | null;
+    dividendMonths: number;
+};
+
+export type PortfolioTotals = {
+    value: string | null;
+    lastIncome: string | null;
+    averageIncome: string | null;
+    withoutPrice: number;
+    withoutDividends: number;
+};
+
+export type PortfolioSearch = {
+    query: string;
+    catalogEmpty: boolean;
+    results: { ticker: string; name: string; inPortfolio: boolean }[];
+};
