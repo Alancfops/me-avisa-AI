@@ -1,10 +1,11 @@
+# Uma PR por ecossistema, uma vez por mês, para não encher a lista de PRs.
 version: 2
 updates:
   - package-ecosystem: composer
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       composer:
         patterns: ["*"]
@@ -12,7 +13,7 @@ updates:
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
     groups:
       npm:
         patterns: ["*"]
@@ -20,9 +21,16 @@ updates:
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
+    groups:
+      github-actions:
+        patterns: ["*"]
   - package-ecosystem: docker
     directory: /
     target-branch: develop
     schedule:
-      interval: weekly
+      interval: monthly
+    ignore:
+      # Versão nova do Node é escolhida à mão, só entre as LTS (as pares).
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
