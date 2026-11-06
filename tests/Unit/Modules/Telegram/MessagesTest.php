@@ -113,6 +113,13 @@ it('escapes names that come from outside', function () {
     expect(tgMessages()->fund(fundView(['name' => 'Fundo A&B <x>'])))->toContain('Fundo A&amp;B &lt;x&gt;');
 });
 
+it('escapes quotes only with entities the Telegram accepts', function () {
+    // O Telegram só aceita &lt; &gt; &amp; &quot; e códigos numéricos: &apos; faria o envio falhar.
+    expect(tgMessages()->fund(fundView(['name' => "Fundo D'Ouro \"Renda\""])))
+        ->toContain('Fundo D&#039;Ouro &quot;Renda&quot;')
+        ->not->toContain('&apos;');
+});
+
 it('answers unknown tickers and a missing ticker', function () {
     expect(tgMessages()->notFound('XPTO11'))->toBe('⚠️ Não achei <b>XPTO11</b>. Confira o código na B3.')
         ->and(tgMessages()->verUsage())->toBe('💡 Use assim: <code>/ver CÓDIGO</code>, com o código do fundo na B3 (termina em 11).');

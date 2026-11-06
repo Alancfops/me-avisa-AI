@@ -73,7 +73,10 @@ final class EloquentTelegramState implements TelegramState
 
     public function forgetToken(): void
     {
-        $this->row()->update(['token' => null]);
+        $this->row()->update([
+            'token' => null, 'chat_id' => null, 'connected_at' => null,
+            'link_code' => null, 'link_code_expires_at' => null,
+        ]);
     }
 
     private function row(): TelegramStateModel

@@ -41,6 +41,13 @@ it('keeps the bot token encrypted and starts over when it changes', function () 
         ->and(DB::table('telegram_state')->value('token'))->not->toContain('123:NEW')
         ->and($fresh->chatId())->toBeNull()->and($fresh->linkCode())->toBeNull()->and($fresh->lastUpdateId())->toBeNull();
 
+    $fresh->connect(7, new DateTimeImmutable);
+    $fresh->saveLinkCode('XYZ789', new DateTimeImmutable('+15 minutes'));
     $fresh->forgetToken();
-    expect((new EloquentTelegramState)->token())->toBeNull();
+
+    // Sem bot não há conexão: o chat e o código pendente saem junto com o token.
+    $forgotten = new EloquentTelegramState;
+    expect($forgotten->token())->toBeNull()
+        ->and($forgotten->chatId())->toBeNull()->and($forgotten->connectedAt())->toBeNull()
+        ->and($forgotten->linkCode())->toBeNull();
 });
