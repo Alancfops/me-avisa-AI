@@ -1,5 +1,5 @@
 # Bases oficiais multi-arquitetura: a mesma receita serve amd64 e arm64.
-FROM node:22 AS assets
+FROM node:25 AS assets
 WORKDIR /app
 COPY package.json package-lock.json .npmrc vite.config.ts tsconfig.json ./
 RUN npm ci --no-audit --no-fund
