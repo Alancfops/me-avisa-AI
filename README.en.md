@@ -152,7 +152,32 @@ and the rest once a day.
 | Update to the newest version | `git pull`, then `make start` (the database updates by itself) |
 | Stop the app | `make stop` |
 | See what's going on | `make logs` (exit with Ctrl+C) |
-| Uninstall and **delete all data** | `docker compose down -v` and delete the `me-avisa-AI` folder |
+| Keep a copy of your data | `make backup` (see [Backup](#backup)) |
+| Uninstall and **delete all data** | Run `make backup` and keep the `backups/` folder and the `.env` file somewhere else. Then `docker compose down -v` (on Podman, `podman compose down -v`) and delete the `me-avisa-AI` folder |
+
+### Backup
+
+Your favorites, rules, alerts, portfolio and keys live in the app's database. To keep a
+copy, with the app running:
+
+```bash
+make backup
+```
+
+The copy goes to the `backups/` folder, with the date and time in the name
+(`backups/me-avisa-ai-2026-11-06-153000.sql.gz`). Make one before updating or
+uninstalling. The folder stays out of git and holds your data, so don't share the files.
+
+To bring the app back to a copy:
+
+```bash
+make restore FILE=backups/me-avisa-ai-2026-11-06-153000.sql.gz
+```
+
+`make restore` asks before replacing the data and, before replacing, saves the current
+data to `backups/`. The brapi and bot keys come along, encrypted: to read them, `.env`
+needs the same `APP_KEY` it had when the copy was made. So when you move a copy to
+another install, take the `.env` along.
 
 ### If something goes wrong
 
@@ -176,6 +201,12 @@ Requires [Podman](https://podman.io/docs/installation) with Compose support. On 
 brew install podman podman-compose
 podman machine init
 podman machine start
+```
+
+On Linux (Ubuntu or Debian), plus `git` and `make`:
+
+```bash
+sudo apt install podman podman-compose
 ```
 
 Follow steps 2 to 6 above, adding `COMPOSE="podman compose"` to every `make`:
@@ -282,7 +313,8 @@ the phone, use the commands.
 
 - **Disconnect:** **Desconectar** button on the tab. Alerts stay on the website. To come
   back, connect again with the QR code.
-- **Switch bots:** **Usar outro bot** on the tab, then paste the new token.
+- **Switch bots:** **Usar outro bot** on the tab, then paste the new token. If the token is
+  in `.env`, that button doesn't show: change the `TELEGRAM_BOT_TOKEN` line and run `make start`.
 - **Leaked token:** send `/revoke` to @BotFather, pick the bot and paste the new token on
   the tab (or in `.env`). Whoever has the token controls the bot, so don't share it.
 - The app fetches messages from Telegram; nothing on your computer is exposed to the
@@ -355,6 +387,7 @@ To stop: `make stop COMPOSE="podman compose"`.
 | `make test` | Runs the tests on a separate database, without touching your data |
 | `make lint` / `make format` | Checks or fixes formatting |
 | `make migrate` | Updates the database |
+| `make backup` / `make restore FILE=...` | Saves a copy of the database to `backups/` or brings one back |
 | `make shell` | Opens a terminal in a tools container |
 | `make check` | Runs the backend CI checks |
 | `make backtest TICKER=KNRI11` | Counts the alerts past prices would have triggered, without saving anything; it does not say whether buying would have been profitable |
