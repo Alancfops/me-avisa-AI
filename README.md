@@ -152,7 +152,32 @@ uma vez por dia.
 | Atualizar para a versão mais nova | `git pull` e depois `make start` (o banco é atualizado sozinho) |
 | Parar o app | `make stop` |
 | Ver o que está acontecendo | `make logs` (saia com Ctrl+C) |
-| Desinstalar e **apagar todos os dados** | `docker compose down -v` e apague a pasta `me-avisa-AI` |
+| Guardar uma cópia dos dados | `make backup` (veja [Backup](#backup)) |
+| Desinstalar e **apagar todos os dados** | Faça um `make backup` e guarde a pasta `backups/` e o arquivo `.env` em outro lugar. Depois, `docker compose down -v` (no Podman, `podman compose down -v`) e apague a pasta `me-avisa-AI` |
+
+### Backup
+
+Seus favoritos, regras, avisos, carteira e chaves ficam no banco do app. Para guardar uma
+cópia, com o app no ar:
+
+```bash
+make backup
+```
+
+A cópia vai para a pasta `backups/`, com a data e a hora no nome
+(`backups/me-avisa-ai-2026-11-06-153000.sql.gz`). Vale fazer uma antes de atualizar ou
+desinstalar. A pasta fica fora do git e tem seus dados, então não compartilhe os arquivos.
+
+Para voltar o app a uma cópia:
+
+```bash
+make restore FILE=backups/me-avisa-ai-2026-11-06-153000.sql.gz
+```
+
+O `make restore` pergunta antes de trocar os dados e, antes de trocar, salva os atuais em
+`backups/`. As chaves da brapi e do bot vêm junto, criptografadas: para lê-las, o `.env`
+precisa ter a mesma `APP_KEY` de quando a cópia foi feita. Por isso, ao levar uma cópia para
+outra instalação, leve também o `.env`.
 
 ### Se algo der errado
 
@@ -176,6 +201,12 @@ Requer [Podman](https://podman.io/docs/installation) com suporte a Compose. No M
 brew install podman podman-compose
 podman machine init
 podman machine start
+```
+
+No Linux (Ubuntu ou Debian), além de `git` e `make`:
+
+```bash
+sudo apt install podman podman-compose
 ```
 
 Siga os passos 2 a 6 acima, acrescentando `COMPOSE="podman compose"` em todo `make`:
@@ -283,7 +314,8 @@ use os comandos.
 
 - **Desconectar:** botão **Desconectar** na aba. Os avisos continuam no site. Para
   voltar, conecte de novo pelo QR code.
-- **Trocar de bot:** **Usar outro bot** na aba, e cole o token novo.
+- **Trocar de bot:** **Usar outro bot** na aba, e cole o token novo. Se o token está no
+  `.env`, esse botão não aparece: troque a linha `TELEGRAM_BOT_TOKEN` e rode `make start`.
 - **Token vazou:** mande `/revoke` ao @BotFather, escolha o bot e cole o token novo na
   aba (ou no `.env`). Quem tem o token controla o bot, então não compartilhe.
 - O app busca as mensagens no Telegram; nada do seu computador fica exposto na
@@ -356,6 +388,7 @@ Para parar: `make stop COMPOSE="podman compose"`.
 | `make test` | Roda os testes em um banco separado, sem tocar nos seus dados |
 | `make lint` / `make format` | Confere ou corrige a formatação |
 | `make migrate` | Atualiza o banco |
+| `make backup` / `make restore FILE=...` | Salva uma cópia do banco em `backups/` ou volta para uma |
 | `make shell` | Abre um terminal em um contêiner de ferramentas |
 | `make check` | Roda as checagens de backend do CI |
 | `make backtest TICKER=KNRI11` | Conta os avisos que teriam saído nos preços passados, sem gravar nada; não diz se a compra daria lucro |
