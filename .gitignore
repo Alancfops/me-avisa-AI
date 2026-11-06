@@ -4,6 +4,36 @@
 __pycache__/
 *.pyc
 .DS_Store
-.claude/settings.local.json
-.claude/agent-memory-local/
+.claude/
 .scaffold/
+# Rascunhos de prompts, locais.
+/docs/prompt
+
+# Laravel e front (do starter kit)
+/.phpunit.cache
+/bootstrap/ssr
+/node_modules
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+
+# Guia pessoal de arquitetura (não vai para o Git)
+/docs/arquitetura-explicada.md

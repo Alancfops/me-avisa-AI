@@ -1,0 +1,41 @@
+<?php
+
+use App\Modules\Fiis\Http\AlertController;
+use App\Modules\Fiis\Http\DashboardController;
+use App\Modules\Fiis\Http\FavoriteController;
+use App\Modules\Fiis\Http\FundController;
+use App\Modules\Fiis\Http\FundListController;
+use App\Modules\Fiis\Http\HealthController;
+use App\Modules\Fiis\Http\PortfolioController;
+use App\Modules\Fiis\Http\SettingsController;
+use App\Modules\Telegram\Http\TelegramController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', DashboardController::class)->name('home');
+
+Route::post('favoritos', [FavoriteController::class, 'store'])->name('favorites.store');
+Route::delete('favoritos/{ticker}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
+
+Route::get('fundos', FundListController::class)->name('funds.index');
+Route::get('fundos/{ticker}', [FundController::class, 'show'])->name('funds.show');
+Route::put('fundos/{ticker}/regras', [FundController::class, 'update'])->name('funds.settings');
+
+Route::get('carteira', [PortfolioController::class, 'index'])->name('portfolio');
+Route::put('carteira/{ticker}', [PortfolioController::class, 'save'])->name('portfolio.save');
+Route::delete('carteira/{ticker}', [PortfolioController::class, 'remove'])->name('portfolio.remove');
+
+Route::get('avisos', AlertController::class)->name('alerts');
+
+Route::get('telegram', [TelegramController::class, 'show'])->name('telegram');
+Route::get('telegram/estado', [TelegramController::class, 'connection'])->name('telegram.connection');
+Route::post('telegram/token', [TelegramController::class, 'saveToken'])->name('telegram.token');
+Route::delete('telegram/token', [TelegramController::class, 'forgetToken'])->name('telegram.token.forget');
+Route::post('telegram/codigo', [TelegramController::class, 'newCode'])->name('telegram.code');
+Route::post('telegram/teste', [TelegramController::class, 'test'])->name('telegram.test');
+Route::delete('telegram', [TelegramController::class, 'disconnect'])->name('telegram.disconnect');
+
+Route::get('saude', HealthController::class)->name('health');
+
+Route::get('settings/appearance', [SettingsController::class, 'show'])->name('appearance.edit');
+Route::post('settings/brapi', [SettingsController::class, 'saveBrapi'])->name('settings.brapi');
+Route::delete('settings/brapi', [SettingsController::class, 'forgetBrapi'])->name('settings.brapi.forget');

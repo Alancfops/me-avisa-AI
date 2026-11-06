@@ -1,8 +1,7 @@
 # O que veio da versão antiga
 
-A primeira versão (Rails + React + Supabase, branches `develop` e
-`feature/fii-dashboard-brapi-catalog` deste repositório) foi descartada no
-recomeço de 2026-10-29. O que dela continua valendo, exceto onde divergir do
+A primeira versão (Rails + React + Supabase) foi descartada no recomeço de
+2026-10-29, e as branches dela foram apagadas em 2026-10-30. O que dela continua valendo, exceto onde divergir do
 design atual (`docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`), que
 prevalece, por exemplo nas rotas da brapi e no envio do token por header:
 
@@ -38,4 +37,5 @@ prevalece, por exemplo nas rotas da brapi e no envio do token por header:
 - Não inventar regra, limite ou fórmula financeira que não esteja em `docs/`;
   se faltar, atualizar o doc primeiro.
 - Separar FII, ação e ETF em módulos próprios.
-- Interface pensada primeiro para o celular.
+- Layout que funciona em telas estreitas. O app continua só web, no computador do
+  usuário, sem app nativo.

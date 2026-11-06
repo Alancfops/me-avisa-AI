@@ -1,0 +1,57 @@
+COMPOSE ?= docker compose
+export APP_UID := $(shell id -u)
+
+.DEFAULT_GOAL := help
+.PHONY: help install start load stop restart logs test lint format migrate shell check backtest
+
+help: ## Lista os comandos
+	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+install: ## Cria o .env sem sobrescrever um existente, constrói as imagens e prepara o banco
+	@test -f .env || cp .env.example .env
+	$(COMPOSE) build
+	# O entrypoint do web gera a APP_KEY e migra.
+	$(COMPOSE) run --rm web true
+
+start: ## Sobe o app
+	$(COMPOSE) up -d --build
+
+load: ## Primeira carga: catálogo, informes da CVM e fechamentos da B3 (o app precisa estar no ar)
+	$(COMPOSE) exec web php artisan fiis:sync-catalog
+	$(COMPOSE) exec web php artisan fiis:import-reports
+	$(COMPOSE) exec web php artisan fiis:import-exchange-closes
+	# Arquivos anuais de ~90 MB: pode levar alguns minutos.
+	$(COMPOSE) exec web php artisan fiis:import-exchange-history
+
+stop: ## Para o app
+	$(COMPOSE) stop
+
+restart: ## Reinicia o app
+	$(COMPOSE) restart
+
+logs: ## Acompanha os logs
+	$(COMPOSE) logs -f
+
+test: ## Roda os testes
+	$(COMPOSE) run --rm tools php artisan test
+
+lint: ## Confere a formatação
+	$(COMPOSE) run --rm tools vendor/bin/pint --test
+
+format: ## Corrige a formatação
+	$(COMPOSE) run --rm tools vendor/bin/pint
+
+migrate: ## Atualiza o banco
+	# O entrypoint do web migra: é o único lugar que faz isso.
+	$(COMPOSE) run --rm web true
+
+shell: ## Abre um terminal no contêiner do app
+	$(COMPOSE) run --rm tools bash
+
+check: lint ## Roda as checagens de backend do CI
+	$(COMPOSE) run --rm tools vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+	$(COMPOSE) run --rm tools php artisan test
+
+backtest: ## Simula os avisos sobre preços passados, sem gravar nada: make backtest TICKER=KNRI11
+	@test -n "$(TICKER)" || { echo "Informe o fundo: make backtest TICKER=KNRI11"; exit 1; }
+	$(COMPOSE) run --rm tools php artisan fiis:backtest $(TICKER)

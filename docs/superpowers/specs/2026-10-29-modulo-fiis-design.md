@@ -64,7 +64,7 @@ testável a atalhos, sem cair em cerimônia que não se paga para um usuário s�
   CVM Dados Abertos. O plano grátis aceita **1 ativo por requisição**. Orçamento:
   6 favoritos × 2 checagens/h × 8 h × 22 dias ≈ 2,1 mil requisições/mês. O limite
   é contado em 30 dias corridos.
-- **Front:** seguir a skill `ui-ux` (`.claude/skills/ui-ux/`) e o protótipo em
+- **Front:** seguir a skill `ui-ux` (local, em `.claude/`, fora do repositório) e o protótipo em
   `docs/prototipo-lovable/` como referência visual.
 - **Regras de domínio** vêm de `docs/fiis/`; se o código precisar de algo que
   não está lá, atualizar o doc primeiro (`docs/legado.md`).
@@ -139,7 +139,9 @@ pessoas. Cada instalação atende uma pessoa, com as próprias chaves.
   Confirmar com a brapi (o ticker precisa existir lá). Fundos que não casarem
   ficam sem VP e a interface diz "VP indisponível".
 - **Dados das fontes são validados** antes de salvar (ver `docs/legado.md`):
-  ausente é `null`, nunca zero; resposta quebrada não sobrescreve dado bom.
+  ausente é `null`, nunca zero; resposta quebrada não sobrescreve dado bom. Preço
+  zero ou negativo vindo de fonte é inválido: o adaptador rejeita, registra em log
+  e mantém o último dado bom.
 - **Cada fonte atrás de uma interface** (ex.: `Quotes` com implementação brapi;
   `FundReports` com implementação CVM), para testar com dados falsos e trocar de
   fonte sem mexer nas regras.
@@ -201,7 +203,7 @@ máximo 2 avisos por fundo em 24 h, fora a exceção dos 2%.
 
 ### Interface (escopo deste módulo)
 
-Seguir `.claude/skills/ui-ux/references/telas.md`, limitado a:
+Seguir as telas da skill `ui-ux` (local, fora do repositório), limitado a:
 
 - **Painel**, **Fundo** (com "Quando me avisar": alvo / faixa / automático +
   queda forte), **Favoritar** (diálogo de busca), **Avisos**.
@@ -219,6 +221,9 @@ Seguir `.claude/skills/ui-ux/references/telas.md`, limitado a:
   exemplos de `docs/fiis/alert.md`, e para os parsers da brapi e da CVM com
   respostas gravadas.
 - Fontes externas nunca são chamadas nos testes.
+- **Simulador (`make backtest`):** roda as mesmas regras sobre preços passados e
+  mostra os avisos que teriam saído, sem enviar nem gravar nada. Entra depois das
+  regras e do antispam. Mostra a quantidade de avisos, não se a compra daria lucro.
 
 ## Riscos
 

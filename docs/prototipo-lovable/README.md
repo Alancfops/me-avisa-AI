@@ -2,9 +2,9 @@
 
 Referência **visual** do front, exportada do Lovable. Não é código para copiar:
 usa TanStack Router e dados fictícios (`lib/fiis.ts`), e tem problemas de
-acessibilidade conhecidos. A versão que vale está na skill
-`.claude/skills/ui-ux/` (`SKILL.md` → seção "O que corrigir do protótipo",
-`references/telas.md` e `references/tokens.css`).
+acessibilidade conhecidos. A versão que vale está nas telas já implementadas
+(`resources/js/`) e nos tokens de `resources/css/app.css`. As correções do protótipo estão
+na skill local `ui-ux` (em `.claude/`, fora do repositório).
 
 | Arquivo | Tela |
 |---|---|

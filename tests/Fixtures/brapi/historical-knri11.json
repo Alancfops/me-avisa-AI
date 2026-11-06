@@ -1,0 +1,62 @@
+{
+    "results": [
+        {
+            "requestedSymbol": "KNRI11",
+            "symbol": "KNRI11",
+            "changed": false,
+            "data": {
+                "usedInterval": "1d",
+                "usedRange": "3mo",
+                "historicalDataPrice": [
+                    {
+                        "date": 1793329200,
+                        "open": 149.6,
+                        "high": 150.64,
+                        "low": 148.31,
+                        "close": 149.91,
+                        "volume": 27898,
+                        "adjustedClose": 149.91
+                    },
+                    {
+                        "date": 1793242800,
+                        "open": 149.0,
+                        "high": 150.0,
+                        "low": 148.0,
+                        "close": 149.6,
+                        "volume": 90000,
+                        "adjustedClose": 149.6
+                    },
+                    {
+                        "date": 1785812400,
+                        "open": 152.49,
+                        "high": 153.98,
+                        "low": 151.27,
+                        "close": 152.09,
+                        "volume": 100871,
+                        "adjustedClose": 149.9697
+                    },
+                    {
+                        "date": 1785726000,
+                        "open": 156.65,
+                        "high": 156.65,
+                        "low": 152.09,
+                        "close": 0,
+                        "volume": 76849,
+                        "adjustedClose": 149.9697
+                    },
+                    {
+                        "date": 1785639600,
+                        "open": 156.65,
+                        "high": 156.65,
+                        "low": 152.09,
+                        "close": null,
+                        "volume": 76849,
+                        "adjustedClose": null
+                    }
+                ]
+            }
+        }
+    ],
+    "requestedAt": "2026-10-30T17:58:27.554Z",
+    "took": 0
+}

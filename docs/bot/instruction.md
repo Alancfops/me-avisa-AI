@@ -1,5 +1,9 @@
 # Comportamento do Bot (Telegram)
 
+> O design implementado está em `docs/superpowers/specs/2026-11-04-bot-telegram-design.md`
+> e prevalece onde divergir deste documento (por exemplo, `/ver` vale para qualquer FII do
+> catálogo, e não só favoritos).
+
 ## Objetivo
 
 O bot é a ponta de entrega imediata: o usuário não precisa abrir o site para saber que um favorito atingiu regra de alerta; o bot avisa. Resumos sob demanda (`/ver`) complementam as notificações push.
@@ -45,7 +49,7 @@ Mostra **snapshot do dia** dos favoritos que satisfazem **alguma** condição de
 - **Preço alvo** (preço ≤ valor definido).
 - **Faixa de preço** (quando configurada; ex.: FIIs).
 - **Regras automáticas** (ex.: FII sem configuração manual — média 30d × 0,95 e P/VP abaixo de 1,0).
-- **Quedas / movimentos** quando aplicável (percentuais por tipo: ver `docs/fiis/alert.md`, `docs/acoes/alert.md`, `docs/ets/alert.md`).
+- **Quedas / movimentos** quando aplicável (percentuais por tipo: ver `docs/fiis/alert.md`, `docs/acoes/alert.md`, `docs/etfs/alert.md`).
 
 Indicar na mensagem **qual regra** disparou (ex.: “alvo”, “faixa”, “automático”, “queda X%”) para o usuário entender o contexto.
 
@@ -82,4 +86,4 @@ Cooldown e exceções devem ser **idênticos** aos descritos em `docs/*/alert.md
 
 - FIIs: `docs/fiis/context.md`, `docs/fiis/alert.md`
 - Ações: `docs/acoes/context.md`, `docs/acoes/alert.md`
-- ETFs: `docs/ets/context.md`, `docs/ets/alert.md`
+- ETFs: `docs/etfs/context.md`, `docs/etfs/alert.md`
