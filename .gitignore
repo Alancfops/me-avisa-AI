@@ -6,6 +6,9 @@ __pycache__/
 .DS_Store
 .claude/
 .scaffold/
+# Cópias do banco (make backup): têm seus dados e as chaves criptografadas.
+/backups/
+
 # Rascunhos de prompts, locais.
 /docs/prompt
 
