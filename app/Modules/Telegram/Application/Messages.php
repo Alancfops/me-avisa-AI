@@ -292,8 +292,9 @@ final readonly class Messages
         return "{$date}/{$month}";
     }
 
+    /** HTML401 escreve o apóstrofo como &#039;: o Telegram não aceita &apos;. */
     private static function e(string $text): string
     {
-        return htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return htmlspecialchars($text, ENT_QUOTES | ENT_HTML401, 'UTF-8');
     }
 }

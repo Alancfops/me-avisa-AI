@@ -32,5 +32,6 @@ interface TelegramState
     /** Bot novo, conversa nova: apaga chat, código e último update. */
     public function saveToken(string $token): void;
 
+    /** Sem bot não há conexão: apaga o token, o chat e o código. */
     public function forgetToken(): void;
 }
