@@ -216,7 +216,17 @@ Proteções contra alerta errado:
    confirmação (ex.: `confirmado: true`). A descrição da ferramenta diz que esse
    parâmetro só pode ir depois de a pessoa dizer que sim. Sem preço atual, a trava não
    tem com o que comparar: salva normalmente e a resposta diz que não deu para conferir.
-   O limite de 30% é decisão de quem escreveu o design e pode mudar com o uso real.
+   O limite de 30% foi conferido com os dados da instalação principal em 2026-11-09
+   (fechamentos da B3 dos últimos 12 meses): os favoritos da pessoa nunca estiveram mais
+   de 5% abaixo do preço atual, e 9 em cada 10 dos 240 FIIs com histórico completo
+   tiveram o mínimo de 12 meses a até 11,4% abaixo do preço atual. Um alvo 30% abaixo
+   fica bem fora disso, e um erro de vírgula (10×) passa muito do limite. Pode mudar
+   com o uso real.
+   **Disparo imediato:** se o preço atual já atende a regra pedida (preço alvo acima do
+   preço atual, ou preço atual dentro da faixa), a ferramenta salva normalmente, mas a
+   resposta avisa: "o preço atual (R$ 8,80) já está abaixo do alvo; o aviso deve sair
+   na próxima atualização". Isso pega o caso estranho de alvo acima do preço mesmo
+   dentro dos 30%. A conta de "já atende" vem das regras do módulo de FIIs, não do MCP.
 5. **Mensagem de concluído** (pedido da pessoa): toda alteração que deu certo começa com
    uma linha clara de sucesso ("✅ Alerta salvo", "✅ KNRI11 favoritado", "✅ Carteira
    atualizada"), seguida do antes e depois. Quando não salvou (trava, erro de
@@ -267,7 +277,8 @@ A IA escreve a resposta final. O app influencia com:
 - Testes de domínio para as variações de 7 e 30 dias (pregões faltando, sem histórico,
   feriado).
 - Testes da trava: alvo e faixa dentro e fora dos 30%, com e sem `confirmado`, sem preço
-  atual; a resposta de trava não grava nada.
+  atual; a resposta de trava não grava nada. Aviso de disparo imediato quando o preço
+  atual já atende a regra.
 - Testes das alterações: antes e depois, favorito inexistente, fundo fora do catálogo,
   faixa invertida, total e variação ao mesmo tempo (recusado), variação que zera as
   cotas (sai da carteira), que deixa negativo (recusada) e positiva em fundo fora da
