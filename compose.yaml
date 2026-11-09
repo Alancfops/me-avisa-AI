@@ -28,6 +28,8 @@ x-app: &app
     - ./tests:/app/tests
     - ./composer.json:/app/composer.json
     - ./composer.lock:/app/composer.lock
+    - ./.claude-plugin:/app/.claude-plugin:ro
+    - ./plugin:/app/plugin:ro
     - ./phpunit.xml:/app/phpunit.xml
     - ./phpstan.neon:/app/phpstan.neon
     - ./pint.json:/app/pint.json

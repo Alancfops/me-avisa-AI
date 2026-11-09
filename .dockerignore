@@ -3,6 +3,8 @@
 .git
 .github
 .claude
+.claude-plugin
+plugin
 node_modules
 vendor
 docs

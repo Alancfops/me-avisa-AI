@@ -331,6 +331,72 @@ the phone, use the commands.
 
 The **Saúde** tab shows the bot's last successful send or read and its last error.
 
+## Chat with an AI (MCP)
+
+Me Avisa Aí has an MCP server: a way for any AI client running on your computer (Claude
+Desktop, Claude Code, Cursor) to read and change your favorites, alerts and portfolio.
+You chat, the AI uses the app. Examples:
+
+- "How are my FIIs today?"
+- "Which alerts came out this week?"
+- "Favorite MXRF11 and set the target to R$ 9.50."
+- "I bought 10 more shares of KNRI11."
+
+The AI informs and does not advise: an alert says a rule was met, not that the fund is
+cheap.
+
+**The app must be running.** The server runs inside the `web` container. Without
+`make start`, the AI cannot answer.
+
+### Claude Desktop
+
+1. Run `make mcp-config`. It prints a JSON snippet with this folder's path and the
+   `COMPOSE` in use (with Podman: `make mcp-config COMPOSE="podman compose"`).
+2. Paste the snippet into `claude_desktop_config.json`. If the file already has
+   `mcpServers`, add only the `me-avisa-ai` block.
+
+   | System | File |
+   |---|---|
+   | Mac | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+   | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+   | Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+3. Quit and reopen Claude Desktop.
+
+### Claude Code
+
+Set `ME_AVISA_AI_DIR` to the folder where the app is, in your shell
+(`export ME_AVISA_AI_DIR=~/me-avisa-AI`) or in Claude Code's `settings.json`:
+
+```json
+{ "env": { "ME_AVISA_AI_DIR": "/path/to/me-avisa-AI" } }
+```
+
+Then, inside Claude Code:
+
+```text
+/plugin marketplace add Alancfops/me-avisa-AI
+/plugin install me-avisa-ai@me-avisa-ai
+```
+
+### Another client
+
+Cursor uses the same JSON from `make mcp-config`, in `~/.cursor/mcp.json`. Other local
+MCP clients follow the same idea: a command that starts the server over `stdio`.
+
+### Far-price guard
+
+If the AI tries to save a target price (or the limits of a range) more than **30%** away
+from the current price, up or down, the app does not save it. It shows the requested
+value, the current price and the distance, and saves only after you confirm. This catches
+decimal-comma mistakes, such as R$ 95 instead of R$ 9.50.
+
+### Claude on the web and on the phone
+
+They do not work yet. The server only talks to programs on your computer and opens no
+port to the internet, on purpose: your data stays on your machine. Reaching the app from
+outside would need a tunnel, and the project has none.
+
 ## Starting with the computer
 
 With Docker (Linux), Docker Desktop or OrbStack, the app comes back when the computer
@@ -390,6 +456,7 @@ To stop: `make stop COMPOSE="podman compose"`.
 | `make backup` / `make restore FILE=...` | Saves a copy of the database to `backups/` or brings one back |
 | `make shell` | Opens a terminal in a tools container |
 | `make check` | Runs the backend CI checks |
+| `make mcp-config` | Prints the MCP server JSON for Claude Desktop |
 | `make backtest TICKER=KNRI11` | Counts the alerts past prices would have triggered, without saving anything; it does not say whether buying would have been profitable |
 
 ## Architecture
@@ -405,6 +472,7 @@ app/Modules/Fiis/
 └── Http/            controllers and Inertia responses
 
 app/Modules/Telegram/  bot: messages, commands and alert delivery
+app/Modules/Mcp/       MCP server: tools for favorites, alerts and portfolio
 ```
 
 Architecture tests keep these layers from mixing.
@@ -424,7 +492,7 @@ historical closing prices from
 |---|---|
 | **FIIs:** favorites, market data, rules, on-site alerts, fund page and portfolio | Done |
 | **Telegram bot:** alerts and commands | Done |
-| MCP server, to manage favorites by chatting with Claude | Next |
+| **MCP server:** query and manage favorites, alerts and portfolio by chatting with an AI (Claude Desktop, Claude Code…) | Done |
 | Stocks and ETFs | Later |
 
 ## Documentation

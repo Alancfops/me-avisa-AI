@@ -332,6 +332,72 @@ use os comandos.
 
 A aba **Saúde** mostra o último envio ou leitura com sucesso e o último erro do bot.
 
+## Conversar com uma IA (MCP)
+
+O Me Avisa Aí tem um servidor MCP: um jeito de qualquer cliente de IA que roda no seu
+computador (Claude Desktop, Claude Code, Cursor) ler e mexer nos seus favoritos,
+alertas e carteira. Você conversa, a IA usa o app. Exemplos:
+
+- "Como estão meus FIIs hoje?"
+- "Quais avisos saíram esta semana?"
+- "Favorita o MXRF11 e põe o alvo em R$ 9,50."
+- "Comprei mais 10 cotas do KNRI11."
+
+A IA informa e não recomenda: um aviso diz que uma regra foi atendida, não que o fundo
+está barato.
+
+**Precisa do app ligado.** O servidor roda dentro do contêiner `web`. Sem `make start`,
+a IA não consegue responder.
+
+### Claude Desktop
+
+1. Rode `make mcp-config`. Ele imprime um trecho JSON com o caminho desta pasta e o
+   `COMPOSE` em uso (com Podman: `make mcp-config COMPOSE="podman compose"`).
+2. Cole o trecho no `claude_desktop_config.json`. Se o arquivo já tem `mcpServers`,
+   acrescente só o bloco `me-avisa-ai`.
+
+   | Sistema | Arquivo |
+   |---|---|
+   | Mac | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+   | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+   | Linux | `~/.config/Claude/claude_desktop_config.json` |
+
+3. Feche e abra o Claude Desktop de novo.
+
+### Claude Code
+
+Defina `ME_AVISA_AI_DIR` com a pasta onde o app está, no shell
+(`export ME_AVISA_AI_DIR=~/me-avisa-AI`) ou no `settings.json` do Claude Code:
+
+```json
+{ "env": { "ME_AVISA_AI_DIR": "/caminho/para/me-avisa-AI" } }
+```
+
+Depois, dentro do Claude Code:
+
+```text
+/plugin marketplace add Alancfops/me-avisa-AI
+/plugin install me-avisa-ai@me-avisa-ai
+```
+
+### Outro cliente
+
+O Cursor usa o mesmo JSON do `make mcp-config`, em `~/.cursor/mcp.json`. Outros clientes
+MCP locais seguem a mesma ideia: um comando que abre o servidor por `stdio`.
+
+### Trava de preço distante
+
+Se a IA tentar salvar um preço alvo (ou os limites de uma faixa) a mais de **30%** do
+preço atual, para cima ou para baixo, o app não salva. Ele mostra o valor pedido, o
+preço atual e a distância, e só salva depois que você confirmar. Isso pega erro de
+vírgula, como R$ 95 no lugar de R$ 9,50.
+
+### Claude no navegador e no celular
+
+Ainda não funcionam. O servidor só fala com programas do seu computador e não abre porta
+na internet, de propósito: seus dados ficam na sua máquina. Falar com o app de fora
+exigiria um túnel, e o projeto não tem.
+
 ## Iniciar com o computador
 
 Com Docker (Linux), Docker Desktop ou OrbStack, o app volta sozinho quando o computador
@@ -391,6 +457,7 @@ Para parar: `make stop COMPOSE="podman compose"`.
 | `make backup` / `make restore FILE=...` | Salva uma cópia do banco em `backups/` ou volta para uma |
 | `make shell` | Abre um terminal em um contêiner de ferramentas |
 | `make check` | Roda as checagens de backend do CI |
+| `make mcp-config` | Imprime o JSON do servidor MCP para o Claude Desktop |
 | `make backtest TICKER=KNRI11` | Conta os avisos que teriam saído nos preços passados, sem gravar nada; não diz se a compra daria lucro |
 
 ## Arquitetura
@@ -406,6 +473,7 @@ app/Modules/Fiis/
 └── Http/            controllers e respostas do Inertia
 
 app/Modules/Telegram/  bot: mensagens, comandos e envio dos avisos
+app/Modules/Mcp/       servidor MCP: ferramentas para favoritos, alertas e carteira
 ```
 
 Testes de arquitetura garantem que essas camadas não se misturem.
@@ -425,7 +493,7 @@ fechamentos diários e históricos da
 |---|---|
 | **FIIs:** favoritos, dados de mercado, regras, avisos no site, página do fundo e carteira | Pronto |
 | **Bot do Telegram:** avisos e comandos | Pronto |
-| Servidor MCP, para gerenciar favoritos conversando com o Claude | Próximo |
+| **Servidor MCP:** consultar e gerenciar favoritos, alertas e carteira conversando com uma IA (Claude Desktop, Claude Code…) | Pronto |
 | Ações e ETFs | Depois |
 
 ## Documentação
