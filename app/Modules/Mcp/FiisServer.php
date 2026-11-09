@@ -2,8 +2,13 @@
 
 namespace App\Modules\Mcp;
 
+use App\Modules\Mcp\Tools\AddFavoriteTool;
+use App\Modules\Mcp\Tools\ChangeAlertTool;
+use App\Modules\Mcp\Tools\ChangeHoldingTool;
 use App\Modules\Mcp\Tools\ListFavoritesTool;
 use App\Modules\Mcp\Tools\RecentAlertsTool;
+use App\Modules\Mcp\Tools\RemoveFavoriteTool;
+use App\Modules\Mcp\Tools\RemoveHoldingTool;
 use App\Modules\Mcp\Tools\SearchFundsTool;
 use App\Modules\Mcp\Tools\ShowFavoriteTool;
 use App\Modules\Mcp\Tools\ShowPortfolioTool;
@@ -25,5 +30,10 @@ final class FiisServer extends Server
         RecentAlertsTool::class,
         ShowPortfolioTool::class,
         SearchFundsTool::class,
+        AddFavoriteTool::class,
+        RemoveFavoriteTool::class,
+        ChangeAlertTool::class,
+        ChangeHoldingTool::class,
+        RemoveHoldingTool::class,
     ];
 }
