@@ -51,3 +51,12 @@ arch('telegram http does not know infrastructure')
 arch('fiis does not know telegram')
     ->expect('App\Modules\Fiis')
     ->not->toUse('App\Modules\Telegram');
+
+// O servidor MCP só fala com a camada Application dos FIIs: nada de banco nem de site.
+arch('mcp does not touch storage or the site')
+    ->expect('App\Modules\Mcp')
+    ->not->toUse(['App\Modules\Fiis\Infrastructure', 'App\Modules\Fiis\Http', 'Illuminate\Database']);
+
+arch('fiis does not know mcp')
+    ->expect('App\Modules\Fiis')
+    ->not->toUse('App\Modules\Mcp');
