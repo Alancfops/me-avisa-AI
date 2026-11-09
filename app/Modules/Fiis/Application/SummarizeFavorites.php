@@ -59,7 +59,7 @@ final readonly class SummarizeFavorites
     {
         $now = $this->clock->now();
         $today = MarketTime::day($now);
-        $price = $view->quote->price ?? $view->close->close;
+        $price = $view->quote->price ?? $view->close?->close;
 
         return new FavoriteSummary(
             $view,

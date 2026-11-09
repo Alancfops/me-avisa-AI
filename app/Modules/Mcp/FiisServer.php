@@ -2,6 +2,11 @@
 
 namespace App\Modules\Mcp;
 
+use App\Modules\Mcp\Tools\ListFavoritesTool;
+use App\Modules\Mcp\Tools\RecentAlertsTool;
+use App\Modules\Mcp\Tools\SearchFundsTool;
+use App\Modules\Mcp\Tools\ShowFavoriteTool;
+use App\Modules\Mcp\Tools\ShowPortfolioTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -14,5 +19,11 @@ use Laravel\Mcp\Server\Tool;
 final class FiisServer extends Server
 {
     /** @var array<int, class-string<Tool>> */
-    protected array $tools = [];
+    protected array $tools = [
+        ListFavoritesTool::class,
+        ShowFavoriteTool::class,
+        RecentAlertsTool::class,
+        ShowPortfolioTool::class,
+        SearchFundsTool::class,
+    ];
 }
