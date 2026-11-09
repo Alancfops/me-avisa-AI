@@ -135,3 +135,31 @@ it('reports a fund that is not a favorite', function () {
     expect($change->status)->toBe(AlertChangeStatus::NotFavorite)
         ->and($world->favorites->exists('KNRI11'))->toBeFalse();
 });
+
+it('does not lock a far target that was already saved when only the sharp drop changes', function () {
+    $world = new AlertWorld('10.00');
+    $world->favorites->saveSettings('MXRF11', FavoriteSettings::target(Money::fromString('13.50'), true));
+    $change = $world->change(FavoriteSettings::target(Money::fromString('13.50'), false));
+
+    expect($change->status)->toBe(AlertChangeStatus::Saved)
+        ->and($change->exceeded)->toBe([])
+        ->and($world->favorites->settings('MXRF11')->sharpDrop)->toBeFalse();
+});
+
+it('locks again when the far target changes to another far value', function () {
+    $world = new AlertWorld('10.00');
+    $world->favorites->saveSettings('MXRF11', FavoriteSettings::target(Money::fromString('13.50'), true));
+    $change = $world->change(FavoriteSettings::target(Money::fromString('13.60'), true));
+
+    expect($change->status)->toBe(AlertChangeStatus::NeedsConfirmation)
+        ->and(array_keys($change->exceeded))->toBe(['target']);
+});
+
+it('checks the range minimum and maximum separately', function () {
+    $world = new AlertWorld('10.00');
+    $world->favorites->saveSettings('MXRF11', FavoriteSettings::range(Money::fromString('5.00'), Money::fromString('9.00'), false));
+    $change = $world->change(FavoriteSettings::range(Money::fromString('5.00'), Money::fromString('14.00'), false));
+
+    expect($change->status)->toBe(AlertChangeStatus::NeedsConfirmation)
+        ->and(array_keys($change->exceeded))->toBe(['rangeMax']);
+});
