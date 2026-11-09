@@ -419,12 +419,14 @@ dividend yield e composição da carteira do
 fechamentos diários e históricos da
 [B3 (COTAHIST)](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/cotacoes-historicas/).
 
-## Próximos módulos
+## Módulos
 
-1. **FIIs:** favoritos, dados de mercado, regras e avisos no site *(funcional, com interface mínima)*
-2. **Bot do Telegram:** avisos e comandos *(funcional)*
-3. Servidor MCP, para gerenciar favoritos conversando com o Claude
-4. Ações e ETFs
+| Módulo | Situação |
+|---|---|
+| **FIIs:** favoritos, dados de mercado, regras, avisos no site, página do fundo e carteira | Pronto |
+| **Bot do Telegram:** avisos e comandos | Pronto |
+| Servidor MCP, para gerenciar favoritos conversando com o Claude | Próximo |
+| Ações e ETFs | Depois |
 
 ## Documentação
 
