@@ -173,6 +173,20 @@ it('sets, adds and removes shares', function () {
     expect(HoldingModel::count())->toBe(0);
 });
 
+it('says nothing changed when the total equals the current shares', function () {
+    HoldingModel::create(['ticker' => 'MXRF11', 'shares' => 80]);
+    HoldingModel::query()->update(['updated_at' => '2020-01-01 00:00:00']);
+
+    FiisServer::tool(ChangeHoldingTool::class, ['codigo' => 'MXRF11', 'total' => 80])
+        ->assertOk()->assertSee('MXRF11 já tem 80 cotas. Nada foi alterado.')->assertDontSee('✅');
+    expect(HoldingModel::first()->updated_at->year)->toBe(2020);
+});
+
+it('asks for total or variation when neither comes', function () {
+    FiisServer::tool(ChangeHoldingTool::class, ['codigo' => 'MXRF11'])
+        ->assertHasErrors(['Informe o total de cotas ou quanto somar ou tirar. Nada foi alterado.']);
+});
+
 it('refuses total and variation together', function () {
     FiisServer::tool(ChangeHoldingTool::class, ['codigo' => 'MXRF11', 'total' => 10, 'variacao' => 5])
         ->assertHasErrors(['Informe o total de cotas ou quanto somar ou tirar, não os dois. Nada foi alterado.']);

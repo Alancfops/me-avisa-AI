@@ -12,6 +12,7 @@ it('speaks only json over stdio', function () {
         ]],
         ['jsonrpc' => '2.0', 'method' => 'notifications/initialized'],
         ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'],
+        ['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/call', 'params' => ['name' => 'list_favorites', 'arguments' => new stdClass]],
     ];
     $input = implode("\n", array_map('json_encode', $messages))."\n";
 
@@ -28,6 +29,11 @@ it('speaks only json over stdio', function () {
     $initialize = json_decode($lines[0], true);
     expect($initialize['id'])->toBe(1)
         ->and($initialize['result']['serverInfo']['name'])->toBe('Me Avisa Aí');
+
+    $responses = collect($lines)->map(fn (string $line): array => json_decode($line, true))->keyBy('id');
+    expect($responses[2]['result']['tools'])->toHaveCount(10)
+        ->and($responses[3]['result']['isError'] ?? false)->toBeFalse()
+        ->and($responses[3]['result']['content'])->not->toBeEmpty();
 });
 
 it('has no web transport', function () {

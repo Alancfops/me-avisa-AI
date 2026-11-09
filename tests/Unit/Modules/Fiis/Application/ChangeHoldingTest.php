@@ -75,11 +75,11 @@ it('removes the holding when the result is zero', function () {
     expect($byDelta->removed)->toBeTrue()->and($holdings->holdings)->toBe([]);
 });
 
-it('refuses total and delta together or none', function () {
+it('refuses total and delta together, and none of them', function () {
     expect(shareError(holdingsWith([]), 'MXRF11', 10, 5))
         ->toBe(['shares' => 'Informe o total de cotas ou quanto somar ou tirar, não os dois.'])
         ->and(shareError(holdingsWith([]), 'MXRF11', null, null))
-        ->toBe(['shares' => 'Informe o total de cotas ou quanto somar ou tirar, não os dois.']);
+        ->toBe(['shares' => 'Informe o total de cotas ou quanto somar ou tirar.']);
 });
 
 it('refuses a zero delta', function () {

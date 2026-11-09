@@ -15,7 +15,7 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[Name('recent_alerts')]
-#[Description('Lista os avisos mais recentes, do mais novo ao mais velho, de todos os favoritos ou de um só. Um aviso diz que uma regra foi atendida, não que o fundo está barato.')]
+#[Description('Lista os avisos mais recentes, do mais novo ao mais velho, de todos os favoritos ou de um só. Um aviso diz que uma regra foi atendida, não que vale comprar.')]
 #[IsReadOnly]
 final class RecentAlertsTool extends Tool
 {

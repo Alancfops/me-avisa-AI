@@ -28,6 +28,10 @@ final class ChangeHoldingTool extends Tool
             return Response::error($invalid->getMessage().' Nada foi alterado.');
         }
 
+        if (! $result->removed && $result->before === $result->after) {
+            return Response::text("{$result->ticker} já tem {$result->after} cotas. Nada foi alterado.");
+        }
+
         $line = match (true) {
             $result->removed => "{$result->ticker}: {$result->before} → 0 cotas, saiu da carteira.",
             $result->before === null => "{$result->ticker}: entrou com {$result->after} cotas",

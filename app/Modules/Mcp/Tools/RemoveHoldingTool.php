@@ -4,6 +4,7 @@ namespace App\Modules\Mcp\Tools;
 
 use App\Modules\Fiis\Application\HoldingRepository;
 use App\Modules\Fiis\Application\InvalidInput;
+use App\Modules\Fiis\Application\RemoveHolding;
 use App\Modules\Mcp\ToolInput;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -18,7 +19,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 #[IsDestructive]
 final class RemoveHoldingTool extends Tool
 {
-    public function handle(Request $request, HoldingRepository $holdings): Response
+    public function handle(Request $request, HoldingRepository $holdings, RemoveHolding $remove): Response
     {
         try {
             $ticker = ToolInput::ticker($request);
@@ -32,7 +33,7 @@ final class RemoveHoldingTool extends Tool
             return Response::error("{$ticker} não está na carteira. Nada foi alterado.");
         }
 
-        $holdings->remove($ticker);
+        $remove->handle($ticker);
 
         return Response::text("✅ {$ticker} saiu da carteira (tinha {$shares} cotas).");
     }

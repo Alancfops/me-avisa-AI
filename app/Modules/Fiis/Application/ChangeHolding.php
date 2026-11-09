@@ -24,6 +24,10 @@ final readonly class ChangeHolding
         $before = $this->holdings->shares($ticker);
         $after = $total ?? $this->afterDelta($ticker, $before, (int) $delta);
 
+        if ($after === $before) {
+            return new HoldingChange($ticker, $before, $after, false);
+        }
+
         if ($after === 0) {
             if ($before === null) {
                 throw $this->notInPortfolio($ticker);
@@ -41,7 +45,11 @@ final readonly class ChangeHolding
 
     private function checkArguments(?int $total, ?int $delta): void
     {
-        if (($total === null) === ($delta === null)) {
+        if ($total === null && $delta === null) {
+            throw new InvalidInput([self::SHARES => 'Informe o total de cotas ou quanto somar ou tirar.']);
+        }
+
+        if ($total !== null && $delta !== null) {
             throw new InvalidInput([self::SHARES => 'Informe o total de cotas ou quanto somar ou tirar, não os dois.']);
         }
 
