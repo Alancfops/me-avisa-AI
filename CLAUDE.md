@@ -22,7 +22,8 @@ Rode os comandos pelo `make` (`make test`, `make check`): `compose run web` migr
 ## Decisões
 
 - Projeto separado em módulos. **Módulo 1: FIIs** (favoritos, dados de mercado,
-  regras de alerta, avisos no site). Depois: Telegram, MCP, ações, ETFs.
+  regras de alerta, avisos no site). **2: Telegram.** **3: MCP** (só stdio; web e
+  celular exigem túnel e OAuth, etapa futura). Depois: ações, ETFs.
 - Laravel + React (Inertia) + Tailwind v4 + shadcn/ui, Postgres. Monólito modular com
   Clean Architecture pragmática em `app/Modules/`.
 - Só web, em localhost. Sem login, sem túnel e sem app nativo: uma pessoa por instalação.
