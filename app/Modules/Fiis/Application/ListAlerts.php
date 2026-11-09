@@ -9,8 +9,8 @@ final readonly class ListAlerts
     public function __construct(private AlertRepository $alerts) {}
 
     /** @return list<Alert> */
-    public function handle(): array
+    public function handle(?string $ticker = null, int $limit = self::SHOWN): array
     {
-        return $this->alerts->latest(self::SHOWN);
+        return $this->alerts->latest($limit, $ticker);
     }
 }
