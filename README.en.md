@@ -418,12 +418,14 @@ yield and portfolio composition from the
 historical closing prices from
 [B3 (COTAHIST)](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/historico/mercado-a-vista/cotacoes-historicas/).
 
-## Upcoming modules
+## Modules
 
-1. **FIIs:** favorites, market data, rules and on-site alerts *(working, with a minimal interface)*
-2. **Telegram bot:** alerts and commands *(working)*
-3. MCP server, to manage favorites by chatting with Claude
-4. Stocks and ETFs
+| Module | Status |
+|---|---|
+| **FIIs:** favorites, market data, rules, on-site alerts, fund page and portfolio | Done |
+| **Telegram bot:** alerts and commands | Done |
+| MCP server, to manage favorites by chatting with Claude | Next |
+| Stocks and ETFs | Later |
 
 ## Documentation
 
