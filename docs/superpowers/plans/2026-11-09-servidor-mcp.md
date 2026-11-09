@@ -253,7 +253,7 @@ Textos (`{T}` = código, `{x}` = `Format::*`; linhas separadas por `\n`):
 | favoritou | `✅ {T} favoritado.` / `Alerta: automático + queda forte (o padrão; dá para trocar).` / `Cada favorito gasta cerca de 350 requisições da brapi por mês (o plano grátis tem 15 mil).` |
 | já era favorito | `{T} já era favorito. Nada foi alterado.` |
 | removeu favorito | `✅ {T} removido dos favoritos.` / `O alerta era: {settings}.` / `Os avisos antigos continuam na aba Avisos.` |
-| alerta `Saved` | `✅ Alerta salvo para {T}.` / `Antes: {settings antes}` / `Agora: {settings depois}` (+ `O preço atual ({money}, {priceSource}) já atende esse alerta; o aviso deve sair na próxima atualização.` se `triggersNow`; + `Sem preço atual para conferir a distância do alvo.` se `priceUnchecked`) |
+| alerta `Saved` | `✅ Alerta salvo para {T}.` / `Antes: {settings antes}` / `Agora: {settings depois}` (+ `O preço atual ({money}, {priceSource}) já atende esse alerta; o aviso deve sair agora ou na próxima atualização.` se `triggersNow`; + `Sem preço atual para conferir a distância do alvo.` se `priceUnchecked`) |
 | alerta `Unchanged` | `O alerta de {T} já era esse: {settings}. Nada foi alterado.` |
 | alerta `NeedsConfirmation` (não é erro) | `⚠️ Nada foi alterado.` / uma linha por valor: `{campo} {money} está {percent sem sinal} {acima/abaixo} do preço atual de {T} ({money}, {priceSource}).` / `Confirme com a pessoa. Se ela disser que sim, chame de novo com confirmado: true.` (campo: `O alvo`, `O mínimo da faixa`, `O máximo da faixa`) |
 | cotas | `✅ Carteira atualizada.` / `{T}: {antes} → {depois} cotas` ou `{T}: entrou com {depois} cotas` ou `{T}: {antes} → 0 cotas, saiu da carteira.` |
