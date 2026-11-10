@@ -458,6 +458,42 @@ Other requests that work:
 > `make start`, the AI can't answer. And, like the rest of the app, the AI informs and
 > doesn't advise.
 
+### How it works
+
+```mermaid
+flowchart LR
+    client["💬 AI client<br/>Claude Desktop, Cursor..."] -- "runs a command and<br/>talks over stdio" --> server["🧩 mcp:start fiis<br/>in the web container"]
+    server --> db[("🗄️ Postgres<br/>your data")]
+```
+
+The AI client doesn't reach the app through an address or a port. It **runs a command** on
+your computer:
+
+```bash
+docker compose --project-directory /path/to/the/app exec -T web php artisan mcp:start fiis
+```
+
+and talks to that command through the terminal's input and output (`stdio`). The client
+starts the command when it opens and stops it when you quit. That command is what
+`make connect` writes into the client's config.
+
+That's why MCP works **only on the computer where the app is installed**:
+
+| | Client |
+|---|---|
+| ✅ Works | Claude Desktop, Claude Code, Cursor or Antigravity installed on **this** machine |
+| ❌ Doesn't work | claude.ai in the browser, the Claude phone app, a client on another computer (even on the same Wi-Fi) |
+
+The ones that don't work have no way to run a command on your computer. Reaching the app
+from outside would mean opening a port, with a tunnel and a login, and the project doesn't
+do that on purpose.
+
+> [!NOTE]
+> "Only on this machine" is about the link to the app, not the conversation. The AI model
+> runs on the client provider's servers (Anthropic, Cursor, Google). What the tools return,
+> like favorites, prices and portfolio, goes there as part of the conversation, like any
+> message you type. The app itself opens no port and receives nothing from outside.
+
 ### Tools
 
 | To read | To change |
@@ -496,6 +532,47 @@ To skip the question: `make connect CLIENT=cursor` (the names are `claude-deskto
 `claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). With
 Podman: `make connect COMPOSE="podman compose"`. For Claude Code, the command writes
 nothing: it shows what to run. It works on Linux and Mac; on Windows, set it up by hand.
+
+#### Examples
+
+From the menu, connecting Claude Desktop (the app's messages are in Portuguese):
+
+```text
+$ make connect
+Qual IA você quer ligar ao app?
+  1) Claude Desktop
+  2) Claude Code
+  3) Cursor
+  4) Antigravity
+  5) Só mostrar o JSON
+Número: 1
+
+A IA vai usar a instalação em /home/you/me-avisa-AI.
+
+✅ Gravado em /home/you/.config/Claude/claude_desktop_config.json.
+Backup do arquivo anterior: /home/you/.config/Claude/claude_desktop_config.json.bak-2026-11-10-153318
+Para voltar a ele: cp '/home/you/.config/Claude/claude_desktop_config.json.bak-2026-11-10-153318' '/home/you/.config/Claude/claude_desktop_config.json'
+
+Testando a conexão...
+✅ Conexão testada: a IA enxerga as ferramentas do app.
+
+Próximo passo: feche e abra o Claude Desktop para ele carregar o app.
+```
+
+It says which installation the AI will use, where it wrote (and the backup), that the
+connection test passed, and to quit and reopen the client.
+
+Other cases:
+
+| Command or situation | What happens |
+|---|---|
+| `make connect CLIENT=cursor` | Writes `~/.cursor/mcp.json` without asking which AI. |
+| `make connect CLIENT=json` | Only prints the JSON, to paste by hand. Writes nothing. |
+| `make connect COMPOSE="podman compose"` | Same, using Podman. |
+| Running it again | `✅ Já estava configurado ...` (already configured): nothing changes. |
+| The client already points to another folder (another install) | Shows the current and the new one and asks `Trocar pelo novo?` (replace?). If you say no, nothing changes. |
+| App stopped | Writes anyway and warns: `Configurado, mas o app está parado: rode make start.` (run `make start`). |
+| Client file with broken JSON | Leaves the file alone and says what to fix. |
 
 ### Manual setup
 
@@ -549,12 +626,6 @@ Other local MCP clients follow the same idea: a command that opens the server ov
 > Run `make connect` or `make mcp-config` in the folder of the installation the AI should
 > use: the path that goes to the client is that folder's. `make mcp-config` only prints the
 > JSON and writes nothing.
-
-### Claude on the web and on the phone
-
-They don't work yet. The server talks only to programs on your computer and opens no port
-to the internet, on purpose: your data stays on your machine. Reaching the app from outside
-would need a tunnel and a login, and the project has neither.
 
 ## 🔌 Start with the computer
 
