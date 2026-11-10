@@ -37,6 +37,12 @@ final class ConnectCommand extends Command
 
         $exists = is_file($file);
 
+        if ($exists && ! is_readable($file)) {
+            $this->error("Não dá para ler {$shownAs}: confira as permissões do arquivo. Nada foi alterado.");
+
+            return self::FAILURE;
+        }
+
         try {
             $config = ClientConfig::fromJson($exists ? (string) file_get_contents($file) : '');
             $new = ClientConfig::serverFrom((string) $this->option('block'));
@@ -72,12 +78,14 @@ final class ConnectCommand extends Command
             }
         }
 
-        $backup = null;
+        // Backup, arquivo temporário e troca acontecem na pasta do arquivo.
+        if (! is_writable(dirname($file))) {
+            $this->error('Não dá para gravar na pasta de '.$shownAs.': confira as permissões. Nada foi alterado.');
 
-        if ($exists) {
-            $backup = '.bak-'.now()->format('Y-m-d-His');
-            copy($file, $file.$backup);
+            return self::FAILURE;
         }
+
+        $backup = $exists ? $this->backup($file) : null;
 
         // Grava ao lado e troca de uma vez: o arquivo nunca fica pela metade.
         file_put_contents($file.'.tmp', $config->withServer($new)->toJson());
@@ -92,10 +100,25 @@ final class ConnectCommand extends Command
 
         if ($backup !== null) {
             $this->line("Backup do arquivo anterior: {$shownAs}{$backup}");
-            $this->line("Para voltar a ele: cp \"{$shownAs}{$backup}\" \"{$shownAs}\"");
+            $this->line('Para voltar a ele: cp '.escapeshellarg($shownAs.$backup).' '.escapeshellarg($shownAs));
         }
 
         return self::SUCCESS;
+    }
+
+    /** Copia o arquivo para um .bak-<data> novo, sem cobrir outro feito no mesmo segundo. */
+    private function backup(string $file): string
+    {
+        $base = '.bak-'.now()->format('Y-m-d-His');
+        $backup = $base;
+
+        for ($n = 2; file_exists($file.$backup); $n++) {
+            $backup = "{$base}-{$n}";
+        }
+
+        copy($file, $file.$backup);
+
+        return $backup;
     }
 
     private function describe(stdClass $server): string

@@ -8,8 +8,9 @@ set -u
 # conexão rodar exatamente o comando gravado mesmo quando a pasta é aberta por um link.
 cd -P "$(dirname "$0")/.." || exit 1
 
-COMPOSE="${COMPOSE:-docker compose}"
-CLIENT="${CLIENT:-}"
+# Vêm do make connect, pelo ambiente.
+COMPOSE="${CONNECT_COMPOSE:-docker compose}"
+CLIENT="${CONNECT_CLIENT:-}"
 CLIENTS="claude-desktop claude-code cursor antigravity json"
 
 # Rótulo de cada cliente. Um cliente novo é uma linha aqui e uma em client_file.
@@ -94,7 +95,8 @@ fi
 # O comando que a IA vai rodar: o mesmo que o make mcp-config grava.
 read -r -a parts <<< "$COMPOSE"
 bin="$(command -v "${parts[0]}" || echo "${parts[0]}")"
-server=("$bin" "${parts[@]:1}" --project-directory "$PWD" exec -T web php artisan mcp:start fiis)
+compose=("$bin" "${parts[@]:1}" --project-directory "$PWD")
+server=("${compose[@]}" exec -T web php artisan mcp:start fiis)
 
 echo
 echo "A IA vai usar a instalação em $PWD."
@@ -141,8 +143,9 @@ else
 fi
 
 # COMPOSE fica sem aspas de propósito: pode ter duas palavras ("podman compose").
+# --no-deps: gravar o arquivo não usa o banco, então não sobe o Postgres com o app parado.
 # shellcheck disable=SC2086
-$COMPOSE run --rm ${interactive[@]+"${interactive[@]}"} -v "$(dirname "$file"):/connect" tools \
+$COMPOSE run --rm --no-deps ${interactive[@]+"${interactive[@]}"} -v "$(dirname "$file"):/connect" tools \
     php artisan mcp:connect "/connect/$(basename "$file")" \
     --block="$(mcp_config)" --shown-as="$file" ${no_interaction:-}
 status=$?
@@ -157,23 +160,26 @@ fi
 echo
 echo "Testando a conexão..."
 
-# Guarda as duas saídas: quando o PHP quebra antes do servidor abrir, o erro vem pela padrão.
-output="$(mktemp)"
-handshake='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"make-connect","version":"1"}}}
+# exec funciona igual no docker compose, no podman compose e no podman-compose; o ps -q não.
+if ! "${compose[@]}" exec -T web true > /dev/null 2>&1; then
+    echo "Configurado, mas o app está parado: rode make start."
+else
+    # Guarda as duas saídas: quando o PHP quebra antes do servidor abrir, o erro vem pela padrão.
+    output="$(mktemp)"
+    handshake='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"make-connect","version":"1"}}}
 {"jsonrpc":"2.0","method":"notifications/initialized"}
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}'
 
-printf '%s\n' "$handshake" | "${server[@]}" > "$output" 2>&1
+    printf '%s\n' "$handshake" | "${server[@]}" > "$output" 2>&1
 
-if grep -q list_favorites "$output"; then
-    echo "✅ Conexão testada: a IA enxerga as ferramentas do app."
-elif [ -z "$($COMPOSE ps -q web 2> /dev/null)" ]; then
-    echo "Configurado, mas o app está parado: rode make start."
-else
-    echo "⚠️ Configurado, mas o teste falhou. Final da resposta do app:"
-    grep -v '^[[:space:]]*$' "$output" | tail -n 8
+    if grep -q list_favorites "$output"; then
+        echo "✅ Conexão testada: a IA enxerga as ferramentas do app."
+    else
+        echo "⚠️ Configurado, mas o teste falhou. Final da resposta do app:"
+        grep -v '^[[:space:]]*$' "$output" | tail -n 8
+    fi
+    rm -f "$output"
 fi
-rm -f "$output"
 
 echo
 echo "Próximo passo: feche e abra o $(label "$CLIENT") para ele carregar o app."

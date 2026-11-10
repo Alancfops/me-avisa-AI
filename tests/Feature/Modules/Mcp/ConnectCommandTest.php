@@ -43,7 +43,7 @@ it('keeps what the file already had and makes a backup', function () {
     file_put_contents($this->file, $original);
 
     ($this->connect)()
-        ->expectsOutputToContain('cp "/home/a/My Files/mcp.json.bak-2026-11-10-102030" "/home/a/My Files/mcp.json"')
+        ->expectsOutputToContain("cp '/home/a/My Files/mcp.json.bak-2026-11-10-102030' '/home/a/My Files/mcp.json'")
         ->assertExitCode(0);
 
     $written = json_decode((string) file_get_contents($this->file), true);
@@ -148,3 +148,53 @@ it('refuses a symlinked file and changes nothing', function (bool $reachable) {
         expect(file_get_contents($target))->toBe('{"mcpServers":{"other":{"command":"o","args":[]}}}');
     }
 })->with(['reachable' => true, 'dangling' => false]);
+
+it('quotes the restore command for any path', function () {
+    file_put_contents($this->file, '{}');
+
+    $this->artisan('mcp:connect', [
+        'file' => $this->file,
+        '--block' => $this->block,
+        '--shown-as' => '/home/a/it\'s $HOME/mcp.json',
+    ])
+        ->expectsOutputToContain("cp '/home/a/it'\\''s \$HOME/mcp.json.bak-2026-11-10-102030' '/home/a/it'\\''s \$HOME/mcp.json'")
+        ->assertExitCode(0);
+});
+
+it('keeps an earlier backup made in the same second', function () {
+    file_put_contents($this->file, '{"v":1}');
+    file_put_contents($this->file.'.bak-2026-11-10-102030', 'earlier');
+
+    ($this->connect)()
+        ->expectsOutputToContain('mcp.json.bak-2026-11-10-102030-2')
+        ->assertExitCode(0);
+
+    expect(file_get_contents($this->file.'.bak-2026-11-10-102030'))->toBe('earlier')
+        ->and(file_get_contents($this->file.'.bak-2026-11-10-102030-2'))->toBe('{"v":1}');
+});
+
+it('explains an unreadable file and changes nothing', function () {
+    file_put_contents($this->file, '{}');
+    chmod($this->file, 0200);
+
+    ($this->connect)()
+        ->expectsOutputToContain('Não dá para ler')
+        ->assertExitCode(1);
+
+    chmod($this->file, 0600);
+    expect(file_get_contents($this->file))->toBe('{}')
+        ->and(backups($this->dir))->toBeEmpty();
+});
+
+it('explains a folder it cannot write and changes nothing', function () {
+    file_put_contents($this->file, '{}');
+    chmod($this->dir, 0500);
+
+    ($this->connect)()
+        ->expectsOutputToContain('Não dá para gravar')
+        ->assertExitCode(1);
+
+    chmod($this->dir, 0700);
+    expect(file_get_contents($this->file))->toBe('{}')
+        ->and(glob($this->dir.'/*'))->toHaveCount(1);
+});
