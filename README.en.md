@@ -568,7 +568,7 @@ To stop: `make stop COMPOSE="podman compose"`.
 
 ## ⌨️ Commands
 
-Run `make` alone to see the list.
+To see the full list, run `make` with nothing after it.
 
 **Day to day**
 

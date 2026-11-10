@@ -526,7 +526,7 @@ tenha parado com `make stop`. No Podman é diferente (veja abaixo).
 Com o app parado, os avisos não saem nem no site nem no Telegram. Ao religar, ele recupera
 os fechamentos e os informes que perdeu.
 
-### Desligar e religar só o app
+### Parar e ligar apenas o app
 
 | Quero | Comando |
 |---|---|
@@ -561,7 +561,7 @@ Para parar: `make stop COMPOSE="podman compose"`.
 
 ## ⌨️ Comandos
 
-Rode `make` sozinho para ver a lista.
+Para ver a lista completa, rode `make` sem nenhuma palavra depois.
 
 **Dia a dia**
 
