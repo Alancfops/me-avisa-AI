@@ -506,10 +506,21 @@ Depois, dentro do Claude Code:
 /plugin install me-avisa-ai@me-avisa-ai
 ```
 
-### Outro cliente
+### Outros clientes
 
-O Cursor usa o mesmo JSON do `make mcp-config`, em `~/.cursor/mcp.json`. Outros clientes
-MCP locais seguem a mesma ideia: um comando que abre o servidor por `stdio`.
+O Cursor e o Antigravity usam o mesmo JSON do `make mcp-config`. Cole o JSON no arquivo do
+cliente e salve:
+
+| Cliente | Arquivo |
+|---|---|
+| Cursor | `~/.cursor/mcp.json` |
+| Antigravity | `~/.gemini/config/mcp_config.json` |
+
+Outros clientes MCP locais seguem a mesma ideia: um comando que abre o servidor por `stdio`.
+
+> [!TIP]
+> O `make mcp-config` só mostra o JSON e não grava nada. Rode o comando na pasta da
+> instalação que a IA deve usar: o caminho que vai no JSON é o dessa pasta.
 
 ### Claude no navegador e no celular
 
