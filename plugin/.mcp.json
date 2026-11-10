@@ -4,8 +4,8 @@
             "command": "docker",
             "args": [
                 "compose",
-                "-f",
-                "${ME_AVISA_AI_DIR}/compose.yaml",
+                "--project-directory",
+                "${ME_AVISA_AI_DIR}",
                 "exec",
                 "-T",
                 "web",

@@ -81,8 +81,10 @@ restore: ## Volta o banco para um backup, depois de salvar o atual: make restore
 	@echo "Banco restaurado de $(FILE)."
 
 # $(COMPOSE) pode ter mais de uma palavra ("podman compose"): a primeira é o command e o resto abre o args.
+# --project-directory (e não -f) faz o Compose ler também o compose.override.yaml.
 mcp-config: ## Imprime o trecho do claude_desktop_config.json para o servidor MCP
-	@echo '$(COMPOSE)' | awk '{ \
-		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": \"%s\",\n      \"args\": [", $$1; \
-		for (i = 2; i <= NF; i++) printf "\"%s\", ", $$i; \
-		printf "\"-f\", \"$(CURDIR)/compose.yaml\", \"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n" }'
+	@DIR='$(CURDIR)' CMD='$(COMPOSE)' awk 'function q(v) { gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); return "\"" v "\"" } \
+	BEGIN { n = split(ENVIRON["CMD"], c, " "); args = ""; \
+		for (i = 2; i <= n; i++) args = args q(c[i]) ", "; \
+		args = args q("--project-directory") ", " q(ENVIRON["DIR"]); \
+		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": %s,\n      \"args\": [%s, \"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n", q(c[1]), args }'

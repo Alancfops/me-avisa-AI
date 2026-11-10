@@ -29,7 +29,7 @@ it('starts the fiis server that routes/ai.php registers', function () {
     $server = manifest('plugin/.mcp.json')['mcpServers']['me-avisa-ai'];
 
     expect($server['command'])->toBe('docker')
-        ->and($server['args'])->toContain('${ME_AVISA_AI_DIR}/compose.yaml')
+        ->and(array_slice($server['args'], 0, 3))->toBe(['compose', '--project-directory', '${ME_AVISA_AI_DIR}'])
         ->and(array_slice($server['args'], -2))->toBe(['mcp:start', 'fiis'])
         ->and(app(Registrar::class)->getLocalServer('fiis'))->not->toBeNull();
 });
