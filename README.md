@@ -472,7 +472,27 @@ preço atual, para cima ou para baixo, o app não salva. Ele mostra o valor pedi
 atual e a distância, e só salva depois que você confirmar. Isso pega erro de vírgula, como
 R$ 95 no lugar de R$ 9,50.
 
-### Ligar no Claude Desktop
+### Ligar com `make connect`
+
+```bash
+make connect
+```
+
+Ele pergunta qual IA você usa (Claude Desktop, Claude Code, Cursor ou Antigravity) e:
+
+- grava o servidor no arquivo de configuração dela, sem apagar o que já existe e com um
+  backup antes (a mensagem mostra o comando para voltar a ele);
+- mostra qual instalação (pasta) a IA vai usar;
+- testa a conexão e diz o próximo passo, como fechar e abrir o cliente.
+
+Para pular a pergunta: `make connect CLIENT=cursor` (os nomes são `claude-desktop`,
+`claude-code`, `cursor`, `antigravity` e `json`, que só mostra o JSON). Com Podman:
+`make connect COMPOSE="podman compose"`. No Claude Code, o comando não grava nada: mostra
+o que rodar. Funciona no Linux e no Mac; no Windows, ligue à mão.
+
+### Ligar à mão
+
+#### Claude Desktop
 
 1. Rode `make mcp-config`. Ele imprime um trecho JSON com o caminho desta pasta e o
    `COMPOSE` em uso (com Podman: `make mcp-config COMPOSE="podman compose"`).
@@ -490,7 +510,7 @@ R$ 95 no lugar de R$ 9,50.
 Se o servidor não aparecer, o erro fica no log do Claude Desktop
 (`mcp-server-me-avisa-ai.log`, na pasta `logs/` ao lado do arquivo de configuração).
 
-### Ligar no Claude Code
+#### Claude Code
 
 Defina `ME_AVISA_AI_DIR` com a pasta onde o app está, no shell
 (`export ME_AVISA_AI_DIR=~/me-avisa-AI`) ou no `settings.json` do Claude Code:
@@ -506,7 +526,7 @@ Depois, dentro do Claude Code:
 /plugin install me-avisa-ai@me-avisa-ai
 ```
 
-### Outros clientes
+#### Outros clientes
 
 O Cursor e o Antigravity usam o mesmo JSON do `make mcp-config`. Cole o JSON no arquivo do
 cliente e salve:
@@ -519,8 +539,9 @@ cliente e salve:
 Outros clientes MCP locais seguem a mesma ideia: um comando que abre o servidor por `stdio`.
 
 > [!TIP]
-> O `make mcp-config` só mostra o JSON e não grava nada. Rode o comando na pasta da
-> instalação que a IA deve usar: o caminho que vai no JSON é o dessa pasta.
+> Rode o `make connect` ou o `make mcp-config` na pasta da instalação que a IA deve usar:
+> o caminho que vai para o cliente é o dessa pasta. O `make mcp-config` só mostra o JSON e
+> não grava nada.
 
 ### Claude no navegador e no celular
 
@@ -589,7 +610,8 @@ Para ver a lista completa, rode `make` sem nenhuma palavra depois.
 | `make install` | Cria o `.env` sem sobrescrever um existente, constrói as imagens e prepara o banco |
 | `make load` | Primeira carga: fundos, informes da CVM e fechamentos da B3 |
 | `make migrate` | Atualiza o banco |
-| `make mcp-config` | Imprime o JSON do servidor MCP para o Claude Desktop |
+| `make connect` | Liga uma IA (Claude, Cursor, Antigravity) ao app |
+| `make mcp-config` | Imprime o JSON do servidor MCP para colar à mão |
 
 **Desenvolvimento**
 

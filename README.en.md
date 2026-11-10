@@ -479,7 +479,27 @@ current price, up or down, the app doesn't save it. It shows the requested value
 current price and the distance, and saves only after you confirm. This catches decimal
 mistakes, like R$ 95 instead of R$ 9.50.
 
-### Set up Claude Desktop
+### Connect with `make connect`
+
+```bash
+make connect
+```
+
+It asks which AI you use (Claude Desktop, Claude Code, Cursor or Antigravity) and:
+
+- writes the server into that client's config file, keeping what is already there and
+  making a backup first (the message shows the command to go back to it);
+- shows which installation (folder) the AI will use;
+- tests the connection and tells you the next step, like quitting and reopening the client.
+
+To skip the question: `make connect CLIENT=cursor` (the names are `claude-desktop`,
+`claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). With
+Podman: `make connect COMPOSE="podman compose"`. For Claude Code, the command writes
+nothing: it shows what to run. It works on Linux and Mac; on Windows, set it up by hand.
+
+### Manual setup
+
+#### Claude Desktop
 
 1. Run `make mcp-config`. It prints a JSON snippet with this folder's path and the
    `COMPOSE` in use (with Podman: `make mcp-config COMPOSE="podman compose"`).
@@ -497,7 +517,7 @@ mistakes, like R$ 95 instead of R$ 9.50.
 If the server doesn't show up, the error is in Claude Desktop's log
 (`mcp-server-me-avisa-ai.log`, in the `logs/` folder next to the config file).
 
-### Set up Claude Code
+#### Claude Code
 
 Set `ME_AVISA_AI_DIR` to the folder where the app lives, in your shell
 (`export ME_AVISA_AI_DIR=~/me-avisa-AI`) or in Claude Code's `settings.json`:
@@ -513,7 +533,7 @@ Then, inside Claude Code:
 /plugin install me-avisa-ai@me-avisa-ai
 ```
 
-### Other clients
+#### Other clients
 
 Cursor and Antigravity use the same JSON from `make mcp-config`. Paste the JSON into the
 client's file and save:
@@ -526,8 +546,9 @@ client's file and save:
 Other local MCP clients follow the same idea: a command that opens the server over `stdio`.
 
 > [!TIP]
-> `make mcp-config` only prints the JSON and writes nothing. Run it in the folder of the
-> installation the AI should use: the path in the JSON is that folder's.
+> Run `make connect` or `make mcp-config` in the folder of the installation the AI should
+> use: the path that goes to the client is that folder's. `make mcp-config` only prints the
+> JSON and writes nothing.
 
 ### Claude on the web and on the phone
 
@@ -596,7 +617,8 @@ To see the full list, run `make` with nothing after it.
 | `make install` | Creates `.env` without overwriting an existing one, builds the images and prepares the database |
 | `make load` | First load: funds, CVM reports and B3 closing prices |
 | `make migrate` | Updates the database |
-| `make mcp-config` | Prints the MCP server JSON for Claude Desktop |
+| `make connect` | Connects an AI (Claude, Cursor, Antigravity) to the app |
+| `make mcp-config` | Prints the MCP server JSON to paste by hand |
 
 **Development**
 
