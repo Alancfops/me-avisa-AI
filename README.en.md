@@ -515,8 +515,19 @@ Then, inside Claude Code:
 
 ### Other clients
 
-Cursor uses the same JSON from `make mcp-config`, in `~/.cursor/mcp.json`. Other local MCP
-clients follow the same idea: a command that opens the server over `stdio`.
+Cursor and Antigravity use the same JSON from `make mcp-config`. Paste the JSON into the
+client's file and save:
+
+| Client | File |
+|---|---|
+| Cursor | `~/.cursor/mcp.json` |
+| Antigravity | `~/.gemini/config/mcp_config.json` |
+
+Other local MCP clients follow the same idea: a command that opens the server over `stdio`.
+
+> [!TIP]
+> `make mcp-config` only prints the JSON and writes nothing. Run it in the folder of the
+> installation the AI should use: the path in the JSON is that folder's.
 
 ### Claude on the web and on the phone
 
