@@ -17,6 +17,6 @@ interface AlertRepository
 
     public function resetAllStates(string $ticker): void;
 
-    /** @return list<Alert> do mais novo ao mais velho */
-    public function latest(int $limit): array;
+    /** @return list<Alert> do mais novo ao mais velho; com `$ticker`, só os desse fundo */
+    public function latest(int $limit, ?string $ticker = null): array;
 }

@@ -39,3 +39,16 @@ it('keeps the instants of an alert and of the rule state', function () use ($ins
         ->and($alerts->latest(1)[0]->occurredAt->getTimestamp())->toBe($moment->getTimestamp())
         ->and($alerts->latest(1)[0]->quotedAt->getTimestamp())->toBe($moment->getTimestamp());
 });
+
+it('filters latest alerts by ticker', function () {
+    $moment = new DateTimeImmutable('2026-10-30T15:00:00-03:00');
+    $alerts = app(AlertRepository::class);
+
+    foreach (['MXRF11', 'KNRI11'] as $ticker) {
+        $alerts->apply($ticker, RuleKind::PriceTarget, RuleState::fresh(), new Alert($ticker, RuleKind::PriceTarget, Money::fromString('9'), 'alvo', 'motivo', $moment, $moment));
+    }
+
+    expect($alerts->latest(10, 'MXRF11'))->toHaveCount(1)
+        ->and($alerts->latest(10, 'MXRF11')[0]->ticker)->toBe('MXRF11')
+        ->and($alerts->latest(10))->toHaveCount(2);
+});

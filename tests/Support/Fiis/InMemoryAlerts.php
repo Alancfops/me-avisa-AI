@@ -45,8 +45,10 @@ final class InMemoryAlerts implements AlertRepository
         }
     }
 
-    public function latest(int $limit): array
+    public function latest(int $limit, ?string $ticker = null): array
     {
-        return array_slice(array_reverse($this->alerts), 0, $limit);
+        $alerts = array_filter($this->alerts, fn (Alert $alert): bool => $ticker === null || $alert->ticker === $ticker);
+
+        return array_slice(array_reverse(array_values($alerts)), 0, $limit);
     }
 }

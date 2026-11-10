@@ -67,9 +67,10 @@ final class EloquentAlertRepository implements AlertRepository
         RuleStateModel::query()->where('ticker', $ticker)->delete();
     }
 
-    public function latest(int $limit): array
+    public function latest(int $limit, ?string $ticker = null): array
     {
         return array_values(AlertModel::query()
+            ->when($ticker !== null, fn ($query) => $query->where('ticker', $ticker))
             ->orderByDesc('occurred_at')
             ->orderByDesc('id')
             ->limit($limit)

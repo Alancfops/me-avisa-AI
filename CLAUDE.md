@@ -12,6 +12,8 @@ brapi, CVM, fechamentos da B3 (COTAHIST), avisos no site, Saúde, página do fun
 "Todos os FIIs" com tipo e preço teto, carteira. Módulo 2, bot do Telegram
 (`app/Modules/Telegram/`): avisos, comandos, aba com QR code. As chaves (brapi e token do bot)
 podem ser coladas pelo site, criptografadas no banco; o `.env` tem prioridade.
+Módulo 3, servidor MCP (`app/Modules/Mcp/`, `routes/ai.php`): 10 ferramentas por stdio
+(`mcp:start fiis`), plugin do Claude Code em `plugin/` e `make mcp-config` para o Desktop.
 Specs e planos em `docs/superpowers/` (design do módulo:
 `docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`).
 **Só comece a implementar quando o usuário disser "pode começar".**
@@ -20,7 +22,8 @@ Rode os comandos pelo `make` (`make test`, `make check`): `compose run web` migr
 ## Decisões
 
 - Projeto separado em módulos. **Módulo 1: FIIs** (favoritos, dados de mercado,
-  regras de alerta, avisos no site). Depois: Telegram, MCP, ações, ETFs.
+  regras de alerta, avisos no site). **2: Telegram.** **3: MCP** (só stdio; web e
+  celular exigem túnel e OAuth, etapa futura). Depois: ações, ETFs.
 - Laravel + React (Inertia) + Tailwind v4 + shadcn/ui, Postgres. Monólito modular com
   Clean Architecture pragmática em `app/Modules/`.
 - Só web, em localhost. Sem login, sem túnel e sem app nativo: uma pessoa por instalação.
