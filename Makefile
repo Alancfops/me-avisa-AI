@@ -2,7 +2,7 @@ COMPOSE ?= docker compose
 export APP_UID := $(shell id -u)
 
 .DEFAULT_GOAL := help
-.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config
+.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config connect
 
 help: ## Lista os comandos
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -82,9 +82,20 @@ restore: ## Volta o banco para um backup, depois de salvar o atual: make restore
 
 # $(COMPOSE) pode ter mais de uma palavra ("podman compose"): a primeira é o command e o resto abre o args.
 # --project-directory (e não -f) faz o Compose ler também o compose.override.yaml.
-mcp-config: ## Imprime o trecho do claude_desktop_config.json para o servidor MCP
-	@DIR='$(CURDIR)' CMD='$(COMPOSE)' awk 'function q(v) { gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); return "\"" v "\"" } \
-	BEGIN { n = split(ENVIRON["CMD"], c, " "); args = ""; \
+# O command leva o caminho completo: no Mac, apps abertos pelo Dock não herdam o PATH do terminal.
+mcp-config: export MCP_DIR := $(CURDIR)
+mcp-config: export MCP_CMD := $(COMPOSE)
+mcp-config: ## Imprime o JSON do servidor MCP para colar à mão
+	@# Caminho e comando chegam pelo ambiente, e não entre aspas: a pasta pode ter ' no nome.
+	@BIN="$$(command -v "$${MCP_CMD%% *}" || echo "$${MCP_CMD%% *}")" \
+	awk 'function q(v) { gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); return "\"" v "\"" } \
+	BEGIN { n = split(ENVIRON["MCP_CMD"], c, " "); c[1] = ENVIRON["BIN"]; args = ""; \
 		for (i = 2; i <= n; i++) args = args q(c[i]) ", "; \
-		args = args q("--project-directory") ", " q(ENVIRON["DIR"]); \
+		args = args q("--project-directory") ", " q(ENVIRON["MCP_DIR"]); \
 		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": %s,\n      \"args\": [%s, \"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n", q(c[1]), args }'
+
+# CLIENT só vale na linha de comando: um CLIENT exportado no shell não pula o menu.
+connect: export CONNECT_COMPOSE := $(COMPOSE)
+connect: export CONNECT_CLIENT := $(if $(filter command line,$(origin CLIENT)),$(CLIENT))
+connect: ## Liga uma IA (Claude, Cursor, Antigravity) ao app: make connect [CLIENT=cursor]
+	@bin/connect

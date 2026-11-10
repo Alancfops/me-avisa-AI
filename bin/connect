@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# make connect: liga uma IA ao app. Pergunta o cliente, grava o servidor MCP no arquivo
+# dele (pelo comando mcp:connect, no contêiner tools), testa a conexão e diz o próximo passo.
+# Roda no bash 3.2 do Mac: sem arrays associativos e sem `timeout`.
+set -u
+
+# -P: o caminho real, o mesmo $(CURDIR) que o make mcp-config grava, para o teste de
+# conexão rodar exatamente o comando gravado mesmo quando a pasta é aberta por um link.
+cd -P "$(dirname "$0")/.." || exit 1
+
+# Vêm do make connect, pelo ambiente.
+COMPOSE="${CONNECT_COMPOSE:-docker compose}"
+CLIENT="${CONNECT_CLIENT:-}"
+CLIENTS="claude-desktop claude-code cursor antigravity json"
+
+# Rótulo de cada cliente. Um cliente novo é uma linha aqui e uma em client_file.
+label() {
+    case "$1" in
+        claude-desktop) echo "Claude Desktop" ;;
+        claude-code) echo "Claude Code" ;;
+        cursor) echo "Cursor" ;;
+        antigravity) echo "Antigravity" ;;
+        json) echo "Só mostrar o JSON" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Arquivo de configuração do cliente, no Mac ou no Linux.
+client_file() {
+    case "$1" in
+        claude-desktop)
+            if [ "$(uname)" = Darwin ]; then
+                echo "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+            else
+                echo "$HOME/.config/Claude/claude_desktop_config.json"
+            fi
+            ;;
+        cursor) echo "$HOME/.cursor/mcp.json" ;;
+        antigravity) echo "$HOME/.gemini/config/mcp_config.json" ;;
+    esac
+}
+
+usage() {
+    echo "Escolha o cliente com CLIENT=, por exemplo: make connect CLIENT=cursor"
+    echo "Clientes: $CLIENTS"
+}
+
+mcp_config() {
+    make --no-print-directory mcp-config COMPOSE="$COMPOSE"
+}
+
+# Entre aspas simples, para colar no terminal.
+quote() {
+    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
+}
+
+if [ ! -f .env ]; then
+    echo "O app ainda não foi instalado. Rode make install antes."
+    exit 1
+fi
+
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    echo "No Windows, a configuração é manual: cole o JSON abaixo no arquivo do cliente (veja o README)."
+    echo
+    mcp_config
+    exit 0
+fi
+
+if [ -z "$CLIENT" ]; then
+    if [ ! -t 0 ]; then
+        usage
+        exit 1
+    fi
+
+    echo "Qual IA você quer ligar ao app?"
+    i=1
+    for client in $CLIENTS; do
+        echo "  $i) $(label "$client")"
+        i=$((i + 1))
+    done
+    read -r -p "Número: " choice
+    i=1
+    for client in $CLIENTS; do
+        [ "$choice" = "$i" ] && CLIENT="$client"
+        i=$((i + 1))
+    done
+fi
+
+if ! label "$CLIENT" > /dev/null; then
+    echo "Cliente desconhecido: ${CLIENT:-(nenhum)}."
+    usage
+    exit 1
+fi
+
+# O comando que a IA vai rodar: o mesmo que o make mcp-config grava.
+read -r -a parts <<< "$COMPOSE"
+bin="$(command -v "${parts[0]}" || echo "${parts[0]}")"
+compose=("$bin" "${parts[@]:1}" --project-directory "$PWD")
+server=("${compose[@]}" exec -T web php artisan mcp:start fiis)
+
+echo
+echo "A IA vai usar a instalação em $PWD."
+echo
+
+if [ "$CLIENT" = json ]; then
+    mcp_config
+    exit 0
+fi
+
+if [ "$CLIENT" = claude-code ]; then
+    if [ "$(basename "${parts[0]}")" = docker ]; then
+        echo "1. Defina a pasta do app no seu shell (ou em \"env\" no settings.json do Claude Code):"
+        echo
+        echo "   export ME_AVISA_AI_DIR=$(quote "$PWD")"
+        echo
+        echo "2. Dentro do Claude Code:"
+        echo
+        echo "   /plugin marketplace add Alancfops/me-avisa-AI"
+        echo "   /plugin install me-avisa-ai@me-avisa-ai"
+    else
+        # O plugin traz docker fixo; com outro programa, o servidor é registrado direto.
+        command_line="claude mcp add --scope user me-avisa-ai --"
+        for part in "${server[@]}"; do
+            command_line="$command_line $(quote "$part")"
+        done
+        echo "Rode no terminal:"
+        echo
+        echo "   $command_line"
+    fi
+    echo
+    echo "Depois, feche e abra o Claude Code para ele carregar o app."
+    exit 0
+fi
+
+file="$(client_file "$CLIENT")"
+mkdir -p "$(dirname "$file")" || exit 1
+
+if [ -t 0 ]; then
+    interactive=()
+else
+    interactive=(-T)
+    no_interaction=--no-interaction
+fi
+
+# COMPOSE fica sem aspas de propósito: pode ter duas palavras ("podman compose").
+# --no-deps: gravar o arquivo não usa o banco, então não sobe o Postgres com o app parado.
+# shellcheck disable=SC2086
+$COMPOSE run --rm --no-deps ${interactive[@]+"${interactive[@]}"} -v "$(dirname "$file"):/connect" tools \
+    php artisan mcp:connect "/connect/$(basename "$file")" \
+    --block="$(mcp_config)" --shown-as="$file" ${no_interaction:-}
+status=$?
+
+# 2 é "nada mudou por escolha". No terminal foi a pessoa que disse não, e isso não é erro.
+if [ "$status" -eq 2 ] && [ -t 0 ]; then
+    exit 0
+elif [ "$status" -ne 0 ]; then
+    exit "$status"
+fi
+
+echo
+echo "Testando a conexão..."
+
+# exec funciona igual no docker compose, no podman compose e no podman-compose; o ps -q não.
+if ! "${compose[@]}" exec -T web true > /dev/null 2>&1; then
+    echo "Configurado, mas o app está parado: rode make start."
+else
+    # Guarda as duas saídas: quando o PHP quebra antes do servidor abrir, o erro vem pela padrão.
+    output="$(mktemp)"
+    handshake='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"make-connect","version":"1"}}}
+{"jsonrpc":"2.0","method":"notifications/initialized"}
+{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
+
+    printf '%s\n' "$handshake" | "${server[@]}" > "$output" 2>&1
+
+    if grep -q list_favorites "$output"; then
+        echo "✅ Conexão testada: a IA enxerga as ferramentas do app."
+    else
+        echo "⚠️ Configurado, mas o teste falhou. Final da resposta do app:"
+        grep -v '^[[:space:]]*$' "$output" | tail -n 8
+    fi
+    rm -f "$output"
+fi
+
+echo
+echo "Próximo passo: feche e abra o $(label "$CLIENT") para ele carregar o app."
