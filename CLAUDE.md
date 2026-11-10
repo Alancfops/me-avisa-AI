@@ -13,7 +13,7 @@ brapi, CVM, fechamentos da B3 (COTAHIST), avisos no site, Saúde, página do fun
 (`app/Modules/Telegram/`): avisos, comandos, aba com QR code. As chaves (brapi e token do bot)
 podem ser coladas pelo site, criptografadas no banco; o `.env` tem prioridade.
 Módulo 3, servidor MCP (`app/Modules/Mcp/`, `routes/ai.php`): 10 ferramentas por stdio
-(`mcp:start fiis`), plugin do Claude Code em `plugin/` e `make mcp-config` para o Desktop.
+(`mcp:start fiis`), plugin do Claude Code em `plugin/`; `make connect` liga os clientes (`make mcp-config` é o manual).
 Specs e planos em `docs/superpowers/` (design do módulo:
 `docs/superpowers/specs/2026-10-29-modulo-fiis-design.md`).
 **Só comece a implementar quando o usuário disser "pode começar".**
