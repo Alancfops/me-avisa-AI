@@ -26,6 +26,15 @@ final class ConnectCommand extends Command
     {
         $file = (string) $this->argument('file');
         $shownAs = (string) ($this->option('shown-as') ?: $file);
+        // Gravar trocaria o link por um arquivo comum; e, no contêiner, o destino do link
+        // costuma estar fora da pasta montada, então o conteúdo atual nem seria lido.
+        if (is_link($file)) {
+            $this->error("{$shownAs} é um link para outro arquivo. Nada foi alterado.");
+            $this->line('Cole o bloco do make mcp-config no arquivo de destino (make connect CLIENT=json mostra o JSON).');
+
+            return self::FAILURE;
+        }
+
         $exists = is_file($file);
 
         try {

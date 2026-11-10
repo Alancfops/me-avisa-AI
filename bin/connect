@@ -4,7 +4,9 @@
 # Roda no bash 3.2 do Mac: sem arrays associativos e sem `timeout`.
 set -u
 
-cd "$(dirname "$0")/.." || exit 1
+# -P: o caminho real, o mesmo $(CURDIR) que o make mcp-config grava, para o teste de
+# conexão rodar exatamente o comando gravado mesmo quando a pasta é aberta por um link.
+cd -P "$(dirname "$0")/.." || exit 1
 
 COMPOSE="${COMPOSE:-docker compose}"
 CLIENT="${CLIENT:-}"

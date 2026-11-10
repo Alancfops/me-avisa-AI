@@ -128,3 +128,23 @@ it('keeps the permissions of the file it replaces', function () {
     clearstatcache();
     expect(fileperms($this->file) & 0777)->toBe(0600);
 });
+
+it('refuses a symlinked file and changes nothing', function (bool $reachable) {
+    $target = $reachable ? $this->dir.'/real.json' : '/nowhere/real.json';
+    if ($reachable) {
+        file_put_contents($target, '{"mcpServers":{"other":{"command":"o","args":[]}}}');
+    }
+    symlink($target, $this->file);
+
+    ($this->connect)()
+        ->expectsOutputToContain('é um link')
+        ->assertExitCode(1);
+
+    expect(is_link($this->file))->toBeTrue()
+        ->and(readlink($this->file))->toBe($target)
+        ->and(backups($this->dir))->toBeEmpty();
+
+    if ($reachable) {
+        expect(file_get_contents($target))->toBe('{"mcpServers":{"other":{"command":"o","args":[]}}}');
+    }
+})->with(['reachable' => true, 'dangling' => false]);
