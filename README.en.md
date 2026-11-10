@@ -21,7 +21,7 @@ message, and see whether there's anything to analyze today.
 
 > [!NOTE]
 > The name is Brazilian Portuguese for roughly "give me a heads-up". The "Aí" is not "AI",
-> even though you can talk to it through one ([MCP](#-talk-to-an-ai-mcp)).
+> but you can talk to it through one ([see MCP](#-talk-to-an-ai-mcp)).
 
 > [!IMPORTANT]
 > **This app provides information, not investment advice.** An alert means a rule was
@@ -34,7 +34,7 @@ message, and see whether there's anything to analyze today.
 - [🚀 Installation](#-installation)
 - [📲 Telegram bot](#-telegram-bot)
 - [🤖 Talk to an AI (MCP)](#-talk-to-an-ai-mcp)
-- [⏻ Start with the computer](#-start-with-the-computer)
+- [🔌 Start with the computer](#-start-with-the-computer)
 - [⌨️ Commands](#️-commands)
 - [🏗️ Architecture](#️-architecture)
 - [🧩 Modules](#-modules)
@@ -44,7 +44,7 @@ message, and see whether there's anything to analyze today.
 
 ### 🔔 Alerts
 
-Each favorite has one main alert, plus the sharp drop alert.
+Each favorite has one main alert, besides the sharp drop alert.
 
 | Alert | Fires when |
 |---|---|
@@ -203,7 +203,7 @@ the token from the dashboard. The free plan gives 15,000 requests a month, and e
 favorite uses about 350.
 
 In the app, open **Configurações** (Settings), paste the token into **Chave da brapi**
-and tap **Salvar chave**. The app checks the key with brapi and stores it encrypted; you
+and click **Salvar chave**. The app checks the key with brapi and stores it encrypted; you
 don't need to open any file. While the key is missing, a notice at the top of the site
 leads to that field.
 
@@ -361,17 +361,17 @@ token is already on the computer, ready to paste into the app.
 
 | Step | You do | @BotFather answers |
 |---|---|---|
-| 1 | Open [@BotFather](https://t.me/BotFather) (the official one, with the blue check), tap **Start** and send `/newbot` | *Alright, a new bot. How are we going to call it?* |
+| 1 | Open [@BotFather](https://t.me/BotFather) (the official one, with the blue check), click **Start** and send `/newbot` | *Alright, a new bot. How are we going to call it?* |
 | 2 | Send the name: `Me Avisa Aí` | *Now let's choose a username for your bot. It must end in `bot`.* |
 | 3 | Send a username ending in `bot`, with something of yours in the middle, such as `meavisaai_maria_bot` | If taken: *Sorry, this username is already taken.* Try another |
 | 4 | — | *Done! Congratulations on your new bot.* and, below *Use this token to access the HTTP API:*, the **token**, a line like `123456789:AAH...` |
 
-Tap the token to copy it.
+Click the token to copy it.
 
 ### 2. Put the token in the app
 
 Open the app's **Telegram** tab (<http://127.0.0.1:8000/telegram>), paste the token and
-tap **Salvar token**. No file or terminal needed: the app checks the token with Telegram
+click **Salvar token**. No file or terminal needed: the app checks the token with Telegram
 and stores it encrypted in the database. Within seconds the bot starts working, without
 restarting anything.
 
@@ -387,7 +387,7 @@ when you type `/` in the chat).
 The same tab shows a **QR code** and an **Abrir no Telegram** (Open in Telegram) button:
 
 - 📱 **on your phone:** point the camera at the QR code and tap **Start** in Telegram;
-- 💻 **on your computer:** tap **Abrir no Telegram** and then **Start**.
+- 💻 **on your computer:** click **Abrir no Telegram** and then **Start**.
 
 The bot replies "✅ Conectado" and the tab switches to **Conectado** (Connected) on its
 own. Use **Enviar mensagem de teste** (Send test message) to check.
@@ -524,7 +524,7 @@ They don't work yet. The server talks only to programs on your computer and open
 to the internet, on purpose: your data stays on your machine. Reaching the app from outside
 would need a tunnel and a login, and the project has neither.
 
-## ⏻ Start with the computer
+## 🔌 Start with the computer
 
 With Docker (Linux), Docker Desktop or OrbStack, the app comes back on its own when the
 computer boots: Docker starts with the system and brings the app's services back, unless
