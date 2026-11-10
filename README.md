@@ -20,8 +20,8 @@ mensagem, e sabe se tem algo para analisar hoje.
 </div>
 
 > [!NOTE]
-> O "Aí" vem de "me avisa aí". Não é IA, embora dê para conversar com ele por uma
-> ([MCP](#-conversar-com-uma-ia-mcp)).
+> O "Aí" vem de "me avisa aí". Não é IA, mas dá para conversar com ele usando uma
+> ([veja o MCP](#-conversar-com-uma-ia-mcp)).
 
 > [!IMPORTANT]
 > **Este app informa e não recomenda investimentos.** Um aviso diz que uma regra foi
@@ -34,7 +34,7 @@ mensagem, e sabe se tem algo para analisar hoje.
 - [🚀 Instalação](#-instalação)
 - [📲 Bot do Telegram](#-bot-do-telegram)
 - [🤖 Conversar com uma IA (MCP)](#-conversar-com-uma-ia-mcp)
-- [⏻ Iniciar com o computador](#-iniciar-com-o-computador)
+- [🔌 Iniciar com o computador](#-iniciar-com-o-computador)
 - [⌨️ Comandos](#️-comandos)
 - [🏗️ Arquitetura](#️-arquitetura)
 - [🧩 Módulos](#-módulos)
@@ -44,7 +44,7 @@ mensagem, e sabe se tem algo para analisar hoje.
 
 ### 🔔 Alertas
 
-Cada favorito tem um alerta principal, mais o aviso de queda forte.
+Cada favorito tem um alerta principal, além do aviso de queda forte.
 
 | Alerta | Avisa quando |
 |---|---|
@@ -202,7 +202,7 @@ A brapi fornece as cotações. Crie uma conta gratuita em <https://brapi.dev/das
 copie o token do painel. O plano gratuito dá 15 mil requisições por mês, e cada favorito
 consome cerca de 350.
 
-No app, abra **Configurações**, cole o token em **Chave da brapi** e toque em **Salvar
+No app, abra **Configurações**, cole o token em **Chave da brapi** e clique em **Salvar
 chave**. O app confere a chave com a brapi e guarda criptografada; não precisa abrir
 nenhum arquivo. Enquanto faltar a chave, um aviso no topo do site leva até esse campo.
 
@@ -360,16 +360,16 @@ inglês.
 
 | Passo | Você faz | O @BotFather responde |
 |---|---|---|
-| 1 | Abre o [@BotFather](https://t.me/BotFather) (o oficial, com selo azul), toca em **Start** e manda `/newbot` | *Alright, a new bot. How are we going to call it?* |
+| 1 | Abre o [@BotFather](https://t.me/BotFather) (o oficial, com selo azul), clica em **Start** e manda `/newbot` | *Alright, a new bot. How are we going to call it?* |
 | 2 | Manda o nome: `Me Avisa Aí` | *Now let's choose a username for your bot. It must end in `bot`.* |
 | 3 | Manda um nome de usuário que termine em `bot`, com algo seu no meio, como `meavisaai_maria_bot` | Se já existir: *Sorry, this username is already taken.* Tente outro |
 | 4 | — | *Done! Congratulations on your new bot.* e, abaixo de *Use this token to access the HTTP API:*, o **token**, uma linha como `123456789:AAH...` |
 
-Toque no token para copiar.
+Clique no token para copiar.
 
 ### 2. Colocar o token no app
 
-Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>), cole o token e toque em
+Abra a aba **Telegram** do app (<http://127.0.0.1:8000/telegram>), cole o token e clique em
 **Salvar token**. Não precisa abrir nenhum arquivo nem usar o terminal: o app confere o
 token com o Telegram e guarda criptografado no banco. Em alguns segundos o bot começa a
 funcionar, sem reiniciar nada.
@@ -386,7 +386,7 @@ aparece ao digitar `/` na conversa).
 Na mesma aba aparecem um **QR code** e o botão **Abrir no Telegram**:
 
 - 📱 **no celular:** aponte a câmera para o QR code e toque em **Começar** no Telegram;
-- 💻 **no computador:** toque em **Abrir no Telegram** e depois em **Começar**.
+- 💻 **no computador:** clique em **Abrir no Telegram** e depois em **Começar**.
 
 O bot responde "✅ Conectado" e a aba muda sozinha para **Conectado**. Use **Enviar
 mensagem de teste** para conferir.
@@ -517,7 +517,7 @@ Ainda não funcionam. O servidor só fala com programas do seu computador e não
 na internet, de propósito: seus dados ficam na sua máquina. Falar com o app de fora
 exigiria um túnel e login, e o projeto não tem.
 
-## ⏻ Iniciar com o computador
+## 🔌 Iniciar com o computador
 
 Com Docker (Linux), Docker Desktop ou OrbStack, o app volta sozinho quando o computador
 liga: o Docker inicia junto com o sistema e religa os serviços do app, a menos que você os
