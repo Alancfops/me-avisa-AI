@@ -1,0 +1,11 @@
+{
+    "name": "me-avisa-ai",
+    "owner": { "name": "Alancfops" },
+    "plugins": [
+        {
+            "name": "me-avisa-ai",
+            "source": "./plugin",
+            "description": "Consulte e gerencie favoritos, alertas e carteira de FIIs do Me Avisa Aí conversando com o Claude Code."
+        }
+    ]
+}

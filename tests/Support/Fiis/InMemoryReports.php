@@ -6,11 +6,15 @@ use App\Modules\Fiis\Application\FundProfile;
 use App\Modules\Fiis\Application\ReportRepository;
 use App\Modules\Fiis\Domain\BookValueReport;
 use App\Modules\Fiis\Domain\FundKind;
+use App\Modules\Fiis\Domain\MonthlyYield;
 
 final class InMemoryReports implements ReportRepository
 {
-    /** @param array<string, list<BookValueReport>> $reports */
-    public function __construct(public array $reports = []) {}
+    /**
+     * @param  array<string, list<BookValueReport>>  $reports
+     * @param  array<string, list<MonthlyYield>>  $yields
+     */
+    public function __construct(public array $reports = [], public array $yields = []) {}
 
     public function bookValues(string $ticker): array
     {
@@ -19,7 +23,7 @@ final class InMemoryReports implements ReportRepository
 
     public function monthlyYields(string $ticker): array
     {
-        return [];
+        return $this->yields[$ticker] ?? [];
     }
 
     public function profile(string $ticker): ?FundProfile

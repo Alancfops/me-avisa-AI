@@ -3,6 +3,7 @@
 namespace App\Modules\Fiis\Http\Requests;
 
 use App\Modules\Fiis\Application\CatalogRepository;
+use App\Modules\Fiis\Application\InvalidInput;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -20,7 +21,7 @@ final class AddFavoriteRequest extends FormRequest
             'stay' => ['sometimes', 'boolean'],
             'ticker' => ['required', 'string', function (string $attribute, mixed $value, Closure $fail): void {
                 if (! is_string($value) || ! app(CatalogRepository::class)->exists($value)) {
-                    $fail('Esse fundo não está no catálogo. Confira o código na B3.');
+                    $fail(InvalidInput::NOT_IN_CATALOG);
                 }
             }],
         ];

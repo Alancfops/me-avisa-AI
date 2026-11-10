@@ -2,7 +2,7 @@ COMPOSE ?= docker compose
 export APP_UID := $(shell id -u)
 
 .DEFAULT_GOAL := help
-.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore
+.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config
 
 help: ## Lista os comandos
 	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -79,3 +79,12 @@ restore: ## Volta o banco para um backup, depois de salvar o atual: make restore
 	gunzip -c "$(FILE)" | $(COMPOSE) exec -T postgres sh -c 'psql -q -v ON_ERROR_STOP=1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 	$(COMPOSE) up -d
 	@echo "Banco restaurado de $(FILE)."
+
+# $(COMPOSE) pode ter mais de uma palavra ("podman compose"): a primeira é o command e o resto abre o args.
+# --project-directory (e não -f) faz o Compose ler também o compose.override.yaml.
+mcp-config: ## Imprime o trecho do claude_desktop_config.json para o servidor MCP
+	@DIR='$(CURDIR)' CMD='$(COMPOSE)' awk 'function q(v) { gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); return "\"" v "\"" } \
+	BEGIN { n = split(ENVIRON["CMD"], c, " "); args = ""; \
+		for (i = 2; i <= n; i++) args = args q(c[i]) ", "; \
+		args = args q("--project-directory") ", " q(ENVIRON["DIR"]); \
+		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": %s,\n      \"args\": [%s, \"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n", q(c[1]), args }'

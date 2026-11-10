@@ -1,0 +1,19 @@
+{
+    "mcpServers": {
+        "me-avisa-ai": {
+            "command": "docker",
+            "args": [
+                "compose",
+                "--project-directory",
+                "${ME_AVISA_AI_DIR}",
+                "exec",
+                "-T",
+                "web",
+                "php",
+                "artisan",
+                "mcp:start",
+                "fiis"
+            ]
+        }
+    }
+}
