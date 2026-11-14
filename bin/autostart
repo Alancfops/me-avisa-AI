@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# make autostart / make autostart-off: liga (ou não) o app com o computador no Podman.
+# O Docker já faz isso com o restart: unless-stopped; o Podman não tem um serviço que
+# religue os contêineres. Aqui, um serviço do systemd do usuário roda o up -d no boot.
+set -eu
+
+cd -P "$(dirname "$0")/.."
+
+UNIT=me-avisa-ai.service
+# Mais de uma instalação no mesmo computador: o nome leva o do projeto no Compose.
+project="$(sed -n 's/^name: *//p' compose.override.yaml 2>/dev/null | head -n 1)"
+[ -n "$project" ] && UNIT="$project.service"
+UNIT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+
+if [ "$(uname)" != Linux ] || ! command -v systemctl > /dev/null; then
+    echo "Só funciona no Linux com systemd. No Mac, depois de ligar: podman machine start e make start podman."
+    exit 1
+fi
+
+if [ "${1:-}" = off ]; then
+    systemctl --user disable "$UNIT" 2> /dev/null || true
+    rm -f "$UNIT_DIR/$UNIT"
+    systemctl --user daemon-reload
+    echo "O app não liga mais com o computador. Ele continua no ar até você rodar make stop podman."
+    exit 0
+fi
+
+COMPOSE="${AUTOSTART_COMPOSE:-}"
+case "$COMPOSE" in
+    *podman*) ;;
+    *)
+        echo "Com o Docker, o app já liga com o computador. Para o Podman: make autostart podman"
+        exit 1
+        ;;
+esac
+
+# O systemd não lê o PATH do terminal: o comando vai com o caminho completo, e o PATH junto,
+# porque o podman compose procura o podman-compose (ou o docker-compose) por ele.
+read -r -a parts <<< "$COMPOSE"
+bin="$(command -v "${parts[0]}")" || { echo "Não achei ${parts[0]}."; exit 1; }
+parts[0]="$bin"
+
+# % é especial no systemd; espaços e aspas vão entre aspas.
+escape() {
+    local v="${1//%/%%}"
+    v="${v//\\/\\\\}"
+    v="${v//\"/\\\"}"
+    printf '"%s"' "$v"
+}
+command_line=""
+for part in "${parts[@]}"; do
+    command_line="$command_line $(escape "$part")"
+done
+
+mkdir -p "$UNIT_DIR"
+cat > "$UNIT_DIR/$UNIT" <<UNIT
+# Criado pelo make autostart podman, em $(date +%Y-%m-%d). Para remover: make autostart-off.
+[Unit]
+Description=Me Avisa Aí ($PWD)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=${PWD//%/%%}
+Environment=$(escape "PATH=$PATH") $(escape "APP_UID=${APP_UID:-}") $(escape "APP_USER=${APP_USER:-}")
+ExecStart=$command_line up -d
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target
+UNIT
+
+systemctl --user daemon-reload
+systemctl --user enable "$UNIT"
+
+# Sem o linger, o serviço do usuário só roda depois do login.
+if [ "$(loginctl show-user "$USER" -p Linger --value 2> /dev/null)" != yes ]; then
+    if ! loginctl enable-linger "$USER" 2> /dev/null; then
+        echo "O app vai ligar quando você entrar na sua conta. Para ligar antes do login, rode:"
+        echo "   sudo loginctl enable-linger $USER"
+    fi
+fi
+
+echo "Pronto: o app liga junto com o computador (serviço $UNIT)."
+echo "Para desfazer: make autostart-off"

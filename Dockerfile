@@ -1,5 +1,6 @@
 # Bases oficiais multi-arquitetura: a mesma receita serve amd64 e arm64.
-FROM node:22 AS assets
+# Nomes completos (docker.io/...): o Podman pode não saber de qual registro baixar um nome curto.
+FROM docker.io/library/node:22 AS assets
 WORKDIR /app
 COPY package.json package-lock.json .npmrc vite.config.ts tsconfig.json ./
 RUN npm ci --no-audit --no-fund
@@ -7,12 +8,12 @@ COPY resources ./resources
 COPY public ./public
 RUN VITE_APP_NAME="meavisaAi" npm run build
 
-FROM php:8.4-cli
+FROM docker.io/library/php:8.4-cli
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip libpq-dev libzip-dev \
     && docker-php-ext-install pdo_pgsql bcmath pcntl zip \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+COPY --from=docker.io/library/composer:2 /usr/bin/composer /usr/local/bin/composer
 
 # Mesmo UID do dono do projeto, para gravar nos arquivos montados pelo Compose.
 ARG APP_UID=1000

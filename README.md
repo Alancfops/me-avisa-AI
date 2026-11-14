@@ -236,7 +236,7 @@ uma vez por dia.
 | ⏹️ Parar o app | `make stop` |
 | 📜 Ver o que está acontecendo | `make logs` (saia com Ctrl+C) |
 | 💾 Guardar uma cópia dos dados | `make backup` (veja [Backup](#backup)) |
-| 🗑️ Desinstalar e **apagar todos os dados** | Faça um `make backup` e guarde a pasta `backups/` e o arquivo `.env` em outro lugar. Depois, `docker compose down -v` (no Podman, `podman compose down -v`) e apague a pasta `me-avisa-AI` |
+| 🗑️ Desinstalar e **apagar todos os dados** | Faça um `make backup` e guarde a pasta `backups/` e o arquivo `.env` em outro lugar. Depois, `docker compose down -v` (no Podman, `podman compose down -v`; se usou o `make autostart podman`, rode antes `make autostart-off`) e apague a pasta `me-avisa-AI` |
 
 ### Backup
 
@@ -298,15 +298,16 @@ No Linux (Ubuntu ou Debian), além de `git` e `make`:
 sudo apt install podman podman-compose
 ```
 
-Siga os passos 2 a 6 acima, acrescentando `COMPOSE="podman compose"` em todo `make`:
+Siga os passos 2 a 6 acima, acrescentando a palavra `podman` no fim de todo `make`. Sem
+ela, o `make` usa o Docker:
 
 ```bash
-make install COMPOSE="podman compose"
-make start COMPOSE="podman compose"
-make load COMPOSE="podman compose"
+make install podman
+make start podman
+make load podman
 ```
 
-No Podman, o app não volta sozinho quando o computador liga (veja
+No Podman, o app só liga com o computador depois de um `make autostart podman` (veja
 [Iniciar com o computador](#-iniciar-com-o-computador)).
 
 </details>
@@ -523,8 +524,7 @@ Ele pergunta qual IA você usa (Claude Desktop, Claude Code, Cursor ou Antigravi
 
 Para pular a pergunta: `make connect CLIENT=cursor` (os nomes são `claude-desktop`,
 `claude-code`, `cursor`, `antigravity` e `json`, que só mostra o JSON). Com Podman:
-`make connect COMPOSE="podman compose"`. No Claude Code, o comando não grava nada: mostra
-o que rodar. Funciona no Linux e no Mac; no Windows, ligue à mão.
+`make connect podman`. No Claude Code, o comando não grava nada: mostra o que rodar. Funciona no Linux e no Mac; no Windows, ligue à mão.
 
 #### Exemplos
 
@@ -561,7 +561,7 @@ Outros casos:
 |---|---|
 | `make connect CLIENT=cursor` | Grava no `~/.cursor/mcp.json` sem perguntar qual IA. |
 | `make connect CLIENT=json` | Só mostra o JSON, para colar à mão. Não grava nada. |
-| `make connect COMPOSE="podman compose"` | Faz o mesmo usando o Podman. |
+| `make connect podman` | Faz o mesmo usando o Podman. |
 | Rodar de novo | `✅ Já estava configurado em ... Nada foi alterado.` |
 | O cliente já aponta para outra pasta (outra instalação) | Mostra o atual e o novo e pergunta `Trocar pelo novo?`. Se você disser não, nada muda. |
 | App parado | Grava mesmo assim e avisa: `Configurado, mas o app está parado: rode make start.` |
@@ -572,7 +572,7 @@ Outros casos:
 #### Claude Desktop
 
 1. Rode `make mcp-config`. Ele imprime um trecho JSON com o caminho desta pasta e o
-   `COMPOSE` em uso (com Podman: `make mcp-config COMPOSE="podman compose"`).
+   `COMPOSE` em uso (com Podman: `make mcp-config podman`).
 2. Cole o trecho no `claude_desktop_config.json`. Se o arquivo já tem `mcpServers`,
    acrescente só o bloco `me-avisa-ai`.
 
@@ -622,9 +622,16 @@ Outros clientes MCP locais seguem a mesma ideia: um comando que abre o servidor 
 
 ## 🔌 Iniciar com o computador
 
-Com Docker (Linux), Docker Desktop ou OrbStack, o app volta sozinho quando o computador
-liga: o Docker inicia junto com o sistema e religa os serviços do app, a menos que você os
-tenha parado com `make stop`. No Podman é diferente (veja abaixo).
+Com Docker, o app volta sozinho: o Docker religa os serviços do app quando inicia, a menos
+que você os tenha parado com `make stop`. Quando o Docker inicia depende de onde ele roda:
+
+| Onde | Quando o app volta |
+|---|---|
+| 🐧 Linux (Docker Engine) | Quando o computador liga, mesmo sem entrar na conta. No Ubuntu e no Debian o Docker já vem ligado no boot; no Fedora e no Arch, ligue uma vez com `sudo systemctl enable --now docker` |
+| Docker Desktop (Windows, Mac, Linux) | Quando você entra na sua conta, se **Start Docker Desktop when you sign in** estiver marcado em **Settings → General** |
+| 🍎 OrbStack (Mac) | Quando você entra na sua conta, se **Start at login** estiver marcado em **Settings → General** |
+
+No Podman é diferente (veja [Com Podman](#com-podman)).
 
 Com o app parado, os avisos não saem nem no site nem no Telegram. Ao religar, ele recupera
 os fechamentos e os informes que perdeu.
@@ -652,15 +659,27 @@ depois `make start` quando quiser usar o app.
 
 ### Com Podman
 
-O Podman não tem um serviço que religue os contêineres sozinho, então o app **não** inicia
-com o computador. Depois de ligar a máquina:
+O Podman não tem um serviço que religue os contêineres sozinho. No Linux, rode uma vez:
 
 ```bash
-podman machine start              # só no Mac
-make start COMPOSE="podman compose"
+make autostart podman
 ```
 
-Para parar: `make stop COMPOSE="podman compose"`.
+Ele cria um serviço do systemd do seu usuário (`~/.config/systemd/user/me-avisa-ai.service`)
+que sobe o app quando o computador liga, mesmo antes de você entrar na conta. Se ele pedir,
+rode `sudo loginctl enable-linger $USER` para valer antes do login.
+
+| Quero | Comando |
+|---|---|
+| Parar o app agora | `make stop podman` (ele volta no próximo boot) |
+| Não ligar mais com o computador | `make autostart-off` |
+
+No Mac, o app não liga sozinho. Depois de ligar a máquina:
+
+```bash
+podman machine start
+make start podman
+```
 
 ## ⌨️ Comandos
 
@@ -683,6 +702,7 @@ Para ver a lista completa, rode `make` sem nenhuma palavra depois.
 | `make migrate` | Atualiza o banco |
 | `make connect` | Liga uma IA (Claude, Cursor, Antigravity) ao app |
 | `make mcp-config` | Imprime o JSON do servidor MCP para colar à mão |
+| `make autostart podman` / `make autostart-off` | Podman no Linux: liga ou não o app com o computador |
 
 **Desenvolvimento**
 
