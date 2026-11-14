@@ -46,6 +46,14 @@ for target in install migrate; do
 done
 echo "ok: só o web migra, e só make install e make migrate o usam para isso"
 
+# Docker por padrão; a palavra podman troca o programa em todos os comandos.
+make -n install | grep -q '^docker compose build' || fail "make install deve usar o Docker"
+make -n install podman | grep -q '^podman[ -]compose build' || fail "make install podman deve usar o Podman"
+make -n start podman | grep -q '^podman[ -]compose up' || fail "make start podman deve usar o Podman"
+[ "$(make -n start COMPOSE=outro podman | head -n 1)" = "outro up -d --build" ] \
+    || fail "COMPOSE= na linha de comando vale mais que a palavra podman"
+echo "ok: make usa o Docker, e o Podman com a palavra podman"
+
 [ "$(services_matching 'restart: unless-stopped')" = "bot postgres scheduler web worker" ] \
     || fail "os cinco serviços precisam de restart: unless-stopped"
 echo "ok: cinco serviços com restart: unless-stopped"
