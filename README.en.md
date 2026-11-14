@@ -237,7 +237,7 @@ rest once a day.
 | ⏹️ Stop the app | `make stop` |
 | 📜 See what's going on | `make logs` (exit with Ctrl+C) |
 | 💾 Keep a copy of the data | `make backup` (see [Backup](#backup)) |
-| 🗑️ Uninstall and **delete all data** | Run `make backup` and keep the `backups/` folder and the `.env` file somewhere else. Then `docker compose down -v` (on Podman, `podman compose down -v`) and delete the `me-avisa-AI` folder |
+| 🗑️ Uninstall and **delete all data** | Run `make backup` and keep the `backups/` folder and the `.env` file somewhere else. Then `docker compose down -v` (on Podman, `podman compose down -v`; if you used `make autostart podman`, run `make autostart-off` first) and delete the `me-avisa-AI` folder |
 
 ### Backup
 
@@ -300,15 +300,16 @@ On Linux (Ubuntu or Debian), besides `git` and `make`:
 sudo apt install podman podman-compose
 ```
 
-Follow steps 2 to 6 above, adding `COMPOSE="podman compose"` to every `make`:
+Follow steps 2 to 6 above, adding the word `podman` at the end of every `make`. Without it,
+`make` uses Docker:
 
 ```bash
-make install COMPOSE="podman compose"
-make start COMPOSE="podman compose"
-make load COMPOSE="podman compose"
+make install podman
+make start podman
+make load podman
 ```
 
-On Podman, the app doesn't come back on its own when the computer boots (see
+On Podman, the app only starts with the computer after a `make autostart podman` (see
 [Start with the computer](#-start-with-the-computer)).
 
 </details>
@@ -529,9 +530,8 @@ It asks which AI you use (Claude Desktop, Claude Code, Cursor or Antigravity) an
 - tests the connection and tells you the next step, like quitting and reopening the client.
 
 To skip the question: `make connect CLIENT=cursor` (the names are `claude-desktop`,
-`claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). With
-Podman: `make connect COMPOSE="podman compose"`. For Claude Code, the command writes
-nothing: it shows what to run. It works on Linux and Mac; on Windows, set it up by hand.
+`claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). With Podman:
+`make connect podman`. For Claude Code, the command writes nothing: it shows what to run. It works on Linux and Mac; on Windows, set it up by hand.
 
 #### Examples
 
@@ -568,7 +568,7 @@ Other cases:
 |---|---|
 | `make connect CLIENT=cursor` | Writes `~/.cursor/mcp.json` without asking which AI. |
 | `make connect CLIENT=json` | Only prints the JSON, to paste by hand. Writes nothing. |
-| `make connect COMPOSE="podman compose"` | Same, using Podman. |
+| `make connect podman` | Same, using Podman. |
 | Running it again | `✅ Já estava configurado ...` (already configured): nothing changes. |
 | The client already points to another folder (another install) | Shows the current and the new one and asks `Trocar pelo novo?` (replace?). If you say no, nothing changes. |
 | App stopped | Writes anyway and warns: `Configurado, mas o app está parado: rode make start.` (run `make start`). |
@@ -579,7 +579,7 @@ Other cases:
 #### Claude Desktop
 
 1. Run `make mcp-config`. It prints a JSON snippet with this folder's path and the
-   `COMPOSE` in use (with Podman: `make mcp-config COMPOSE="podman compose"`).
+   `COMPOSE` in use (with Podman: `make mcp-config podman`).
 2. Paste the snippet into `claude_desktop_config.json`. If the file already has
    `mcpServers`, add only the `me-avisa-ai` block.
 
@@ -629,9 +629,16 @@ Other local MCP clients follow the same idea: a command that opens the server ov
 
 ## 🔌 Start with the computer
 
-With Docker (Linux), Docker Desktop or OrbStack, the app comes back on its own when the
-computer boots: Docker starts with the system and brings the app's services back, unless
-you stopped them with `make stop`. Podman is different (see below).
+With Docker, the app comes back on its own: Docker brings the app's services back when it
+starts, unless you stopped them with `make stop`. When Docker starts depends on where it runs:
+
+| Where | When the app comes back |
+|---|---|
+| 🐧 Linux (Docker Engine) | When the computer boots, even before you sign in. On Ubuntu and Debian Docker already starts on boot; on Fedora and Arch, turn it on once with `sudo systemctl enable --now docker` |
+| Docker Desktop (Windows, Mac, Linux) | When you sign in, if **Start Docker Desktop when you sign in** is checked in **Settings → General** |
+| 🍎 OrbStack (Mac) | When you sign in, if **Start at login** is checked in **Settings → General** |
+
+Podman is different (see [With Podman](#with-podman)).
 
 While the app is stopped, no alerts go out, on the website or on Telegram. When it comes
 back, it catches up on the closing prices and reports it missed.
@@ -659,15 +666,27 @@ With Docker off at boot, open Docker (or run `sudo systemctl start docker`) and 
 
 ### With Podman
 
-Podman has no service that brings containers back on its own, so the app does **not**
-start with the computer. After booting:
+Podman has no service that brings containers back on its own. On Linux, run once:
 
 ```bash
-podman machine start              # Mac only
-make start COMPOSE="podman compose"
+make autostart podman
 ```
 
-To stop: `make stop COMPOSE="podman compose"`.
+It creates a systemd service for your user (`~/.config/systemd/user/me-avisa-ai.service`)
+that starts the app when the computer boots, even before you sign in. If it asks, run
+`sudo loginctl enable-linger $USER` so it works before sign-in.
+
+| I want to | Command |
+|---|---|
+| Stop the app now | `make stop podman` (it comes back on the next boot) |
+| Stop starting it with the computer | `make autostart-off` |
+
+On a Mac, the app doesn't start on its own. After booting:
+
+```bash
+podman machine start
+make start podman
+```
 
 ## ⌨️ Commands
 
@@ -690,6 +709,7 @@ To see the full list, run `make` with nothing after it.
 | `make migrate` | Updates the database |
 | `make connect` | Connects an AI (Claude, Cursor, Antigravity) to the app |
 | `make mcp-config` | Prints the MCP server JSON to paste by hand |
+| `make autostart podman` / `make autostart-off` | Podman on Linux: start the app with the computer, or stop doing so |
 
 **Development**
 

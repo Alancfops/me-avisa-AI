@@ -7,6 +7,8 @@ x-app: &app
     args:
       APP_UID: ${APP_UID:-1000}
   image: me-avisa-ai:local
+  # root só no Podman sem root (o Makefile define): lá, root aqui é você no computador.
+  user: ${APP_USER:-app}
   restart: unless-stopped
   # Só o código-fonte é montado. vendor e public/build vêm da imagem, então ficam
   # sempre em dia depois de um build, e nenhum volume guarda uma versão velha deles.
@@ -88,7 +90,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:17
+    image: docker.io/library/postgres:17
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_DATABASE:-me_avisa_ai}
