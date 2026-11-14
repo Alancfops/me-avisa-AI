@@ -1,26 +1,43 @@
-# Sem COMPOSE na linha de comando, usa o Docker se houver; senão, o Podman.
+# Docker por padrão. Com a palavra podman no fim, o Podman: make install podman.
+# COMPOSE="..." na linha de comando escolhe qualquer outro e vale mais que os dois.
 ifeq ($(origin COMPOSE),undefined)
-COMPOSE := $(shell \
-	if docker compose version >/dev/null 2>&1; then echo docker compose; \
-	elif podman compose version >/dev/null 2>&1; then echo podman compose; \
-	elif command -v podman-compose >/dev/null 2>&1; then echo podman-compose; \
-	elif command -v docker-compose >/dev/null 2>&1; then echo docker-compose; \
-	else echo docker compose; fi)
+ifneq ($(filter podman,$(MAKECMDGOALS)),)
+COMPOSE := $(shell podman compose version >/dev/null 2>&1 && echo podman compose || echo podman-compose)
+else
+COMPOSE := docker compose
 endif
-export APP_UID := $(shell id -u)
+endif
 
-# No Podman sem root, o root do contêiner é você no computador, e o UID do app vira outro.
-# Por isso o app roda como root lá: só assim grava o .env e os arquivos montados.
-# Vale também para o docker que, na verdade, é o Podman (pacote podman-docker).
-ifneq ($(findstring podman,$(COMPOSE) $(shell docker --version 2>/dev/null)),)
+# O UID do dono do projeto vira o do usuário app na imagem. Com root (id 0) não há como
+# criar outro usuário com esse UID: a imagem usa 1000, e o app roda como root.
+ifeq ($(shell id -u),0)
+export APP_UID := 1000
+export APP_USER := root
+else
+export APP_UID := $(shell id -u)
+endif
+
+# No Podman e no Docker sem root, o root do contêiner é você no computador, e o UID do app
+# vira outro. Por isso o app roda como root lá: só assim grava o .env e os arquivos montados.
+ifeq ($(APP_USER),)
+ifneq ($(findstring podman,$(COMPOSE)),)
 export APP_USER := $(shell podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -qx true && echo root)
+else
+export APP_USER := $(shell docker info --format '{{.SecurityOptions}}' 2>/dev/null | grep -q rootless && echo root)
+endif
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config connect
+.PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config connect autostart autostart-off podman
 
 help: ## Lista os comandos
-	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-10s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*## "} /^[a-z-]+:.*## / {printf "  make %-13s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo
+	@echo "  Com Podman, acrescente podman no fim: make install podman, make start podman..."
+
+# Só marca o Podman (veja o COMPOSE acima). Sozinho, mostra a ajuda.
+podman:
+	@$(if $(filter-out podman,$(MAKECMDGOALS)),:,$(MAKE) --no-print-directory help)
 
 install: ## Cria o .env sem sobrescrever um existente, constrói as imagens e prepara o banco
 	@test -f .env || cp .env.example .env
@@ -114,3 +131,12 @@ connect: export CONNECT_COMPOSE := $(COMPOSE)
 connect: export CONNECT_CLIENT := $(if $(filter command line,$(origin CLIENT)),$(CLIENT))
 connect: ## Liga uma IA (Claude, Cursor, Antigravity) ao app: make connect [CLIENT=cursor]
 	@bin/connect
+
+# O Docker religa o app sozinho ao ligar o computador; o Podman não tem esse serviço.
+# Um serviço do systemd do usuário faz o up -d no boot, e o linger o roda antes do login.
+autostart: export AUTOSTART_COMPOSE := $(COMPOSE)
+autostart: ## Podman no Linux: liga o app junto com o computador (make autostart podman)
+	@bin/autostart on
+
+autostart-off: ## Podman no Linux: não liga mais o app com o computador
+	@bin/autostart off
