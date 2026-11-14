@@ -300,13 +300,9 @@ On Linux (Ubuntu or Debian), besides `git` and `make`:
 sudo apt install podman podman-compose
 ```
 
-Follow steps 2 to 6 above, adding `COMPOSE="podman compose"` to every `make`:
-
-```bash
-make install COMPOSE="podman compose"
-make start COMPOSE="podman compose"
-make load COMPOSE="podman compose"
-```
+Follow steps 2 to 6 above with the same commands. Without Docker on the computer, `make`
+uses Podman on its own (`podman compose` or `podman-compose`). With both installed, it
+prefers Docker; to use Podman, add `COMPOSE="podman compose"` to every `make`.
 
 On Podman, the app doesn't come back on its own when the computer boots (see
 [Start with the computer](#-start-with-the-computer)).
@@ -529,8 +525,8 @@ It asks which AI you use (Claude Desktop, Claude Code, Cursor or Antigravity) an
 - tests the connection and tells you the next step, like quitting and reopening the client.
 
 To skip the question: `make connect CLIENT=cursor` (the names are `claude-desktop`,
-`claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). With
-Podman: `make connect COMPOSE="podman compose"`. For Claude Code, the command writes
+`claude-code`, `cursor`, `antigravity` and `json`, which only prints the JSON). Without
+Docker, it uses Podman. For Claude Code, the command writes
 nothing: it shows what to run. It works on Linux and Mac; on Windows, set it up by hand.
 
 #### Examples
@@ -568,7 +564,7 @@ Other cases:
 |---|---|
 | `make connect CLIENT=cursor` | Writes `~/.cursor/mcp.json` without asking which AI. |
 | `make connect CLIENT=json` | Only prints the JSON, to paste by hand. Writes nothing. |
-| `make connect COMPOSE="podman compose"` | Same, using Podman. |
+| `make connect COMPOSE="podman compose"` | Uses Podman even with Docker installed. |
 | Running it again | `✅ Já estava configurado ...` (already configured): nothing changes. |
 | The client already points to another folder (another install) | Shows the current and the new one and asks `Trocar pelo novo?` (replace?). If you say no, nothing changes. |
 | App stopped | Writes anyway and warns: `Configurado, mas o app está parado: rode make start.` (run `make start`). |
@@ -579,7 +575,7 @@ Other cases:
 #### Claude Desktop
 
 1. Run `make mcp-config`. It prints a JSON snippet with this folder's path and the
-   `COMPOSE` in use (with Podman: `make mcp-config COMPOSE="podman compose"`).
+   `COMPOSE` in use (Docker or, without it, Podman).
 2. Paste the snippet into `claude_desktop_config.json`. If the file already has
    `mcpServers`, add only the `me-avisa-ai` block.
 
@@ -664,10 +660,10 @@ start with the computer. After booting:
 
 ```bash
 podman machine start              # Mac only
-make start COMPOSE="podman compose"
+make start
 ```
 
-To stop: `make stop COMPOSE="podman compose"`.
+To stop: `make stop`.
 
 ## ⌨️ Commands
 

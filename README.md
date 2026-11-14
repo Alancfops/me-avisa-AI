@@ -298,13 +298,9 @@ No Linux (Ubuntu ou Debian), além de `git` e `make`:
 sudo apt install podman podman-compose
 ```
 
-Siga os passos 2 a 6 acima, acrescentando `COMPOSE="podman compose"` em todo `make`:
-
-```bash
-make install COMPOSE="podman compose"
-make start COMPOSE="podman compose"
-make load COMPOSE="podman compose"
-```
+Siga os passos 2 a 6 acima, com os mesmos comandos. Sem Docker no computador, o `make`
+usa o Podman sozinho (`podman compose` ou `podman-compose`). Com os dois instalados, ele
+prefere o Docker; para usar o Podman, acrescente `COMPOSE="podman compose"` em todo `make`.
 
 No Podman, o app não volta sozinho quando o computador liga (veja
 [Iniciar com o computador](#-iniciar-com-o-computador)).
@@ -522,8 +518,8 @@ Ele pergunta qual IA você usa (Claude Desktop, Claude Code, Cursor ou Antigravi
 - testa a conexão e diz o próximo passo, como fechar e abrir o cliente.
 
 Para pular a pergunta: `make connect CLIENT=cursor` (os nomes são `claude-desktop`,
-`claude-code`, `cursor`, `antigravity` e `json`, que só mostra o JSON). Com Podman:
-`make connect COMPOSE="podman compose"`. No Claude Code, o comando não grava nada: mostra
+`claude-code`, `cursor`, `antigravity` e `json`, que só mostra o JSON). Sem Docker, usa o Podman.
+No Claude Code, o comando não grava nada: mostra
 o que rodar. Funciona no Linux e no Mac; no Windows, ligue à mão.
 
 #### Exemplos
@@ -561,7 +557,7 @@ Outros casos:
 |---|---|
 | `make connect CLIENT=cursor` | Grava no `~/.cursor/mcp.json` sem perguntar qual IA. |
 | `make connect CLIENT=json` | Só mostra o JSON, para colar à mão. Não grava nada. |
-| `make connect COMPOSE="podman compose"` | Faz o mesmo usando o Podman. |
+| `make connect COMPOSE="podman compose"` | Usa o Podman mesmo com o Docker instalado. |
 | Rodar de novo | `✅ Já estava configurado em ... Nada foi alterado.` |
 | O cliente já aponta para outra pasta (outra instalação) | Mostra o atual e o novo e pergunta `Trocar pelo novo?`. Se você disser não, nada muda. |
 | App parado | Grava mesmo assim e avisa: `Configurado, mas o app está parado: rode make start.` |
@@ -572,7 +568,7 @@ Outros casos:
 #### Claude Desktop
 
 1. Rode `make mcp-config`. Ele imprime um trecho JSON com o caminho desta pasta e o
-   `COMPOSE` em uso (com Podman: `make mcp-config COMPOSE="podman compose"`).
+   `COMPOSE` em uso (o Docker ou, sem ele, o Podman).
 2. Cole o trecho no `claude_desktop_config.json`. Se o arquivo já tem `mcpServers`,
    acrescente só o bloco `me-avisa-ai`.
 
@@ -657,10 +653,10 @@ com o computador. Depois de ligar a máquina:
 
 ```bash
 podman machine start              # só no Mac
-make start COMPOSE="podman compose"
+make start
 ```
 
-Para parar: `make stop COMPOSE="podman compose"`.
+Para parar: `make stop`.
 
 ## ⌨️ Comandos
 

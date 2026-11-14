@@ -1,5 +1,20 @@
-COMPOSE ?= docker compose
+# Sem COMPOSE na linha de comando, usa o Docker se houver; senão, o Podman.
+ifeq ($(origin COMPOSE),undefined)
+COMPOSE := $(shell \
+	if docker compose version >/dev/null 2>&1; then echo docker compose; \
+	elif podman compose version >/dev/null 2>&1; then echo podman compose; \
+	elif command -v podman-compose >/dev/null 2>&1; then echo podman-compose; \
+	elif command -v docker-compose >/dev/null 2>&1; then echo docker-compose; \
+	else echo docker compose; fi)
+endif
 export APP_UID := $(shell id -u)
+
+# No Podman sem root, o root do contêiner é você no computador, e o UID do app vira outro.
+# Por isso o app roda como root lá: só assim grava o .env e os arquivos montados.
+# Vale também para o docker que, na verdade, é o Podman (pacote podman-docker).
+ifneq ($(findstring podman,$(COMPOSE) $(shell docker --version 2>/dev/null)),)
+export APP_USER := $(shell podman info --format '{{.Host.Security.Rootless}}' 2>/dev/null | grep -qx true && echo root)
+endif
 
 .DEFAULT_GOAL := help
 .PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config connect
