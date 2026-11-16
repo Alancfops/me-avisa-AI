@@ -184,7 +184,7 @@ it('explains an unreadable file and changes nothing', function () {
     chmod($this->file, 0600);
     expect(file_get_contents($this->file))->toBe('{}')
         ->and(backups($this->dir))->toBeEmpty();
-});
+})->skip(runsAsRoot(), 'root ignora as permissões do chmod (Podman ou Docker sem root)');
 
 it('explains a folder it cannot write and changes nothing', function () {
     file_put_contents($this->file, '{}');
@@ -197,4 +197,11 @@ it('explains a folder it cannot write and changes nothing', function () {
     chmod($this->dir, 0700);
     expect(file_get_contents($this->file))->toBe('{}')
         ->and(glob($this->dir.'/*'))->toHaveCount(1);
-});
+})->skip(runsAsRoot(), 'root ignora as permissões do chmod (Podman ou Docker sem root)');
+
+// No Podman e no Docker sem root, os testes rodam como root no contêiner, e root lê e grava
+// apesar do chmod.
+function runsAsRoot(): bool
+{
+    return function_exists('posix_geteuid') && posix_geteuid() === 0;
+}

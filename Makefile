@@ -27,6 +27,10 @@ export APP_USER := $(shell docker info --format '{{.SecurityOptions}}' 2>/dev/nu
 endif
 endif
 
+# O tools fica num profile. O docker compose ativa o profile de um serviço chamado no run;
+# o podman-compose não, e diria "missing services [tools]".
+TOOLS = $(COMPOSE) --profile tools run --rm tools
+
 .DEFAULT_GOAL := help
 .PHONY: help install start load stop restart logs test lint format migrate shell check backtest backup restore mcp-config connect autostart autostart-off podman
 
@@ -39,14 +43,18 @@ help: ## Lista os comandos
 podman:
 	@$(if $(filter-out podman,$(MAKECMDGOALS)),:,$(MAKE) --no-print-directory help)
 
-install: ## Cria o .env sem sobrescrever um existente, constrói as imagens e prepara o banco
+# Todos os serviços do app usam a mesma imagem: construir só a do web. Um build sem serviço,
+# ou um up que ainda não acha a imagem, faz o podman-compose construí-la uma vez por serviço,
+# todas ao mesmo tempo, e isso esgota a memória da máquina virtual do Podman no Mac.
+install: ## Cria o .env sem sobrescrever um existente, constrói a imagem e prepara o banco
 	@test -f .env || cp .env.example .env
-	$(COMPOSE) build
+	$(COMPOSE) build web
 	# O entrypoint do web gera a APP_KEY e migra.
 	$(COMPOSE) run --rm web true
 
 start: ## Sobe o app
-	$(COMPOSE) up -d --build
+	$(COMPOSE) build web
+	$(COMPOSE) up -d
 
 load: ## Primeira carga: catálogo, informes da CVM e fechamentos da B3 (o app precisa estar no ar)
 	$(COMPOSE) exec web php artisan fiis:sync-catalog
@@ -65,28 +73,28 @@ logs: ## Acompanha os logs
 	$(COMPOSE) logs -f
 
 test: ## Roda os testes
-	$(COMPOSE) run --rm tools php artisan test
+	$(TOOLS) php artisan test
 
 lint: ## Confere a formatação
-	$(COMPOSE) run --rm tools vendor/bin/pint --test
+	$(TOOLS) vendor/bin/pint --test
 
 format: ## Corrige a formatação
-	$(COMPOSE) run --rm tools vendor/bin/pint
+	$(TOOLS) vendor/bin/pint
 
 migrate: ## Atualiza o banco
 	# O entrypoint do web migra: é o único lugar que faz isso.
 	$(COMPOSE) run --rm web true
 
 shell: ## Abre um terminal no contêiner do app
-	$(COMPOSE) run --rm tools bash
+	$(TOOLS) bash
 
 check: lint ## Roda as checagens de backend do CI
-	$(COMPOSE) run --rm tools vendor/bin/phpstan analyse --no-progress --memory-limit=1G
-	$(COMPOSE) run --rm tools php artisan test
+	$(TOOLS) vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+	$(TOOLS) php artisan test
 
 backtest: ## Simula os avisos sobre preços passados, sem gravar nada: make backtest TICKER=KNRI11
 	@test -n "$(TICKER)" || { echo "Informe o fundo: make backtest TICKER=KNRI11"; exit 1; }
-	$(COMPOSE) run --rm tools php artisan fiis:backtest $(TICKER)
+	$(TOOLS) php artisan fiis:backtest $(TICKER)
 
 # O pg_dump roda dentro do contêiner do banco, com o usuário e o banco que ele já conhece.
 # --clean faz o arquivo trocar as tabelas ao ser restaurado. O backup só vale se terminar com a
@@ -115,16 +123,27 @@ restore: ## Volta o banco para um backup, depois de salvar o atual: make restore
 # $(COMPOSE) pode ter mais de uma palavra ("podman compose"): a primeira é o command e o resto abre o args.
 # --project-directory (e não -f) faz o Compose ler também o compose.override.yaml.
 # O command leva o caminho completo: no Mac, apps abertos pelo Dock não herdam o PATH do terminal.
+# O podman-compose não tem --project-directory, e o podman e o podman-compose se acham pelo
+# PATH (que podem estar em pastas diferentes). Com Podman, o command é um sh que entra na
+# pasta (o Compose lê o override de lá), põe na frente o PATH do terminal que rodou o make e
+# roda o resto. Pasta e PATH vão como argumentos ($0 e $1), fora do script.
 mcp-config: export MCP_DIR := $(CURDIR)
 mcp-config: export MCP_CMD := $(COMPOSE)
 mcp-config: ## Imprime o JSON do servidor MCP para colar à mão
 	@# Caminho e comando chegam pelo ambiente, e não entre aspas: a pasta pode ter ' no nome.
 	@BIN="$$(command -v "$${MCP_CMD%% *}" || echo "$${MCP_CMD%% *}")" \
+	SH='cd "$$0" && PATH="$$1:$$PATH" && shift && exec "$$@"' \
 	awk 'function q(v) { gsub(/\\/, "\\\\", v); gsub(/"/, "\\\"", v); return "\"" v "\"" } \
-	BEGIN { n = split(ENVIRON["MCP_CMD"], c, " "); c[1] = ENVIRON["BIN"]; args = ""; \
-		for (i = 2; i <= n; i++) args = args q(c[i]) ", "; \
-		args = args q("--project-directory") ", " q(ENVIRON["MCP_DIR"]); \
-		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": %s,\n      \"args\": [%s, \"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n", q(c[1]), args }'
+	BEGIN { n = split(ENVIRON["MCP_CMD"], c, " "); c[1] = ENVIRON["BIN"]; rest = ""; \
+		for (i = 2; i <= n; i++) rest = rest q(c[i]) ", "; \
+		if (ENVIRON["MCP_CMD"] ~ /podman/) { \
+			cmd = q("/bin/sh"); \
+			args = q("-c") ", " q(ENVIRON["SH"]) ", " q(ENVIRON["MCP_DIR"]) ", " q(ENVIRON["PATH"]) ", " q(c[1]) ", " rest; \
+		} else { \
+			cmd = q(c[1]); \
+			args = rest q("--project-directory") ", " q(ENVIRON["MCP_DIR"]) ", "; \
+		} \
+		printf "{\n  \"mcpServers\": {\n    \"me-avisa-ai\": {\n      \"command\": %s,\n      \"args\": [%s\"exec\", \"-T\", \"web\", \"php\", \"artisan\", \"mcp:start\", \"fiis\"]\n    }\n  }\n}\n", cmd, args }'
 
 # CLIENT só vale na linha de comando: um CLIENT exportado no shell não pula o menu.
 connect: export CONNECT_COMPOSE := $(COMPOSE)

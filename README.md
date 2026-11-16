@@ -124,7 +124,7 @@ o programa de contêineres.
 | 🐧 Linux | [Docker Engine](https://docs.docker.com/engine/install/) | ✅ Testado |
 | 🍎 Mac (Intel ou Apple Silicon) | [OrbStack](https://orbstack.dev) (mais leve) ou [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) | ⚠️ Ainda não testado: conte se der problema |
 | 🪟 Windows | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) com WSL 2 | ⚠️ Ainda não testado |
-| Qualquer um, sem Docker | [Podman](#podman) | ⚠️ Ainda não testado |
+| Qualquer um, sem Docker | [Podman](#podman) | ✅ Testado no Linux, sem root. No Mac, ⚠️ ainda não |
 | Sem contêineres | [PHP, Node e Postgres direto](#sem-contêineres) | 🚧 Ainda não disponível |
 
 > [!CAUTION]
@@ -310,6 +310,11 @@ make load podman
 No Podman, o app só liga com o computador depois de um `make autostart podman` (veja
 [Iniciar com o computador](#-iniciar-com-o-computador)).
 
+A primeira instalação baixa as imagens base e constrói a do app: conte uns 15 minutos. Se
+a tela parar por muito mais tempo no Mac, falta memória na máquina virtual do Podman:
+`podman machine stop`, `podman machine set --memory 4096`, `podman machine start` e
+`make install podman` de novo.
+
 </details>
 
 ### Sem contêineres
@@ -470,7 +475,8 @@ docker compose --project-directory /caminho/do/app exec -T web php artisan mcp:s
 
 e conversa com esse comando pela entrada e saída do terminal (`stdio`). O cliente abre o
 comando quando liga e fecha quando você sai dele. É esse comando que o `make connect` grava
-na configuração do cliente.
+na configuração do cliente. Com Podman, o comando gravado é um `sh` que entra na pasta do app
+e roda o `podman compose exec`, porque o `podman-compose` não tem `--project-directory`.
 
 Por isso o MCP funciona **só no computador onde o app está instalado**:
 

@@ -124,7 +124,7 @@ container program.
 | 🐧 Linux | [Docker Engine](https://docs.docker.com/engine/install/) | ✅ Tested |
 | 🍎 Mac (Intel or Apple Silicon) | [OrbStack](https://orbstack.dev) (lighter) or [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) | ⚠️ Not tested yet: tell us if something breaks |
 | 🪟 Windows | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with WSL 2 | ⚠️ Not tested yet |
-| Any, without Docker | [Podman](#podman) | ⚠️ Not tested yet |
+| Any, without Docker | [Podman](#podman) | ✅ Tested on Linux, rootless. On a Mac, ⚠️ not yet |
 | Without containers | [PHP, Node and Postgres directly](#without-containers) | 🚧 Not available yet |
 
 > [!CAUTION]
@@ -312,6 +312,11 @@ make load podman
 On Podman, the app only starts with the computer after a `make autostart podman` (see
 [Start with the computer](#-start-with-the-computer)).
 
+The first install downloads the base images and builds the app's: allow about 15 minutes.
+If the screen stalls much longer than that on a Mac, Podman's virtual machine is short on
+memory: `podman machine stop`, `podman machine set --memory 4096`, `podman machine start`
+and `make install podman` again.
+
 </details>
 
 ### Without containers
@@ -476,7 +481,9 @@ docker compose --project-directory /path/to/the/app exec -T web php artisan mcp:
 
 and talks to that command through the terminal's input and output (`stdio`). The client
 starts the command when it opens and stops it when you quit. That command is what
-`make connect` writes into the client's config.
+`make connect` writes into the client's config. With Podman, the stored command is an `sh`
+that enters the app's folder and runs `podman compose exec`, because `podman-compose` has no
+`--project-directory`.
 
 That's why MCP works **only on the computer where the app is installed**:
 
