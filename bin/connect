@@ -95,7 +95,12 @@ fi
 # O comando que a IA vai rodar: o mesmo que o make mcp-config grava.
 read -r -a parts <<< "$COMPOSE"
 bin="$(command -v "${parts[0]}" || echo "${parts[0]}")"
-compose=("$bin" "${parts[@]:1}" --project-directory "$PWD")
+case "$COMPOSE" in
+    # O podman-compose não tem --project-directory (veja o mcp-config no Makefile).
+    # shellcheck disable=SC2016
+    *podman*) compose=(/bin/sh -c 'cd "$0" && PATH="$1:$PATH" && shift && exec "$@"' "$PWD" "$PATH" "$bin" "${parts[@]:1}") ;;
+    *) compose=("$bin" "${parts[@]:1}" --project-directory "$PWD") ;;
+esac
 server=("${compose[@]}" exec -T web php artisan mcp:start fiis)
 
 echo
@@ -145,7 +150,7 @@ fi
 # COMPOSE fica sem aspas de propósito: pode ter duas palavras ("podman compose").
 # --no-deps: gravar o arquivo não usa o banco, então não sobe o Postgres com o app parado.
 # shellcheck disable=SC2086
-$COMPOSE run --rm --no-deps ${interactive[@]+"${interactive[@]}"} -v "$(dirname "$file"):/connect" tools \
+$COMPOSE --profile tools run --rm --no-deps ${interactive[@]+"${interactive[@]}"} -v "$(dirname "$file"):/connect" tools \
     php artisan mcp:connect "/connect/$(basename "$file")" \
     --block="$(mcp_config)" --shown-as="$file" ${no_interaction:-}
 status=$?

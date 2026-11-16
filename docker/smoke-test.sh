@@ -39,6 +39,9 @@ echo "ok: porta publicada só em 127.0.0.1"
 for target in test lint format shell check; do
     commands="$(make -n "$target")"
     printf '%s\n' "$commands" | grep -q 'run --rm tools' || fail "make $target deve usar o serviço tools"
+    # Sem o --profile, o podman-compose não acha o tools.
+    ! printf '%s\n' "$commands" | grep 'run --rm tools' | grep -qv -- '--profile tools run' \
+        || fail "make $target deve ativar o profile tools"
     ! printf '%s\n' "$commands" | grep -q 'run --rm web' || fail "make $target não pode usar o web, que migra"
 done
 for target in install migrate; do
@@ -50,9 +53,18 @@ echo "ok: só o web migra, e só make install e make migrate o usam para isso"
 make -n install | grep -q '^docker compose build' || fail "make install deve usar o Docker"
 make -n install podman | grep -q '^podman[ -]compose build' || fail "make install podman deve usar o Podman"
 make -n start podman | grep -q '^podman[ -]compose up' || fail "make start podman deve usar o Podman"
-[ "$(make -n start COMPOSE=outro podman | head -n 1)" = "outro up -d --build" ] \
+[ "$(make -n start COMPOSE=outro podman | head -n 1)" = "outro build web" ] \
     || fail "COMPOSE= na linha de comando vale mais que a palavra podman"
 echo "ok: make usa o Docker, e o Podman com a palavra podman"
+
+# A imagem é uma só: o podman-compose constrói uma por serviço, ao mesmo tempo, se o build
+# não nomear o web ou se o up precisar construir.
+for target in install start; do
+    builds="$(make -n "$target" | grep ' build')"
+    [ "$builds" = "docker compose build web" ] || fail "make $target deve construir só o web"
+    ! make -n "$target" | grep -q -- 'up.*--build' || fail "make $target não pode usar up --build"
+done
+echo "ok: make install e make start constroem a imagem uma vez só"
 
 [ "$(services_matching 'restart: unless-stopped')" = "bot postgres scheduler web worker" ] \
     || fail "os cinco serviços precisam de restart: unless-stopped"
