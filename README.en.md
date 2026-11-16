@@ -233,7 +233,7 @@ rest once a day.
 
 | I want to | Command |
 |---|---|
-| ⬆️ Update to the latest version | `git pull` then `make start` (the database updates itself) |
+| ⬆️ Update to the latest version | `git pull` then `make start` (the database updates itself; on Podman, `make start podman`) |
 | ⏹️ Stop the app | `make stop` |
 | 📜 See what's going on | `make logs` (exit with Ctrl+C) |
 | 💾 Keep a copy of the data | `make backup` (see [Backup](#backup)) |
@@ -286,7 +286,10 @@ and, for the first load, the commands in the `Makefile`'s `load` rule, each pref
 <details>
 <summary>Install and run with Podman</summary>
 
-Requires [Podman](https://podman.io/docs/installation) with Compose support. On a Mac:
+Requires [Podman](https://podman.io/docs/installation) with Compose support.
+
+**1. Install Podman.** On a Mac, containers run in a virtual machine, which has to be
+created and started:
 
 ```bash
 brew install podman podman-compose
@@ -300,22 +303,46 @@ On Linux (Ubuntu or Debian), besides `git` and `make`:
 sudo apt install podman podman-compose
 ```
 
-Follow steps 2 to 6 above, adding the word `podman` at the end of every `make`. Without it,
-`make` uses Docker:
+**2. Install and start the app.** These are steps 2 to 6 above, with the word `podman` at
+the end of every `make`. Without it, `make` uses Docker:
 
 ```bash
-make install podman
-make start podman
-make load podman
+git clone https://github.com/Alancfops/me-avisa-AI.git
+cd me-avisa-AI
+make install podman   # creates .env, builds the image and prepares the database
+make start podman     # starts the app at http://127.0.0.1:8000
+make load podman      # first load: funds, CVM reports and B3 closing prices
 ```
 
-On Podman, the app only starts with the computer after a `make autostart podman` (see
-[Start with the computer](#-start-with-the-computer)).
+**3. Check.** `podman images` should list `localhost/me-avisa-ai`, and `podman ps` should
+show `postgres`, `web`, `scheduler`, `worker` and `bot` running.
 
-The first install downloads the base images and builds the app's: allow about 15 minutes.
-If the screen stalls much longer than that on a Mac, Podman's virtual machine is short on
-memory: `podman machine stop`, `podman machine set --memory 4096`, `podman machine start`
-and `make install podman` again.
+On Podman, the app only starts with the computer after a `make autostart podman` (see
+[Start with the computer](#-start-with-the-computer)). On a Mac, after a restart, run
+`podman machine start` before `make start podman`.
+
+#### What to expect the first time
+
+| Step | How long | What shows on screen |
+|---|---|---|
+| `make install podman` | 5 to 15 minutes | Downloads the base images (`Copying blob ...`) and runs the `Dockerfile` steps (`STEP 4/7: RUN npm ci`, `STEP 10/15: RUN composer install`...). On some steps the screen does not change for a few minutes. At the end, the list of created tables |
+| `make start podman` | Under 1 minute | Checks the image (`Using cache`) and starts the containers |
+| `make load podman` | 5 to 10 minutes | `Catálogo atualizado`, `Informes importados`, `Histórico da B3 conferido` |
+
+The message `>>>> Executing external compose provider "podman-compose"` shows up on every
+command and is normal: `podman compose` just hands the request to `podman-compose`.
+
+#### If something goes wrong on Podman
+
+| Problem | Why it happens | What to do |
+|---|---|---|
+| `make install podman` sits on the same step for over 20 minutes | On a Mac, the virtual machine is short on memory (the default is 2 GB) | Ctrl+C and raise the memory: `podman machine stop`, `podman machine set --memory 4096`, `podman machine start`. Then `make install podman` again: what was already downloaded is reused |
+| After Ctrl+C, a long text with `Traceback`, `ProcessLookupError` or `KeyboardInterrupt` | It is `podman-compose` complaining about the interruption, not an app error | Nothing to fix: run the command again |
+| `Cannot connect to Podman` | On a Mac, the virtual machine is stopped | `podman machine start` |
+| `missing services [tools]` on `make test`, `make check` or `make connect` | Old version of the `Makefile` | `git pull` |
+| On `make install podman`, the same steps show up repeated and mixed (`STEP 1/7` four times) | Old version of the `Makefile`, which builds the same image four times at once | Ctrl+C, `git pull` and run it again |
+| `make start podman` keeps waiting, and `podman ps` shows `postgres` as `starting` | Podman checks container health through systemd. Without it (WSL without systemd, for example), the check never runs | Turn on systemd in WSL (`[boot] systemd=true` in `/etc/wsl.conf`) or use Docker |
+| `make: *** No rule to make target 'podman'` | The folder does not have the new `Makefile` | `git pull` |
 
 </details>
 

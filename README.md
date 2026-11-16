@@ -232,7 +232,7 @@ uma vez por dia.
 
 | Quero | Comando |
 |---|---|
-| ⬆️ Atualizar para a versão mais nova | `git pull` e depois `make start` (o banco é atualizado sozinho) |
+| ⬆️ Atualizar para a versão mais nova | `git pull` e depois `make start` (o banco é atualizado sozinho; no Podman, `make start podman`) |
 | ⏹️ Parar o app | `make stop` |
 | 📜 Ver o que está acontecendo | `make logs` (saia com Ctrl+C) |
 | 💾 Guardar uma cópia dos dados | `make backup` (veja [Backup](#backup)) |
@@ -284,7 +284,10 @@ e, para a primeira carga, os comandos da regra `load` do `Makefile`, cada um com
 <details>
 <summary>Instalar e rodar com o Podman</summary>
 
-Requer [Podman](https://podman.io/docs/installation) com suporte a Compose. No Mac:
+Requer [Podman](https://podman.io/docs/installation) com suporte a Compose.
+
+**1. Instale o Podman.** No Mac, os contêineres rodam numa máquina virtual, que precisa ser
+criada e ligada:
 
 ```bash
 brew install podman podman-compose
@@ -298,22 +301,46 @@ No Linux (Ubuntu ou Debian), além de `git` e `make`:
 sudo apt install podman podman-compose
 ```
 
-Siga os passos 2 a 6 acima, acrescentando a palavra `podman` no fim de todo `make`. Sem
-ela, o `make` usa o Docker:
+**2. Instale e suba o app.** São os passos 2 a 6 acima, com a palavra `podman` no fim de
+todo `make`. Sem ela, o `make` usa o Docker:
 
 ```bash
-make install podman
-make start podman
-make load podman
+git clone https://github.com/Alancfops/me-avisa-AI.git
+cd me-avisa-AI
+make install podman   # cria o .env, constrói a imagem e prepara o banco
+make start podman     # sobe o app em http://127.0.0.1:8000
+make load podman      # primeira carga: fundos, informes da CVM e fechamentos da B3
 ```
 
-No Podman, o app só liga com o computador depois de um `make autostart podman` (veja
-[Iniciar com o computador](#-iniciar-com-o-computador)).
+**3. Confira.** `podman images` deve listar `localhost/me-avisa-ai`, e `podman ps` deve
+mostrar `postgres`, `web`, `scheduler`, `worker` e `bot` no ar.
 
-A primeira instalação baixa as imagens base e constrói a do app: conte uns 15 minutos. Se
-a tela parar por muito mais tempo no Mac, falta memória na máquina virtual do Podman:
-`podman machine stop`, `podman machine set --memory 4096`, `podman machine start` e
-`make install podman` de novo.
+No Podman, o app só liga com o computador depois de um `make autostart podman` (veja
+[Iniciar com o computador](#-iniciar-com-o-computador)). No Mac, depois de reiniciar,
+rode `podman machine start` antes de `make start podman`.
+
+#### O que esperar na primeira vez
+
+| Etapa | Quanto leva | O que aparece na tela |
+|---|---|---|
+| `make install podman` | 5 a 15 minutos | Baixa as imagens base (`Copying blob ...`) e roda os passos do `Dockerfile` (`STEP 4/7: RUN npm ci`, `STEP 10/15: RUN composer install`...). Em alguns passos, a tela fica alguns minutos sem mudar. No fim, a lista de tabelas criadas |
+| `make start podman` | Menos de 1 minuto | Confere a imagem (`Using cache`) e liga os contêineres |
+| `make load podman` | 5 a 10 minutos | `Catálogo atualizado`, `Informes importados`, `Histórico da B3 conferido` |
+
+A mensagem `>>>> Executing external compose provider "podman-compose"` aparece em todo
+comando e é normal: o `podman compose` só repassa o pedido ao `podman-compose`.
+
+#### Se algo der errado no Podman
+
+| Problema | Por que acontece | O que fazer |
+|---|---|---|
+| O `make install podman` passa de 20 minutos parado no mesmo passo | No Mac, falta memória na máquina virtual (o padrão é 2 GB) | Ctrl+C e aumente a memória: `podman machine stop`, `podman machine set --memory 4096`, `podman machine start`. Depois, `make install podman` de novo: o que já foi baixado é aproveitado |
+| Depois do Ctrl+C, aparece um texto longo com `Traceback`, `ProcessLookupError` ou `KeyboardInterrupt` | É o `podman-compose` reclamando da interrupção, não um erro do app | Nada a corrigir: rode o comando de novo |
+| `Cannot connect to Podman` | No Mac, a máquina virtual está desligada | `podman machine start` |
+| `missing services [tools]` no `make test`, `make check` ou `make connect` | Versão antiga do `Makefile` | `git pull` |
+| No `make install podman`, os mesmos passos aparecem repetidos e embaralhados (`STEP 1/7` quatro vezes) | Versão antiga do `Makefile`, que monta a mesma imagem quatro vezes ao mesmo tempo | Ctrl+C, `git pull` e rode de novo |
+| `make start podman` fica esperando, e o `podman ps` mostra o `postgres` como `starting` | O Podman confere a saúde dos contêineres pelo systemd. Sem ele (WSL sem systemd, por exemplo), a conferência não roda | Ligue o systemd no WSL (`[boot] systemd=true` no `/etc/wsl.conf`) ou use o Docker |
+| `make: *** No rule to make target 'podman'` | A pasta não tem a versão nova do `Makefile` | `git pull` |
 
 </details>
 
